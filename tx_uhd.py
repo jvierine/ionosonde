@@ -72,7 +72,7 @@ def transmit_waveform(u,t0_full,f0,waveform):
 def main():
     """TX samples based on input arguments"""
     log=l.logger("tx-%d.log"%(time.time()))
-    log.log("Starting TX sweep")
+    log.log("Starting TX sweep",print_msg=True)
     
     # define an ionosonde program
     #s=sweep.sweep(freqs=sweep.freqs60,freq_dur=10.0)
@@ -110,7 +110,7 @@ def main():
             tune_at(usrp,step_t0+s.freq_dur-0.1,f0=s.freq(i+1))
             locked=gl.check_lock(usrp,log)
             if locked==False:
-                log.log("Exiting due to loss of lock and restarting...")
+                log.log("Exiting due to loss of lock and restarting...",print_msg=True)
                 exit(0)
 
         t0+=np.uint64(s.sweep_len_s)
