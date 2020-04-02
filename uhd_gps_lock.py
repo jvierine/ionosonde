@@ -1,5 +1,13 @@
-def check_lock(u):
-    return(u.get_mboard_sensor("gps_locked").to_bool())
+import numpy as n
+import time
+import uhd
+
+def check_lock(u,log=None):
+    locked=u.get_mboard_sensor("gps_locked").to_bool()
+    if locked==False:
+        if log!=None:
+            log.log("Warning, GPS not locked")
+    return(locked)
 
 def sync_clock(u,log):
     # synchronize the usrp clock to the pc clock

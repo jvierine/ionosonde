@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2017-2018 Ettus Research, a National Instruments Company
+# Copyright 2020, Juha Vierinen, Markus Floer
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
@@ -18,16 +18,10 @@ import matplotlib.pyplot as plt
 #frequencies = np.arange(10.0)*100e3 + 3.5e6
 #import freqs
 import sweep
+import uhd_gps_lock as gl
+import iono_logger as l
 
-
-
-
-#def parse_args():
- #   """Parse the command line arguments"""
-#    parser = argparse.ArgumentParser()
- #   return parser.parse_args()
-
-def sync_clock(u):
+def osync_clock(u):
     # synchronize the usrp clock to the pc clock
     # assume that the pc clock is synchronized using ntp
     u.set_clock_source("gpsdo")
@@ -43,11 +37,11 @@ def sync_clock(u):
     # these should be similar
     print("pc clock %1.2f usrp clock %1.2f"%(t_now,t_usrp))
     
-def tune_at(u,t0_full,f0=4e6,t0_frac=0.0):
+def tune_at(u,t0,f0=4e6):
     """ tune radio to frequency f0 at t0_full """
 
 #    u.clear_command_time()
-    t0_ts=uhd.libpyuhd.types.time_spec(t0_full)
+    t0_ts=uhd.libpyuhd.types.time_spec(t0)
     print("tuning at %1.2f"%(t0_ts.get_real_secs()))
     u.set_command_time(t0_ts)
     tune_req=uhd.libpyuhd.types.tune_request(f0)
@@ -61,29 +55,35 @@ def transmit_waveform(u,t0_full,f0,waveform):
     md.has_time_spec=True
     md.time_spec=t0_ts
     print("transmit start at %1.2f"%(t0_full))
-    tune_req=uhd.libpyuhd.types.tune_request(f0)
+#    tune_req=uhd.libpyuhd.types.tune_request(f0)
     # wait for moment right before transmit
     while t0_full-time.time() > 0.1:
         time.sleep(0.01)
-    u.set_tx_freq(tune_req)
+#    u.set_tx_freq(tune_req)
 
     tx_stream=u.get_tx_stream(stream_args)
+    # this command will block until everything is in the transmit
+    # buffer.
     tx_stream.send(waveform,md,timeout=11.0)
-    print("done %1.2f"%(time.time()))
+    #print("done %1.2f"%(time.time()))
 
     
 def main():
     """TX samples based on input arguments"""
-
+    log=l.logger("tx-%d.log"%(time.time()))
+    log.log("Starting TX sweep")
     # define an ionosonde program
     s=sweep.sweep(freqs=sweep.freqs60,freq_dur=10.0)
-    print(s.sweep_len_s)
     sample_rate=1000000
     usrp = uhd.usrp.MultiUSRP()
     usrp.set_tx_rate(sample_rate)
     subdev_spec=uhd.usrp.SubdevSpec("A:A")
     usrp.set_tx_subdev_spec(subdev_spec)
-    sync_clock(usrp)
+    gl.sync_clock(usrp,log)
+    # start with first frequency
+    tune_req=uhd.libpyuhd.types.tune_request(s.freq(0))
+    usrp.set_tx_freq(tune_req)
+
 
     code = np.fromfile("waveforms/code-l10000-b10-000000f.bin",dtype=np.complex64)
     n_reps=s.freq_dur*sample_rate/len(code)
@@ -101,6 +101,10 @@ def main():
             step_t0=t0+t0i
             print(step_t0)
             transmit_waveform(usrp,np.uint64(step_t0),f0,data)
+            # tune to next frequency 0.1 s before end
+            tune_at(usrp,step_t0+s.freq_dur-0.1,f0=s.freq(i+1))
+            l.check_lock(usrp,log)
+
         t0+=np.uint64(s.sweep_len_s)
 
     print("started tx thread")
