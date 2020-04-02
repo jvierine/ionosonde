@@ -59,6 +59,7 @@ def transmit_waveform(u,t0_full,f0,waveform):
     # wait for moment right before transmit
     while t0_full-time.time() > 0.1:
         time.sleep(0.01)
+    print(time.time())
 #    u.set_tx_freq(tune_req)
 
     tx_stream=u.get_tx_stream(stream_args)
@@ -72,8 +73,12 @@ def main():
     """TX samples based on input arguments"""
     log=l.logger("tx-%d.log"%(time.time()))
     log.log("Starting TX sweep")
+    
     # define an ionosonde program
-    s=sweep.sweep(freqs=sweep.freqs60,freq_dur=10.0)
+    #s=sweep.sweep(freqs=sweep.freqs60,freq_dur=10.0)
+
+    s=sweep.sweep(freqs=sweep.freqs30,freq_dur=2.0)
+    
     sample_rate=1000000
     usrp = uhd.usrp.MultiUSRP()
     usrp.set_tx_rate(sample_rate)
@@ -103,7 +108,10 @@ def main():
             transmit_waveform(usrp,np.uint64(step_t0),f0,data)
             # tune to next frequency 0.1 s before end
             tune_at(usrp,step_t0+s.freq_dur-0.1,f0=s.freq(i+1))
-            gl.check_lock(usrp,log)
+            locked=gl.check_lock(usrp,log)
+            if locked==False:
+                log.log("Exiting due to loss of lock and restarting...")
+                exit(0)
 
         t0+=np.uint64(s.sweep_len_s)
 
