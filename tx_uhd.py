@@ -103,7 +103,7 @@ def main():
             transmit_waveform(usrp,np.uint64(step_t0),f0,data)
             # tune to next frequency 0.1 s before end
             tune_at(usrp,step_t0+s.freq_dur-0.1,f0=s.freq(i+1))
-            l.check_lock(usrp,log)
+            gl.check_lock(usrp,log)
 
         t0+=np.uint64(s.sweep_len_s)
 
