@@ -19,7 +19,7 @@ for i in range(6):
         dBr=10.0*n.log10(n.transpose(n.abs(res["res"])**2.0))
         dBr=dBr-n.nanmedian(dBr)
         plt.pcolormesh(tvec,rvec,dBr)
-        plt.xlabel("Frequency (Hz)")
+        plt.xlabel("Time (s)")
         plt.title("Range-Time Power f=%d (dB)"%(i))
         plt.ylabel("Range (km)")
         plt.ylim([0,500])
