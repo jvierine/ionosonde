@@ -20,53 +20,14 @@ import numpy as n
 import matplotlib.pyplot as plt
 import sweep
 import iono_logger as l
+import uhd_gps_lock as gl
 
-def check_lock(u):
-    return(u.get_mboard_sensor("gps_locked").to_bool())
-
-def sync_clock(u,log):
-    # synchronize the usrp clock to the pc clock
-    # assume that the pc clock is synchronized using ntp
-    gps_locked=check_lock(u)
-    while gps_locked==False:
-        print("Waiting for GPS lock. Check GPS antenna")
-        time.sleep(10)
-        gps_locked=check_lock(u)
-        
-    u.set_clock_source("gpsdo")        
-    u.set_time_source("gpsdo")
-
-    lastt=u.get_time_last_pps()
-    nextt=u.get_time_last_pps()
-    while nextt==lastt:
-        time.sleep(0.05)
-        lastt=nextt
-        nextt=u.get_time_last_pps()
-    time.sleep(0.2)
-    u.set_time_next_pps(uhd.libpyuhd.types.time_spec(u.get_mboard_sensor("gps_time").to_int()+1))
-
-    log.log(str(u.get_mboard_sensor("gps_gpgga")))
-    log.log(str(u.get_mboard_sensor("gps_gprmc")))
-    
-#    t0=time.time()
- #   while (np.ceil(t0)-t0) < 0.2:
-  #      t0=time.time()
-   #     time.sleep(0.1)
-        
-   #    u.set_time_next_pps(uhd.libpyuhd.types.time_spec(np.ceil(t0)))
-    time.sleep(0.2)
-    t_now=time.time()
-    t_usrp=(u.get_time_now().get_full_secs()+u.get_time_now().get_frac_secs())
-    t_gpsdo=u.get_mboard_sensor("gps_time")
-    # these should be similar
-    print("pc clock %1.2f usrp clock %1.2f gpsdo %1.2f"%(t_now,t_usrp,t_gpsdo.to_int()))
-    
 def receive_waveform(u,t0_full,f0,log=None,N=10000000,file_idx=0):
     t0_ts=uhd.libpyuhd.types.time_spec(np.uint64(t0_full),0.0)
     print("receive starts at %1.2f"%(t0_full))
     tune_req=uhd.libpyuhd.types.tune_request(f0)
     
-    gps_lock=check_lock(u)
+    gps_lock=gl.check_lock(u)
     if gps_lock == False:
         if log != None:
             log.log("Warning. No GPS lock")
@@ -90,7 +51,7 @@ def receive_waveform(u,t0_full,f0,log=None,N=10000000,file_idx=0):
     recv_buffer = np.empty(N,dtype=n.complex64)
     md=uhd.types.RXMetadata()
 
-    num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=2.0)
+    num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=20.0)
     if num_rx_samps != N:
         if log != None:
             log.log("Dropped packet %d read."%(num_rx_samps))
@@ -121,7 +82,7 @@ def main():
     usrp.set_rx_subdev_spec(subdev_spec)
 
     # Synchronizing clock
-    sync_clock(usrp,log)
+    gl.sync_clock(usrp,log)
 
     # figure out when to start the cycle. Assuming that we've been
     # doing this since 1970 with a fixed sweep length :)
