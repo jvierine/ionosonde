@@ -28,7 +28,7 @@ import stuffr
 
 import numpy as np
 import scipy.signal
-import digital_rf as drf
+#import digital_rf as drf
 
 def create_pseudo_random_code(clen=10000, seed=0):
     """
@@ -115,7 +115,7 @@ def analyze_prc(zin,
     """
     code = create_pseudo_random_code(clen=clen, seed=station)
     an_len=len(zin)/dec
-    N = an_len / clen 
+    N = int(an_len / clen )
     res = np.zeros([N, Nranges], dtype=np.complex64)
     if os.path.exists("waveforms/b-%d-%d.h5"%(station,Nranges)):
         hb=h5py.File("waveforms/b-%d-%d.h5"%(station,Nranges),"r")
