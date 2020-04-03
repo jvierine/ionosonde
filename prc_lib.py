@@ -95,6 +95,11 @@ def analyze_prc(zin,
                 rfi_rem=True,
                 spec_rfi_rem=False,
                 cache=True,
+                gc_rem=True,
+#                wfun=scipy.signal.blackmanharris(N),
+                wfun=scipy.signal.tukey,
+#                wfun=1.0,
+                gc=20,
                 dec=10):
     """
     Analyze pseudorandom code transmission for a block of data.
@@ -114,22 +119,25 @@ def analyze_prc(zin,
     res = np.zeros([N, Nranges], dtype=np.complex64)
     if os.path.exists("waveforms/b-%d-%d.h5"%(station,Nranges)):
         hb=h5py.File("waveforms/b-%d-%d.h5"%(station,Nranges),"r")
-        B=np.array(hb["B"].value,dtype=np.complex64)
+        B=hb["B"].value
         hb.close()
     else:
         r = create_estimation_matrix(code=code, cache=cache, rmax=Nranges)
         B = r['B']        
         hb=h5py.File("waveforms/b-%d-%d.h5"%(station,Nranges),"w")
         hb["B"]=B
-        hb.close()
-        
+        hb.close()        
         
     spec = np.zeros([N, Nranges], dtype=np.complex64)
 
-    z=stuffr.decimate(zin,dec=dec)
+    if dec > 1:
+        z=stuffr.decimate(zin,dec=dec)
+    else:
+        z=zin
     z.shape=(N,clen)
     if rfi_rem:
-        z=z-np.median(z,axis=0)
+        bg=np.median(z,axis=0)
+        z=z-bg
 #    print(len(z))
     for i in np.arange(N):
 #        z = stuffr.decimate(zin[(i*clen*dec):((i+1)*clen*dec)],dec=dec)
@@ -138,9 +146,14 @@ def analyze_prc(zin,
         # z = measurement
         # res[i,:] = backscattered echo complex amplitude
         res[i, :] = np.dot(B, z[i,:])
+    if gc_rem:
+        for i in range(gc,Nranges):
+            res[:,i]=res[:,i]-np.median(res[:,i])
+
+    window=wfun(N)
     for i in np.arange(Nranges):
         spec[:, i] = np.fft.fftshift(np.fft.fft(
-            scipy.signal.blackmanharris(N) * res[:, i]
+            window * res[:, i]
         ))
 
     if spec_rfi_rem:
@@ -155,123 +168,3 @@ def analyze_prc(zin,
     return(ret)
 
 
-if __name__ == '__main__':
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-
-    desc = """Script for analyzing pseudorandom-coded waveforms.
-
-    See the following paper for a description and application of the technique:
-
-    Vierinen, J., Chau, J. L., Pfeffer, N., Clahsen, M., and Stober, G.,
-    Coded continuous wave meteor radar, Atmos. Meas. Tech., 9, 829-839,
-    doi:10.5194/amt-9-829-2016, 2016.
-
-    """
-
-    parser = ArgumentParser(description=desc)
-
-    parser.add_argument(
-        'datadir', help='''Data directory to analyze.''',
-    )
-    parser.add_argument(
-        '-c', '--ch', default='hfrx',
-        help='''Channel name of data to analyze. (default: %(default)s)'''
-    )
-    parser.add_argument(
-        '-o', '--out', dest='outdir', default='{datadir}/prc_analysis',
-        help='''Processed output directory. (default: %(default)s)''',
-    )
-    parser.add_argument(
-        '-x', '--delete_old', action='store_true', default=False,
-        help='''Delete existing processed files.''',
-    )
-    parser.add_argument(
-        '-n', '--analysis_length', dest='anlen', type=int, default=6000000,
-        help='''Analysis length. (default: %(default)s)''',
-    )
-    parser.add_argument(
-        '-l', '--code_length', dest='codelen', type=int, default=10000,
-        help='''Code length. (default: %(default)s)''',
-    )
-    parser.add_argument(
-        '-s', '--station', type=int, default=0,
-        help='''Station ID for code (seed). (default: %(default)s)''',
-    )
-    parser.add_argument(
-        '-r', '--nranges', type=int, default=1000,
-        help='''Number of range gates. (default: %(default)s)''',
-    )
-    parser.add_argument(
-        '-d', '--receiver_delay', type=int, default=0,
-        help='''How much is receiver delayed. (default: %(default)s)''',
-    )
-    parser.add_argument(
-        '-D', '--decimate', type=int, default=1,
-        help='''How much to decimate signal. (default: %(default))''',
-    )
-    
-
-    op = parser.parse_args()
-
-    op.datadir = os.path.abspath(op.datadir)
-    # join outdir to datadir to allow for relative path, normalize
-    op.outdir = os.path.abspath(op.outdir.format(datadir=op.datadir))
-    if not os.path.isdir(op.outdir):
-        os.makedirs(op.outdir)
-    datpath = os.path.join(op.outdir, 'last.dat')
-    if op.delete_old:
-        for f in itertools.chain(
-            glob.iglob(datpath),
-            glob.iglob(os.path.join(op.outdir, '*.png')),
-        ):
-            os.remove(f)
-
-    d = drf.DigitalRFReader(op.datadir)
-    sr = d.get_properties(op.ch)['samples_per_second']
-    b = d.get_bounds(op.ch)
-    idx = np.array(b[0])
-    if os.path.isfile(datpath):
-        fidx = np.fromfile(datpath, dtype=np.int)
-        if b[0] <= fidx:
-            idx = fidx
-
-    while True:
-        if idx + op.anlen*op.decimate > b[1]:
-            print('waiting for more data, sleeping.')
-            time.sleep(op.anlen*op.decimate / sr)
-            b = d.get_bounds(op.ch)
-            continue
-
-        try:
-            res = analyze_prc(
-                d, channel=op.ch, idx0=idx+op.receiver_delay, an_len=op.anlen, clen=op.codelen,
-                station=op.station, Nranges=op.nranges, dec=op.decimate,
-                cache=True, rfi_rem=False,
-            )
-            plt.clf()
-            timestamp=int(np.uint64(idx / sr))
-
-            ho=h5py.File("%s/spec-%06d.h5"%(op.outdir,timestamp),"w")
-            ho["range_doppler"]=res['spec']
-            ho["range_amplitude"]=res['res']            
-            ho.close()
-
-            M = 10.0 * np.log10((np.abs(res['spec'])))
-            plt.pcolormesh(np.transpose(M), vmin=(np.median(M) - 1.0))
-
-            plt.colorbar()
-            plt.title(
-                datetime.datetime.utcfromtimestamp(idx / sr).strftime(
-                    '%Y-%m-%d %H:%M:%S'
-                )
-            )
-            plt.savefig(os.path.join(
-                op.outdir, 'spec-{0:06d}.png'.format(timestamp),
-            ))
-            print('%d' % (idx))
-        except IOError:
-            print('IOError, skipping.')
-        idx = idx + op.anlen*op.decimate
-        idx.tofile(datpath)
