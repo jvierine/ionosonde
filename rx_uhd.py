@@ -131,7 +131,7 @@ def main():
             receive_waveform(usrp,np.uint64(t0+dt),f0,recv_buffer=recv_buffers[buf_idx],log=log,N=N-50000,file_idx=i,sweep_idx=t0)
             buf_idx=(buf_idx+1)%2
             
-        gl.check_lock(usrp,exit_if_not_locked=True)
+        gl.check_lock(usrp,log,exit_if_not_locked=True)
         t0+=np.uint64(s.sweep_len_s)
 
         
