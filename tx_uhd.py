@@ -15,8 +15,8 @@ import time
 import threading
 import numpy as n
 import matplotlib.pyplot as plt
-#frequencies = np.arange(10.0)*100e3 + 3.5e6
-#import freqs
+
+# internal modules related with the ionosonde
 import sweep
 import uhd_gps_lock as gl
 import iono_logger as l
@@ -24,6 +24,7 @@ import iono_logger as l
 def tune_at(u,t0,f0=4e6):
     """ 
     tune radio to frequency f0 at t0_full 
+    use a timed command.
     """
     u.clear_command_time()
     t0_ts=uhd.libpyuhd.types.time_spec(t0)
@@ -39,12 +40,11 @@ def tx_send(tx_stream,waveform,md,timeout=11.0):
     # buffer.
     tx_stream.send(waveform,md,timeout=11.0)
 
-def rx_swr(u,t0,f0,recv_buffer):
+def rx_swr(u,t0,recv_buffer):
     """
-    Receive samples for a SWR measurement
+    Receive samples for a reflected power measurement
     """
     N=len(recv_buffer)
-    tune_req=uhd.libpyuhd.types.tune_request(f0)
     stream_args=uhd.usrp.libtypes.StreamArgs("fc32","sc16")    
     rx_stream=u.get_rx_stream(stream_args)
     stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.num_done)
@@ -55,36 +55,39 @@ def rx_swr(u,t0,f0,recv_buffer):
     md=uhd.types.RXMetadata()
     num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=20.0)
     pwr=n.sum(n.abs(recv_buffer)**2.0)
-    print("Reflected pwr=%1.2f (dB)"%(10.0*n.log10(pwr)))
+    print("reflected pwr=%1.2f (dB)"%(10.0*n.log10(pwr)))
 
-def transmit_waveform(u,t0_full,f0,waveform,swr_buffer):
+def transmit_waveform(u,t0_full,waveform,swr_buffer):
+    """
+    Transmit a timed burst 
+    """
     t0_ts=uhd.libpyuhd.types.time_spec(np.uint64(t0_full),0.0)
     stream_args=uhd.usrp.libtypes.StreamArgs("fc32","sc16")
     md=uhd.types.TXMetadata()
     md.has_time_spec=True
     md.time_spec=t0_ts
+    
     print("transmit start at %1.2f"%(t0_full))
     # wait for moment right before transmit
     while t0_full-time.time() > 0.1:
         time.sleep(0.01)
-        
-    print("thread setup %1.3f"%(time.time()))
+
+    # transmit the code
     tx_stream=u.get_tx_stream(stream_args)
     tx_thread = threading.Thread(target=tx_send,args=(tx_stream,waveform,md))
     tx_thread.start()
-    
-    rx_thread = threading.Thread(target=rx_swr,args=(u,t0_full,f0,swr_buffer))
+
+    # do an swr measurement
+    rx_thread = threading.Thread(target=rx_swr,args=(u,t0_full,swr_buffer))
     rx_thread.start()
-    print("thread setup done %1.3f"%(time.time()))
     
 def main():
-    """TX samples based on input arguments"""
+    """
+    The main loop for the ionosonde transmitter
+    """
     log=l.logger("tx-%d.log"%(time.time()))
     log.log("Starting TX sweep",print_msg=True)
     
-    # define an ionosonde program
-    #s=sweep.sweep(freqs=sweep.freqs60,freq_dur=10.0)
-
     s=sweep.sweep(freqs=sweep.freqs30,freq_dur=2.0)
     
     sample_rate=1000000
@@ -96,15 +99,15 @@ def main():
     usrp.set_tx_subdev_spec(subdev_spec)
     usrp.set_rx_subdev_spec(subdev_spec)
 
-    # wait until GPS is locked, then align USRP time with global
-    # reference
+    # wait until GPS is locked, then align USRP time with global ref
     gl.sync_clock(usrp,log)
     
-    # start with first frequency
+    # start with first frequency on tx and rx
     tune_req=uhd.libpyuhd.types.tune_request(s.freq(0))
     usrp.set_tx_freq(tune_req)
     usrp.set_rx_freq(tune_req)
-    
+
+    # setup enough repetitions of the code to fill a frequency step
     code = np.fromfile("waveforms/code-l10000-b10-000000f.bin",dtype=np.complex64)
     n_reps=s.freq_dur*sample_rate/len(code)
     data=np.tile(code,int(n_reps))
@@ -115,13 +118,13 @@ def main():
     # figure out when to start the cycle
     t0=np.uint64(np.floor(time.time()/(s.sweep_len_s))*s.sweep_len_s+s.sweep_len_s)
     print("starting next sweep at %1.2f"%(s.sweep_len_s))
-    t0s=s.t0s()
-    print(t0s)
+    
     while True:
         for i in range(s.n_freqs):
             f0,dt=s.pars(i)
-            
-            transmit_waveform(usrp,np.uint64(t0+dt),f0,data,swr_buffer)
+
+            # Transmit signal
+            transmit_waveform(usrp,np.uint64(t0+dt),data,swr_buffer)
             
             # tune to next frequency 0.1 s before end
             tune_at(usrp,t0+dt+s.freq_dur-0.1,f0=s.freq(i+1))
@@ -130,8 +133,6 @@ def main():
             locked=gl.check_lock(usrp,log,exit_if_not_locked=True)
 
         t0+=np.uint64(s.sweep_len_s)
-
-    print("started tx thread")
 
     
 if __name__ == "__main__":
