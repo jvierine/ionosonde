@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import sweep
 import uhd_gps_lock as gl
 import iono_logger as l
+import iono_config
 
 def tune_at(u,t0,f0=4e6):
     """ 
@@ -43,6 +44,8 @@ def tx_send(tx_stream,waveform,md,timeout=11.0):
 def rx_swr(u,t0,recv_buffer):
     """
     Receive samples for a reflected power measurement
+    USRP output connected to input with 35 dB attenuation gives 
+    9.96 dB reflected power.
     """
     N=len(recv_buffer)
     stream_args=uhd.usrp.libtypes.StreamArgs("fc32","sc16")    
@@ -88,9 +91,9 @@ def main():
     log=l.logger("tx-%d.log"%(time.time()))
     log.log("Starting TX sweep",print_msg=True)
     
-    s=sweep.sweep(freqs=sweep.freqs30,freq_dur=2.0)
+    s=iono_config.s#sweep.sweep(freqs=sweep.freqs30,freq_dur=2.0)
     
-    sample_rate=1000000
+    sample_rate=iono_config.sample_rate#1000000
     usrp = uhd.usrp.MultiUSRP()
     usrp.set_tx_rate(sample_rate)
     usrp.set_rx_rate(sample_rate)
@@ -108,7 +111,7 @@ def main():
     usrp.set_rx_freq(tune_req)
 
     # setup enough repetitions of the code to fill a frequency step
-    code = np.fromfile("waveforms/code-l10000-b10-000000f.bin",dtype=np.complex64)
+    code = 0.5*np.fromfile("waveforms/code-l10000-b10-000000f.bin",dtype=np.complex64)
     n_reps=s.freq_dur*sample_rate/len(code)
     data=np.tile(code,int(n_reps))
 
