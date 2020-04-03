@@ -10,4 +10,4 @@ data_path="/dev/shm"
 sample_rate=1000000
 rx_subdev="A:A"
 
-
+ionogram_path="./results"

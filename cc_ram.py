@@ -37,7 +37,10 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
     
     rvec=n.arange(1000.0)*1.5
     fvec=n.fft.fftshift(n.fft.fftfreq(20,d=dt))
-
+    
+    dname="%s/%s"%(iono_config.ionogram_path,stuffr.sec2dirname(t0))
+    os.system("mkdir -p %s"%(dname))
+    
     for i in range(s.n_freqs):
         fname="%s/raw-%d-%03d.bin"%(data_path,t0,i)
         if os.path.exists(fname):
@@ -80,7 +83,8 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
             
             plt.colorbar()
             plt.tight_layout()
-            plt.savefig("iono-%d.png"%(i))
+            
+            plt.savefig("%s/iono-%d.png"%(dname,i))
             plt.close()
             plt.clf()
         else:
@@ -99,13 +103,13 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
     plt.colorbar()
     plt.ylim([0,800.0])
     plt.tight_layout()
-    ofname="ionogram-%d.png"%(t0)
+    ofname="%s/ionogram-%d.png"%(dname,t0)
     print("Saving ionogram %s"%(ofname))
     plt.savefig(ofname)
     plt.clf()
     plt.close()
 
-    ho=h5py.File("ionogram-%d.h5"%(t0),"w")
+    ho=h5py.File("%s/ionogram-%d.h5"%(dname,t0),"w")
     ho["I"]=I
     ho["i_freq_Hz"]=i_fvec
     ho["freq_Hz"]=fvec
