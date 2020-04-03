@@ -76,7 +76,6 @@ def transmit_waveform(u,t0_full,f0,waveform,swr_buffer):
     rx_thread = threading.Thread(target=rx_swr,args=(u,t0_full,f0,swr_buffer))
     rx_thread.start()
     print("thread setup done %1.3f"%(time.time()))
-
     
 def main():
     """TX samples based on input arguments"""
@@ -123,15 +122,14 @@ def main():
             f0=s.freq(i)
             t0i=t0s[i%s.n_freqs]
             step_t0=t0+t0i
-            print(step_t0)
+            
             transmit_waveform(usrp,np.uint64(step_t0),f0,data,swr_buffer)
+            
             # tune to next frequency 0.1 s before end
             tune_at(usrp,step_t0+s.freq_dur-0.1,f0=s.freq(i+1))
             time.sleep(0.2)
-            locked=gl.check_lock(usrp,log)
-            if locked==False:
-                log.log("Exiting due to loss of lock and restarting...",print_msg=True)
-                exit(0)
+            
+            locked=gl.check_lock(usrp,log,exit_if_not_locked=True)
 
         t0+=np.uint64(s.sweep_len_s)
 

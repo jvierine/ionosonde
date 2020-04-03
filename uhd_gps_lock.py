@@ -2,11 +2,14 @@ import numpy as n
 import time
 import uhd
 
-def check_lock(u,log=None):
+def check_lock(u,log=None,exit_if_not_locked=False):
     locked=u.get_mboard_sensor("gps_locked").to_bool()
     if locked==False:
         if log!=None:
             log.log("Warning, GPS not locked")
+        if exit_if_not_locked:
+            log.log("Exiting program.")
+            exit(0)
     return(locked)
 
 def sync_clock(u,log):
