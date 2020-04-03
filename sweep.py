@@ -80,7 +80,9 @@ class sweep():
         self.freq_dur=freq_dur
         self.n_freqs=len(freqs)
         self.freqs=freqs
+        
         self.determine_sweep_length()
+        self.t0=n.arange(self.n_freqs,dtype=n.float)*self.freq_dur
 
     def determine_sweep_length(self):
         self.n_minutes=n.ceil((self.n_freqs*self.freq_dur)/60.0)
@@ -91,8 +93,11 @@ class sweep():
         self.sweep_len_s=self.sweep_len*60
         
     def t0s(self):
-        return(n.arange(self.n_freqs,dtype=n.float)*self.freq_dur)
+        return(self.t0)
 
     def freq(self,i):
         return(0.5*(self.freqs[i%self.n_freqs][0]+self.freqs[i%self.n_freqs][1])*1e6)
+
+    def pars(self,i):
+        return(self.freq(i),self.t0[i%self.n_freqs])
     

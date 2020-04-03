@@ -119,14 +119,12 @@ def main():
     print(t0s)
     while True:
         for i in range(s.n_freqs):
-            f0=s.freq(i)
-            t0i=t0s[i%s.n_freqs]
-            step_t0=t0+t0i
+            f0,dt=s.pars(i)
             
-            transmit_waveform(usrp,np.uint64(step_t0),f0,data,swr_buffer)
+            transmit_waveform(usrp,np.uint64(t0+dt),f0,data,swr_buffer)
             
             # tune to next frequency 0.1 s before end
-            tune_at(usrp,step_t0+s.freq_dur-0.1,f0=s.freq(i+1))
+            tune_at(usrp,t0+dt+s.freq_dur-0.1,f0=s.freq(i+1))
             time.sleep(0.2)
             
             locked=gl.check_lock(usrp,log,exit_if_not_locked=True)
