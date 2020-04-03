@@ -11,6 +11,7 @@ import re
 import stuffr
 import sweep
 import h5py
+import iono_config
 
 def delete_old_files(t0,data_path="/dev/shm"):
     """
@@ -65,7 +66,7 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
             all_spec[i,:,:]=S
             I[i,:]=n.max(S,axis=0)
             # normalize by median std estimate
-            I[i,:]=I[i,:]/n.median(n.abs(S-n.median(S)))
+#            I[i,:]=I[i,:]/n.median(n.abs(S-n.median(S)))
             dBs=10.0*n.log10(n.transpose(S))
             noise_floor=n.nanmedian(dBs)
             dBs=dBs-noise_floor
@@ -116,8 +117,6 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
 
 if __name__ == "__main__":
     
-    s=sweep.sweep(freqs=sweep.freqs30,freq_dur=2.0)
-    while True:
-        print("Starting analysis")
-        analyze_latest_sweep(s)
-        time.sleep(10)
+    s=iono_config.s
+    print("Starting analysis")
+    analyze_latest_sweep(s)
