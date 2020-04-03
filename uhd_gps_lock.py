@@ -8,6 +8,7 @@ def check_lock(u,log=None,exit_if_not_locked=False):
         if log!=None:
             log.log("Warning, GPS not locked")
         if exit_if_not_locked:
+            print("No GPS lock. Exiting.")
             exit(0)
     return(locked)
 
