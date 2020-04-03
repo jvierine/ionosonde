@@ -46,6 +46,9 @@ def receive_waveform(u,t0_full,f0,recv_buffer,log=None,N=10000000,file_idx=0):
     
     md=uhd.types.RXMetadata()
 
+    # this part could be improved by processing the stream one
+    # packet at a time and padding zeros when a drop is
+    # detected.
     num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=20.0)
     if num_rx_samps != N:
         if log != None:
@@ -80,7 +83,7 @@ def main():
     N=int(sample_rate*s.freq_dur)
 
     # configure usrp
-    usrp = uhd.usrp.MultiUSRP("recv_buff_size=1000000")
+    usrp = uhd.usrp.MultiUSRP("recv_buff_size=500000000")
     usrp.set_rx_rate(sample_rate)
     subdev_spec=uhd.usrp.SubdevSpec("A:A")
     usrp.set_rx_subdev_spec(subdev_spec)
