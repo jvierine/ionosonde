@@ -29,7 +29,7 @@ def tune_at(u,t0,f0=4e6):
     """
     u.clear_command_time()
     t0_ts=uhd.libpyuhd.types.time_spec(t0)
-    print("tuning at %1.2f"%(t0_ts.get_real_secs()))
+    print("tuning to %1.2f MHz at %1.2f"%(f0/1e6,t0_ts.get_real_secs()))
     u.set_command_time(t0_ts)
     tune_req=uhd.libpyuhd.types.tune_request(f0)
     u.set_tx_freq(tune_req)
@@ -75,7 +75,7 @@ def transmit_waveform(u,t0_full,waveform,swr_buffer):
     
     # wait for moment right before transmit
     t_now=u.get_time_now().get_real_secs()
-
+    print("setup time %1.2f"%(t_now))
     if t_now > t0_full:
         log.log("Delayed start for transmit %1.2f %1.2f"%(t_now,t0_full))
     if t0_full-t_now > 0.1:
@@ -136,6 +136,7 @@ def main():
     print("starting next sweep at %1.2f"%(s.sweep_len_s))
     
     while True:
+        log.log("Starting sweep at %1.2f"%(t0))
         for i in range(s.n_freqs):
             f0,dt=s.pars(i)
 
@@ -144,9 +145,9 @@ def main():
             
             # tune to next frequency 0.1 s before end
             tune_at(usrp,t0+dt+s.freq_dur-0.1,f0=s.freq(i+1))
-            time.sleep(0.2)
-            
-            locked=gl.check_lock(usrp,log,exit_if_not_locked=True)
+
+            # check that GPS is still locked.
+            gl.check_lock(usrp,log,exit_if_not_locked=True)
 
         t0+=np.uint64(s.sweep_len_s)
 

@@ -16,6 +16,7 @@ sample_rate=1000000
 
 # receiver subdevice
 rx_subdev="A:A"
+tx_subdev="A:0"
 
 # this is where all the data produced by the ionosonde is stored
 ionogram_path="./results"

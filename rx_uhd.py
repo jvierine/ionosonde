@@ -170,7 +170,7 @@ def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
                     cycle_t0 += s.sweep_len_s
                     freq_num=0
                     sweep_num+=1
-                    log.log("Starting new cycle")
+                    log.log("Starting new cycle at %1.2f"%(cycle_t0))
             
                 # we've got a full freq step
                 next_sample += n_per_freq
