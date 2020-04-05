@@ -39,7 +39,7 @@ def tune_at(u,t0,f0=4e6):
 def tx_send(tx_stream,waveform,md,timeout=11.0):
     # this command will block until everything is in the transmit
     # buffer.
-    tx_stream.send(waveform,md,timeout=11.0)
+    tx_stream.send(waveform,md,timeout=(len(waveform)/float(iono_config.sample_rate))+1.0)
 
 def rx_swr(u,t0,recv_buffer):
     """
@@ -48,7 +48,7 @@ def rx_swr(u,t0,recv_buffer):
     9.96 dB reflected power.
     """
     N=len(recv_buffer)
-    stream_args=uhd.usrp.libtypes.StreamArgs("fc32","sc16")    
+    stream_args=uhd.usrp.StreamArgs("fc32","sc16")    
     rx_stream=u.get_rx_stream(stream_args)
     stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.num_done)
     stream_cmd.num_samps=N
@@ -56,7 +56,7 @@ def rx_swr(u,t0,recv_buffer):
     stream_cmd.time_spec=uhd.types.TimeSpec(t0)
     rx_stream.issue_stream_cmd(stream_cmd)    
     md=uhd.types.RXMetadata()
-    num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=20.0)
+    num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=float(N/iono_config.sample_rate)+1.0)
     pwr=n.sum(n.abs(recv_buffer)**2.0)
     rx_stream=None
     print("reflected pwr=%1.2f (dB)"%(10.0*n.log10(pwr)))
@@ -66,15 +66,20 @@ def transmit_waveform(u,t0_full,waveform,swr_buffer):
     Transmit a timed burst 
     """
     t0_ts=uhd.libpyuhd.types.time_spec(np.uint64(t0_full),0.0)
-    stream_args=uhd.usrp.libtypes.StreamArgs("fc32","sc16")
+    stream_args=uhd.usrp.StreamArgs("fc32","sc16")
     md=uhd.types.TXMetadata()
     md.has_time_spec=True
     md.time_spec=t0_ts
     
     print("transmit start at %1.2f"%(t0_full))
+    
     # wait for moment right before transmit
-    while t0_full-time.time() > 0.1:
-        time.sleep(0.01)
+    t_now=u.get_time_now().get_real_secs()
+
+    if t_now > t0_full:
+        log.log("Delayed start for transmit %1.2f %1.2f"%(t_now,t0_full))
+    if t0_full-t_now > 0.1:
+        time.sleep(t0_full-t_now-0.1)
 
     # transmit the code
     tx_stream=u.get_tx_stream(stream_args)
@@ -86,7 +91,7 @@ def transmit_waveform(u,t0_full,waveform,swr_buffer):
     rx_thread.start()
     tx_thread.join()
     rx_thread.join()
-    tx_send=None
+    tx_stream=None
     
     
 def main():
@@ -95,17 +100,19 @@ def main():
     """
     log=l.logger("tx-%d.log"%(time.time()))
     log.log("Starting TX sweep",print_msg=True)
+
+    # this is the sweep configuration
+    s=iono_config.s
     
-    s=iono_config.s#sweep.sweep(freqs=sweep.freqs30,freq_dur=2.0)
-    
-    sample_rate=iono_config.sample_rate#1000000
+    sample_rate=iono_config.sample_rate
     usrp = uhd.usrp.MultiUSRP()
     usrp.set_tx_rate(sample_rate)
     usrp.set_rx_rate(sample_rate)
     
-    subdev_spec=uhd.usrp.SubdevSpec("A:A")
-    usrp.set_tx_subdev_spec(subdev_spec)
-    usrp.set_rx_subdev_spec(subdev_spec)
+    rx_subdev_spec=uhd.usrp.SubdevSpec(iono_config.rx_subdev)
+    tx_subdev_spec=uhd.usrp.SubdevSpec(iono_config.tx_subdev)    
+    usrp.set_tx_subdev_spec(tx_subdev_spec)
+    usrp.set_rx_subdev_spec(rx_subdev_spec)
 
     # wait until GPS is locked, then align USRP time with global ref
     gl.sync_clock(usrp,log)
@@ -124,7 +131,8 @@ def main():
     swr_buffer=np.empty(int(len(data)*0.5),dtype=n.complex64)    
      
     # figure out when to start the cycle
-    t0=np.uint64(np.floor(time.time()/(s.sweep_len_s))*s.sweep_len_s+s.sweep_len_s)
+    t_now=usrp.get_time_now().get_real_secs()    
+    t0=np.uint64(np.floor(t_now/(s.sweep_len_s))*s.sweep_len_s+s.sweep_len_s)
     print("starting next sweep at %1.2f"%(s.sweep_len_s))
     
     while True:
