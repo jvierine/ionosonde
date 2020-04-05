@@ -47,16 +47,24 @@ def write_to_file(recv_buffer,fname,log,dec=10):
     obuf=stuffr.decimate(recv_buffer,dec=dec)
     obuf.tofile(fname)
 
-def receive_waveform(u,t0_full,f0,recv_buffer,log=None,N=10000000,file_idx=0,sweep_idx=0,prev_write=None):
+def receive_waveform(u,t0_full,f0,recv_buffer,log=None,N=10000000,file_idx=0,sweep_idx=0):
     t0_ts=uhd.libpyuhd.types.time_spec(np.uint64(t0_full),0.0)
         
     # wait for moment right before transmit
-    while t0_full-time.time() > 0.1:
-        time.sleep(0.01)
+    t_now = u.get_time_now().get_real_secs()
+    t_left = t0_full - t_now
+    print(t_now)
+    print(t_left)
+    
+    if (t_left-0.1) > 0.0:
+        # sleep until we're ready to go
+        time.sleep(t_left-0.1)
+
+    print("Tuning to %1.2f"%(f0))
     tune_req=uhd.libpyuhd.types.tune_request(f0)
     u.set_rx_freq(tune_req)
     
-    print("Launching receive at %1.2f now=%1.2f"%(t0_full,time.time()))
+    print("Launching receive at %1.2f now=%1.2f"%(t0_full,t_now))
 
     stream_args=uhd.usrp.libtypes.StreamArgs("fc32","sc16")    
     rx_stream=u.get_rx_stream(stream_args)
@@ -74,10 +82,6 @@ def receive_waveform(u,t0_full,f0,recv_buffer,log=None,N=10000000,file_idx=0,swe
         if log != None:
             log.log("Dropped packet %d read."%(num_rx_samps))
             
-    # make sure the previous write is done
-    if prev_write != None:
-        prev_write.join()
-
     write_thread=threading.Thread(target=write_to_file,args=(recv_buffer,"%s/raw-%d-%03d.bin"%(iono_config.data_path,sweep_idx,file_idx),log))
     write_thread.start()
     
@@ -110,30 +114,37 @@ def main():
     subdev_spec=uhd.usrp.SubdevSpec(iono_config.rx_subdev)
     usrp.set_rx_subdev_spec(subdev_spec)
 
+    print("tuning")
+    tune_req=uhd.libpyuhd.types.tune_request(1e6)
+    usrp.set_rx_freq(tune_req)
+    print("tuning done")
+    
     # Synchronizing clock
     gl.sync_clock(usrp,log)
 
+    t_now = usrp.get_time_now().get_real_secs()
     # figure out when to start the cycle. 
-    t0=np.uint64(np.floor(time.time()/(s.sweep_len_s))*s.sweep_len_s+s.sweep_len_s)
-    print("starting next sweep at %1.2f"%(s.sweep_len_s))
+    t0=np.uint64(np.floor(t_now/(s.sweep_len_s))*s.sweep_len_s+s.sweep_len_s)
+    
+    print("starting next sweep at %1.2f"%(t0))
     
     # double buffer
     recv_buffers = [np.empty(N,dtype=n.complex64),np.empty(N,dtype=n.complex64)]
     buf_idx=0
 
-    prev_write=None
+    print("Starting loop")
     while True:
+        log.log("Del thread")
         del_thread=threading.Thread(target=delete_old_files,args=(int(t0)-int(s.sweep_len_s)*2,iono_config.data_path))
         del_thread.start()
         
         log.log("Starting sweep")
-
+        
         # run the sweep program
         for i in range(s.n_freqs):
             f0,dt=s.pars(i)
-            write_thread=receive_waveform(usrp,np.uint64(t0+dt),f0,recv_buffer=recv_buffers[buf_idx],log=log,N=N-100000,file_idx=i,sweep_idx=t0,prev_write=prev_write)
+            receive_waveform(usrp,np.uint64(t0+dt),f0,recv_buffer=recv_buffers[buf_idx],log=log,N=N-100000,file_idx=i,sweep_idx=t0)
             buf_idx=(buf_idx+1)%2
-            prev_write=write_thread
         
         gl.check_lock(usrp,log,exit_if_not_locked=True)
         t0+=np.uint64(s.sweep_len_s)

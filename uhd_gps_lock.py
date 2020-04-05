@@ -35,14 +35,9 @@ def sync_clock(u,log):
 
     log.log(str(u.get_mboard_sensor("gps_gpgga")))
     log.log(str(u.get_mboard_sensor("gps_gprmc")))
+
+    time.sleep(2.0)
     
-#    t0=time.time()
- #   while (np.ceil(t0)-t0) < 0.2:
-  #      t0=time.time()
-   #     time.sleep(0.1)
-        
-   #    u.set_time_next_pps(uhd.libpyuhd.types.time_spec(np.ceil(t0)))
-    time.sleep(0.2)
     t_now=time.time()
     t_usrp=(u.get_time_now().get_full_secs()+u.get_time_now().get_frac_secs())
     t_gpsdo=u.get_mboard_sensor("gps_time")
