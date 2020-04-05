@@ -58,6 +58,7 @@ def rx_swr(u,t0,recv_buffer):
     md=uhd.types.RXMetadata()
     num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=20.0)
     pwr=n.sum(n.abs(recv_buffer)**2.0)
+    rx_stream=None
     print("reflected pwr=%1.2f (dB)"%(10.0*n.log10(pwr)))
 
 def transmit_waveform(u,t0_full,waveform,swr_buffer):
@@ -83,6 +84,10 @@ def transmit_waveform(u,t0_full,waveform,swr_buffer):
     # do an swr measurement
     rx_thread = threading.Thread(target=rx_swr,args=(u,t0_full,swr_buffer))
     rx_thread.start()
+    tx_thread.join()
+    rx_thread.join()
+    tx_send=None
+    
     
 def main():
     """
