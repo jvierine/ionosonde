@@ -15,7 +15,7 @@ import iono_config
 
 def delete_old_files(t0,data_path="/dev/shm"):
     """
-    Deleting files older than two cycles ago
+    Deleting files that are from the currently analyzed sweep or older.
     """
     # delete older files
     fl=glob.glob("%s/raw*.bin"%(data_path))
@@ -29,6 +29,9 @@ def delete_old_files(t0,data_path="/dev/shm"):
             print("error deleting file")
 
 def analyze_latest_sweep(s,data_path="/dev/shm"):
+    """
+    Analyze an ionogram, make some plots, save some data
+    """
     # figure out what cycle is ready
     t0=n.uint64(n.floor(time.time()/(s.sweep_len_s))*s.sweep_len_s-s.sweep_len_s)
     I=n.zeros([s.n_freqs,1000],dtype=n.float32)

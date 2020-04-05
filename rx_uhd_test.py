@@ -27,6 +27,19 @@ import iono_config
 import os
 import psutil
 
+def tune_at(u,t0,f0=4e6):
+    """ 
+    tune radio to frequency f0 at t0_full 
+    use a timed command.
+    """
+    u.clear_command_time()
+    t0_ts=uhd.libpyuhd.types.time_spec(t0)
+    print("tuning at %1.2f"%(t0_ts.get_real_secs()))
+    u.set_command_time(t0_ts)
+    tune_req=uhd.libpyuhd.types.tune_request(f0)
+    u.set_tx_freq(tune_req)
+    u.set_rx_freq(tune_req)
+    u.clear_command_time()
 
 def delete_old_files(t0,data_path="/dev/shm"):
     """
@@ -50,14 +63,20 @@ def write_to_file(recv_buffer,fname,log,dec=10):
     obuf.tofile(fname)
 
 def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
+    """
+    New receive script, which processes data incoming from the usrp
+    one packet at a time.
+    """
 
+    # sweep timing and frequencies
     fvec=[]
     t0s=[]    
     for i in range(s.n_freqs):
         f,t=s.pars(i)
         fvec.append(f)
         t0s.append(t)
-    
+
+    # setup usrp to stream continuously, starting at t0
     stream_args=uhd.usrp.StreamArgs("fc32","sc16")    
     rx_stream=u.get_rx_stream(stream_args)
     stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.start_cont)
@@ -66,23 +85,34 @@ def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
     rx_stream.issue_stream_cmd(stream_cmd)
     md=uhd.types.RXMetadata()
 
+    # this is how many samples we expect to get from each packet
     max_samps_per_packet = rx_stream.get_max_num_samps()
-    
+
+    # receive buffer size large enough to fit one packet
     recv_buffer=n.zeros(max_samps_per_packet,dtype=n.complex64)
+
+    # initial timeout is long enough for us to receive the first packet, which
+    # happens at t0
     timeout=(t0-t_now)+5.0
 
-
-
+    # store data in this ringbuffer, and offload it to ram disk once
+    # one full cycle is finished
     output_buffer = n.zeros(2*int(s.freq_dur*sample_rate),dtype=n.complex64)
+
+    # use this buffer to write to a file
     wr_buff = n.zeros(int(s.freq_dur*sample_rate),dtype=n.complex64)
     bl=len(output_buffer)
     bi=0
-    
+
+    # frequency index
     fi = 0
+    # samples since 1970 for the previous packet (no previous packet at first)
     prev_samples = -1
 
+    # samples since 1970 for the first packet. 
     samples0=int(stream_cmd.time_spec.get_full_secs())*int(sample_rate) + int(stream_cmd.time_spec.get_frac_secs()*sample_rate)
-    # number of samples per frequency
+    
+    # number of samples per frequency in the sweep
     n_per_freq=int(s.freq_dur*sample_rate)
     n_per_sweep=int(s.sweep_len_s*sample_rate)    
 
@@ -90,10 +120,13 @@ def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
     freq_num=0    
     next_sample = samples0 + n_per_freq
     cycle_t0 = t0
+
+    tune_at(u,t0+s.freq_dur,f0=s.freq(1))
+    
     while True:
         num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=timeout)
         if num_rx_samps == 0:
-            # shit happened. gotta try again
+            # shit happened. we probably lost a packet. gotta try again
             log.log("dropped packet. number of received samples is 0")
             continue
         
@@ -115,33 +148,44 @@ def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
         output_buffer[ n.mod(bi+n.arange(num_rx_samps,dtype=n.uint64),bl) ]=recv_buffer
 
         bi=bi+step
-
+        
         if samples > next_sample:
-            idx0=bi-n_per_freq
+            # this should be correct now.
+            idx0=sweep_num*n_per_sweep+freq_num*n_per_freq
+            
             wr_buff[:]=output_buffer[n.mod(idx0+n.arange(n_per_freq,dtype=n.uint64),bl)]
             
             wr_thread=threading.Thread(target=write_to_file,args=(wr_buff,"%s/raw-%d-%03d.bin"%(iono_config.data_path,cycle_t0,freq_num),log))
             wr_thread.start()
             freq_num += 1
+
+            # setup tuning for next frequency
+            tune_at(u,cycle_t0 + (freq_num+1)*s.freq_dur,f0=s.freq(freq_num+1))
+            print("Tuning to %1.2f at %1.2f"%(s.freq(freq_num+1)/1e6,cycle_t0 + (freq_num+1)*s.freq_dur))
+            
             # we cycle over
             if freq_num == s.n_freqs:
                 cycle_t0 += s.sweep_len_s
                 freq_num=0
+                sweep_num+=1
                 log.log("Starting new cycle")
+                
+                
             
             # we've got a full freq step
             next_sample += n_per_freq
+            
 
         # timestamp of first sample
-        t_head=md.time_spec.get_real_secs()
+      #  t_head=md.time_spec.get_real_secs()
 
-        t_sweep=n.mod(t_head-t0,s.sweep_len_s)
-        n_sweep = int(n.floor(t_sweep/s.freq_dur))
-        if n_sweep != fi:
-            print("freq %d tuning to %1.2f MHz at %1.6f"%(n_sweep,fvec[n_sweep]/1e6,t_head))
-            tune_req=uhd.libpyuhd.types.tune_request(fvec[n_sweep])
-            u.set_rx_freq(tune_req)
-            fi=n_sweep
+      #  t_sweep=n.mod(t_head-t0,s.sweep_len_s)
+     #   n_sweep = int(n.floor(t_sweep/s.freq_dur))
+    #    if n_sweep != fi:
+   #         print("freq %d tuning to %1.2f MHz at %1.6f"%(n_sweep,fvec[n_sweep]/1e6,t_head))
+  #          tune_req=uhd.libpyuhd.types.tune_request(fvec[n_sweep])
+ #           u.set_rx_freq(tune_req)
+#            fi=n_sweep
         
         timeout=0.1
 
@@ -155,7 +199,7 @@ def main():
     logfile="rx-%d.log"%(time.time())
     log=l.logger(logfile)
     log.log("Starting receiver")
-    os.system("ln -s %s rx-current.log"%(logfile))
+    os.system("rm rx-current.log;ln -s %s rx-current.log"%(logfile))
     
     s=iono_config.s
     log.log("Sweep freqs:")
