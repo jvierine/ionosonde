@@ -14,9 +14,16 @@ data_path="/dev/shm"
 # sample rate for tx and rx
 sample_rate=1000000
 
+# IP address of the transmit USRP N210
+tx_addr="192.168.20.2"
+# IP address of the receive USRP N210 
+rx_addr="192.168.10.2"
+
+# transmit subdevice
+tx_subdev="A:A"
+
 # receiver subdevice
 rx_subdev="A:A"
-tx_subdev="A:0"
 
 # this is where all the data produced by the ionosonde is stored
 ionogram_path="./results"

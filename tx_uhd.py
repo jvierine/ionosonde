@@ -105,7 +105,7 @@ def main():
     s=iono_config.s
     
     sample_rate=iono_config.sample_rate
-    usrp = uhd.usrp.MultiUSRP()
+    usrp = uhd.usrp.MultiUSRP("addr=%s"%(iono_config.tx_addr))
     usrp.set_tx_rate(sample_rate)
     usrp.set_rx_rate(sample_rate)
     
