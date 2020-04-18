@@ -123,8 +123,9 @@ def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
 
     tune_at(u,t0+s.freq_dur,f0=s.freq(1))
 
+    locked=True
     try:
-        while True:
+        while locked:
             num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=timeout)
             if num_rx_samps == 0:
                 # shit happened. we probably lost a packet. gotta try again
@@ -170,6 +171,7 @@ def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
                     cycle_t0 += s.sweep_len_s
                     freq_num=0
                     sweep_num+=1
+                    locked=gl.check_lock(u,log,exit_if_not_locked=False)
                     log.log("Starting new cycle at %1.2f"%(cycle_t0))
             
                 # we've got a full freq step
@@ -185,13 +187,13 @@ def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
     rx_stream.issue_stream_cmd(stream_cmd)
     time.sleep(1)
     print("Stream stopped")
+    exit(0)
     return
 
 def housekeeping(usrp,log,s):
     while True:
         t0=usrp.get_time_now().get_real_secs()
         delete_old_files(int(t0)-int(s.sweep_len_s)*3,iono_config.data_path)
-        gl.check_lock(usrp,log,exit_if_not_locked=True)
         t0+=np.uint64(s.sweep_len_s)
         
         process = psutil.Process(os.getpid())
