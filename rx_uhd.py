@@ -223,7 +223,7 @@ def main():
     N=int(sample_rate*s.freq_dur)
 
     # configure usrp
-    usrp = uhd.usrp.MultiUSRP("recv_buff_size=500000000")
+    usrp = uhd.usrp.MultiUSRP("addr=%s,recv_buff_size=500000000"%(iono_config.rx_addr))
     usrp.set_rx_rate(sample_rate)
     subdev_spec=uhd.usrp.SubdevSpec(iono_config.rx_subdev)
     usrp.set_rx_subdev_spec(subdev_spec)
