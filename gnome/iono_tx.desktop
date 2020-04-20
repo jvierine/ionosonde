@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Exec=gnome-terminal --working-directory=/home/markus/j/ionosonde --command "bash start_tx.sh" 
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name[en_US]=Ionosonde TX
+Name=Ionosonde TX
+Comment[en_US]=
+Comment=
