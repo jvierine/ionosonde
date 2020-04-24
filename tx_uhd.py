@@ -146,12 +146,16 @@ def main():
         for i in range(s.n_freqs):
             f0,dt=s.pars(i)
             
-            bw=s.bw(i)
-            if bw == 0.05:
+            bw=int(n.round(s.bw(i)*1e6))
+            print("f=%f bandwidth %f"%(f0,bw))
+            if bw == 50000:
+                print("code 50 kHz")
                 transmit_waveform(usrp,np.uint64(t0+dt),data_50,swr_buffer)
-            if bw == 0.03:
+            if bw == 30000:
+                print("code 30 kHz")                                
                 transmit_waveform(usrp,np.uint64(t0+dt),data_30,swr_buffer)
             else:
+                print("code 100 kHz")
                 # Transmit signal
                 transmit_waveform(usrp,np.uint64(t0+dt),data_100,swr_buffer)
                 
