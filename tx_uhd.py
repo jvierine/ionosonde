@@ -84,6 +84,7 @@ def transmit_waveform(u,t0_full,waveform,swr_buffer):
     # transmit the code
     tx_stream=u.get_tx_stream(stream_args)
     tx_thread = threading.Thread(target=tx_send,args=(tx_stream,waveform,md))
+    
     tx_thread.start()
 
     # do an swr measurement
@@ -105,6 +106,7 @@ def main():
     s=iono_config.s
     
     sample_rate=iono_config.sample_rate
+    # use the address configured for the transmitter
     usrp = uhd.usrp.MultiUSRP("addr=%s"%(iono_config.tx_addr))
     usrp.set_tx_rate(sample_rate)
     usrp.set_rx_rate(sample_rate)
@@ -123,12 +125,16 @@ def main():
     usrp.set_rx_freq(tune_req)
 
     # setup enough repetitions of the code to fill a frequency step
-    code = 0.5*np.fromfile("waveforms/code-l10000-b10-000000f.bin",dtype=np.complex64)
-    n_reps=s.freq_dur*sample_rate/len(code)
-    data=np.tile(code,int(n_reps))
+    code_100 = 0.5*np.fromfile("waveforms/code-l10000-b10-000000f_100k.bin",dtype=np.complex64)
+    code_50 = 0.5*np.fromfile("waveforms/code-l10000-b10-000000f_50k.bin",dtype=np.complex64)
+    code_30 = 0.5*np.fromfile("waveforms/code-l10000-b10-000000f_30k.bin",dtype=np.complex64)    
+    n_reps=s.freq_dur*sample_rate/len(code_100)
+    data_100=np.tile(code_100,int(n_reps))
+    data_50=np.tile(code_50,int(n_reps))
+    data_30=np.tile(code_30,int(n_reps))
 
     # hold SWR measurement
-    swr_buffer=np.empty(int(len(data)*0.5),dtype=n.complex64)    
+    swr_buffer=np.empty(int(len(data_100)*0.5),dtype=n.complex64)    
      
     # figure out when to start the cycle
     t_now=usrp.get_time_now().get_real_secs()    
@@ -139,9 +145,16 @@ def main():
         log.log("Starting sweep at %1.2f"%(t0))
         for i in range(s.n_freqs):
             f0,dt=s.pars(i)
-
-            # Transmit signal
-            transmit_waveform(usrp,np.uint64(t0+dt),data,swr_buffer)
+            
+            bw=s.bw(i)
+            if bw == 0.05:
+                transmit_waveform(usrp,np.uint64(t0+dt),data_50,swr_buffer)
+            if bw == 0.03:
+                transmit_waveform(usrp,np.uint64(t0+dt),data_30,swr_buffer)
+            else:
+                # Transmit signal
+                transmit_waveform(usrp,np.uint64(t0+dt),data_100,swr_buffer)
+                
             
             # tune to next frequency 0.1 s before end
             tune_at(usrp,t0+dt+s.freq_dur-0.1,f0=s.freq(i+1))
