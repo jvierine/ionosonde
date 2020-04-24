@@ -151,7 +151,7 @@ def main():
             if bw == 50000:
                 print("code 50 kHz")
                 transmit_waveform(usrp,np.uint64(t0+dt),data_50,swr_buffer)
-            if bw == 30000:
+            elif bw == 30000:
                 print("code 30 kHz")                                
                 transmit_waveform(usrp,np.uint64(t0+dt),data_30,swr_buffer)
             else:
