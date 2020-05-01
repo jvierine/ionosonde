@@ -23,7 +23,7 @@ import glob
 import re
 import os
 import iono_config
-
+import scipy.signal
 import os
 import psutil
 
@@ -57,9 +57,18 @@ def delete_old_files(t0,data_path="/dev/shm"):
             print("Error deleting file %s"%(f))
             
 
-def write_to_file(recv_buffer,fname,log,dec=10):
+def write_to_file(recv_buffer,fname,log,dec=10,fl=20):
     print("writing to file %s"%(fname))
-    obuf=stuffr.decimate(recv_buffer,dec=dec)
+
+    # filter and decimate with Blackmann-Harris window
+    w = n.zeros(fl, dtype=n.complex64)
+    w[0:fl] = scipy.signal.blackmanharris(fl)
+    # filter, time shift, decimate, and cast to complex64 data type
+    obuf=n.array(n.roll(n.fft.ifft(n.fft.fft(w,len(recv_buffer))*n.fft.fft(recv_buffer)),-int(fl/2))[0:len(recv_buffer):dec],dtype=n.complex64)
+
+    # rectangular impulse response. better for range resolution,
+    # but not very good for frequency selectivity.
+#    obuf=stuffr.decimate(recv_buffer,dec=dec)
     obuf.tofile(fname)
 
 def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
