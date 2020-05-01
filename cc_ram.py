@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-
+import matplotlib
+matplotlib.use("Agg")
 import numpy as n
 import matplotlib.pyplot as plt
 import prc_lib as p
