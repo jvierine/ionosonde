@@ -99,8 +99,12 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
         i_fvec[fi]=s.freq(fi)
     dB=10.0*n.log10(n.transpose(I))
     noise_floor=n.nanmedian(dB)
+    
+    for i in range(dB.shape[1]):
+        dB[:,i]=dB[:,i]-n.nanmedian(dB[:,i])
+    
     plt.figure(figsize=(1.5*8,1.5*6))
-    plt.pcolormesh(i_fvec/1e6,rvec,dB-noise_floor,vmin=-3,vmax=100.0)
+    plt.pcolormesh(i_fvec/1e6,rvec,dB,vmin=-3,vmax=100.0)
     plt.title("Ionogram %s\nnoise_floor=%1.2f (dB)"%(stuffr.unix2datestr(t0),noise_floor))
     plt.xlabel("Frequency (MHz)")
     plt.ylabel("Range (km)")
