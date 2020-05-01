@@ -62,11 +62,17 @@ def waveform_to_file(
     )
     if filter_output:
         w = numpy.zeros([oversample * clen], dtype=numpy.complex64)
-        fl = (int(2*oversample))
+#        fl = (int(2*oversample*1.8))  # 100 kHz 1% outside band
+#        fl = (int(2*oversample*1.9*2.0))  # 50 kHz 1% outside band
+        fl = (int(2*oversample*2.1*3.0))  # 30 kHz 1% outside band        
         w[0:fl] = scipy.signal.blackmanharris(fl)
+        # todo roll by fl
+        
+               
         aa = numpy.fft.ifft(numpy.fft.fft(w) * numpy.fft.fft(a))
         a = aa / numpy.max(numpy.abs(aa))
         a = numpy.array(a, dtype=numpy.complex64)
+        a=np.roll(a,-int(fl/2)+20)
         a.tofile('code-l%d-b%d-%06df.bin' % (clen, oversample, station))
     else:
         a.tofile('code-l%d-b%d-%06d.bin' % (clen, oversample, station))
