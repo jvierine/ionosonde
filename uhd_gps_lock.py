@@ -1,9 +1,13 @@
 import numpy as n
 import time
 import uhd
+import stuffr
 
 def check_lock(u,log=None,exit_if_not_locked=False):
     locked=u.get_mboard_sensor("gps_locked").to_bool()
+    f=open("gps.log","a")
+    f.write("%s lock=%d\n"%(stuffr.unix2datestr(time.time()),locked))
+    f.close()
     if locked==False:
         if log!=None:
             log.log("Warning, GPS not locked")
