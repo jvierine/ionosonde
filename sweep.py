@@ -101,5 +101,5 @@ class sweep():
     def pars(self,i):
         return(self.freq(i),self.t0[i%self.n_freqs])
     def bw(self,i):
-        return(self.freqs[i,1]-self.freqs[i,0])
+        return(self.freqs[i][1]-self.freqs[i][0])
     
