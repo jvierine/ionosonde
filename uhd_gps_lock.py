@@ -16,14 +16,32 @@ def check_lock(u,log=None,exit_if_not_locked=False):
             exit(0)
     return(locked)
 
-def sync_clock(u,log):
+def sync_clock(u,log, min_sync_time=300.0):
     # synchronize the usrp clock to the pc clock
     # assume that the pc clock is synchronized using ntp
-    gps_locked=check_lock(u)
-    while gps_locked==False:
-        print("Waiting for GPS lock. Check GPS antenna")
+    t0=time.time()
+        
+    not_locked_for_long_enough=True
+    if min_sync_time < 10:
+        min_sync_time=20.0
+    
+    while not_locked_for_long_enough:
+        time_locked=time.time()-t0
+        
+        if time_locked > min_sync_time:
+            # we've been locked for long enough. start the receiver.
+            not_locked_for_long_enough=False
+        
+        print("Waiting for GPS lock.\nObtained lock for %1.0f/%1.0f seconds\nCheck GPS antenna if needed."%(time_locked,min_sync_time))
         time.sleep(10)
+        # check for lock. don't log or exit 
         gps_locked=check_lock(u)
+        
+        if gps_locked == False:
+            # reset t0 if not locked
+            t0=time.time()
+            
+        
         
     u.set_clock_source("gpsdo")        
     u.set_time_source("gpsdo")
