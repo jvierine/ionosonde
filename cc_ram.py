@@ -116,6 +116,7 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
     plt.savefig(ofname)
     plt.clf()
     plt.close()
+    os.system("ln -sf %s latest.png"%(ofname))
 
     ho=h5py.File("%s/ionogram-%d.h5"%(dname,t0),"w")
     ho["I"]=I

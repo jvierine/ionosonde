@@ -17,8 +17,8 @@ def check_lock(u,log=None,exit_if_not_locked=False):
     return(locked)
 
 def sync_clock(u,log, min_sync_time=300.0):
-    # synchronize the usrp clock to the pc clock
-    # assume that the pc clock is synchronized using ntp
+    # Based on the specs for the gpsdo, it takes 5 minutes to warm 
+    # up after restart
     t0=time.time()
         
     not_locked_for_long_enough=True
