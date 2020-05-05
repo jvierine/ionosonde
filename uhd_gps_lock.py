@@ -32,7 +32,7 @@ def sync_clock(u,log, min_sync_time=300.0):
             # we've been locked for long enough. start the receiver.
             not_locked_for_long_enough=False
         
-        print("Waiting for GPS lock.\nObtained lock for %1.0f/%1.0f seconds\nCheck GPS antenna if needed."%(time_locked,min_sync_time))
+        print("Waiting for GPS lock.\nObtained lock for %1.0f/%1.0f seconds\nCheck GPS antenna if no lock obtained in 60 seconds."%(time_locked,min_sync_time))
         time.sleep(10)
         # check for lock. don't log or exit 
         gps_locked=check_lock(u)
