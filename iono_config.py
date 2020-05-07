@@ -27,3 +27,6 @@ rx_subdev="A:A"
 
 # this is where all the data produced by the ionosonde is stored
 ionogram_path="./results"
+
+# conversion from reflected power in ADC units to dBm
+reflected_power_cal_dB=18.6 
