@@ -29,4 +29,4 @@ rx_subdev="A:A"
 ionogram_path="./results"
 
 # conversion from reflected power in ADC units to dBm
-reflected_power_cal_dB=18.6 
+reflected_power_cal_dB=17.6 
