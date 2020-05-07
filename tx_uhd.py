@@ -57,7 +57,7 @@ def rx_swr(u,t0,recv_buffer):
     rx_stream.issue_stream_cmd(stream_cmd)    
     md=uhd.types.RXMetadata()
     num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=float(N/iono_config.sample_rate)+1.0)
-    pwr=n.sum(n.abs(recv_buffer)**2.0)
+    pwr=n.mean(n.abs(recv_buffer)**2.0)
     rx_stream=None
     print("reflected pwr=%1.2f (dB)"%(10.0*n.log10(pwr)))
 
@@ -81,19 +81,22 @@ def transmit_waveform(u,t0_full,waveform,swr_buffer):
     if t0_full-t_now > 0.1:
         time.sleep(t0_full-t_now-0.1)
 
-    # transmit the code
-    tx_stream=u.get_tx_stream(stream_args)
-    tx_thread = threading.Thread(target=tx_send,args=(tx_stream,waveform,md))
-    
-    tx_thread.start()
+    try:
+        # transmit the code
+        tx_stream=u.get_tx_stream(stream_args)
+        tx_thread = threading.Thread(target=tx_send,args=(tx_stream,waveform,md))
+        tx_thread.daemon=True # exit if parent thread exits
+        tx_thread.start()
 
-    # do an swr measurement
-    rx_thread = threading.Thread(target=rx_swr,args=(u,t0_full,swr_buffer))
-    rx_thread.start()
-    tx_thread.join()
-    rx_thread.join()
-    tx_stream=None
-    
+        # do an swr measurement
+        rx_thread = threading.Thread(target=rx_swr,args=(u,t0_full,swr_buffer))
+        rx_thread.daemon=True # exit if parent thread exits
+        rx_thread.start()
+        tx_thread.join()
+        rx_thread.join()
+        tx_stream=None
+    except:
+        exit(0)
     
 def main():
     """
