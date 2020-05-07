@@ -67,7 +67,7 @@ def rx_swr(u,t0,recv_buffer):
     num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=float(N/iono_config.sample_rate)+1.0)
     pwr=n.mean(n.abs(recv_buffer)**2.0)
     rx_stream=None
-    relf_pwr_dBm=10.0*n.log10(pwr)+iono_config.reflected_power_cal_dB
+    refl_pwr_dBm=10.0*n.log10(pwr)+iono_config.reflected_power_cal_dB
     print("reflected pwr=%1.2f (dBm)"%(refl_pwr_dBm))
 
 def transmit_waveform(u,t0_full,waveform,swr_buffer):
