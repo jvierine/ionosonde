@@ -22,7 +22,7 @@ import uhd_gps_lock as gl
 import iono_logger as l
 import iono_config
 
-def tune_at(u,t0,f0=4e6):
+def tune_at(u,t0,f0=4e6,gpio_state=0):
     """ 
     tune radio to frequency f0 at t0_full 
     use a timed command.
@@ -34,6 +34,14 @@ def tune_at(u,t0,f0=4e6):
     tune_req=uhd.libpyuhd.types.tune_request(f0)
     u.set_tx_freq(tune_req)
     u.set_rx_freq(tune_req)
+    
+    if gpio_state == 0:
+        out=0x00
+    else:
+        out=0x01
+    gpio_line=0x01 # pin 0
+    print("TX A GPIO pin 0=%d"%(out))
+    u.set_gpio_attr("TXA","OUT",out,gpio_line,0)
     u.clear_command_time()
 
 def tx_send(tx_stream,waveform,md,timeout=11.0):
@@ -113,6 +121,8 @@ def main():
     usrp = uhd.usrp.MultiUSRP("addr=%s"%(iono_config.tx_addr))
     usrp.set_tx_rate(sample_rate)
     usrp.set_rx_rate(sample_rate)
+#    print(usrp.get_gpio_banks(0))
+ #   exit(0)
     
     rx_subdev_spec=uhd.usrp.SubdevSpec(iono_config.rx_subdev)
     tx_subdev_spec=uhd.usrp.SubdevSpec(iono_config.tx_subdev)    
@@ -143,7 +153,8 @@ def main():
     t_now=usrp.get_time_now().get_real_secs()    
     t0=np.uint64(np.floor(t_now/(s.sweep_len_s))*s.sweep_len_s+s.sweep_len_s)
     print("starting next sweep at %1.2f"%(s.sweep_len_s))
-    
+
+    gpio_state=0
     while True:
         log.log("Starting sweep at %1.2f"%(t0))
         for i in range(s.n_freqs):
@@ -164,7 +175,8 @@ def main():
                 
             
             # tune to next frequency 0.1 s before end
-            tune_at(usrp,t0+dt+s.freq_dur-0.1,f0=s.freq(i+1))
+            tune_at(usrp,t0+dt+s.freq_dur-0.1,f0=s.freq(i+1),gpio_state=gpio_state)
+            gpio_state=(gpio_state+1)%2
 
             # check that GPS is still locked.
             gl.check_lock(usrp,log,exit_if_not_locked=True)
