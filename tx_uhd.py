@@ -15,6 +15,7 @@ import time
 import threading
 import numpy as n
 import matplotlib.pyplot as plt
+import os
 
 # internal modules related with the ionosonde
 import sweep
@@ -49,7 +50,7 @@ def tx_send(tx_stream,waveform,md,timeout=11.0):
     # buffer.
     tx_stream.send(waveform,md,timeout=(len(waveform)/float(iono_config.sample_rate))+1.0)
 
-def rx_swr(u,t0,recv_buffer):
+def rx_swr(u,t0,recv_buffer,f0,log):
     """
     Receive samples for a reflected power measurement
     USRP output connected to input with 35 dB attenuation gives 
@@ -68,9 +69,10 @@ def rx_swr(u,t0,recv_buffer):
     pwr=n.mean(n.abs(recv_buffer)**2.0)
     rx_stream=None
     refl_pwr_dBm=10.0*n.log10(pwr)+iono_config.reflected_power_cal_dB
+    log.log("reflected pwr %1.4f (MHz) %1.4f (dBm)"%(f0,refl_pwr_dBm))
     print("reflected pwr=%1.2f (dBm)"%(refl_pwr_dBm))
 
-def transmit_waveform(u,t0_full,waveform,swr_buffer):
+def transmit_waveform(u,t0_full,waveform,swr_buffer,f0,log):
     """
     Transmit a timed burst 
     """
@@ -98,7 +100,7 @@ def transmit_waveform(u,t0_full,waveform,swr_buffer):
         tx_thread.start()
 
         # do an swr measurement
-        rx_thread = threading.Thread(target=rx_swr,args=(u,t0_full,swr_buffer))
+        rx_thread = threading.Thread(target=rx_swr,args=(u,t0_full,swr_buffer,f0,log))
         rx_thread.daemon=True # exit if parent thread exits
         rx_thread.start()
         tx_thread.join()
@@ -111,7 +113,10 @@ def main():
     """
     The main loop for the ionosonde transmitter
     """
-    log=l.logger("tx-%d.log"%(time.time()))
+    t_start=time.time()
+    logfname="tx-%d.log"%(t_start)
+    log=l.logger(logfname)
+    os.system("ln -s %s tx-current.log"%(logfname))
     log.log("Starting TX sweep",print_msg=True)
 
     # this is the sweep configuration
@@ -165,14 +170,14 @@ def main():
             print("f=%f bandwidth %f"%(f0,bw))
             if bw == 50000:
                 print("code 50 kHz")
-                transmit_waveform(usrp,np.uint64(t0+dt),data_50,swr_buffer)
+                transmit_waveform(usrp,np.uint64(t0+dt),data_50,swr_buffer,f0,log)
             elif bw == 30000:
                 print("code 30 kHz")                                
-                transmit_waveform(usrp,np.uint64(t0+dt),data_30,swr_buffer)
+                transmit_waveform(usrp,np.uint64(t0+dt),data_30,swr_buffer,f0,log)
             else:
                 print("code 100 kHz")
                 # Transmit signal
-                transmit_waveform(usrp,np.uint64(t0+dt),data_100,swr_buffer)
+                transmit_waveform(usrp,np.uint64(t0+dt),data_100,swr_buffer,f0,log)
                 
             
             # tune to next frequency 0.1 s before end
