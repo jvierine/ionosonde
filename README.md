@@ -17,8 +17,9 @@ The software relies on USRP N2x0 software defined radio hardware. The minimum re
 
 ![Example implementation](figures/rf_block_diagram.png)
 
-## Dependencies
+## Software dependencies
 
+- Requires Linux. We've tested the program using Ubuntu 18.04 LTS. 
 - Requires UHD Library 3.15. The UHD library needs to be compiled with the Python API enabled. 
 - Numpy, Matplotlib, Scipy, Psutil
 
