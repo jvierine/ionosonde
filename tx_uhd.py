@@ -19,7 +19,7 @@ import os
 
 # internal modules related with the ionosonde
 import sweep
-import uhd_gps_lock as gl
+import gps_lock as gl
 import iono_logger as l
 import iono_config
 
@@ -116,7 +116,7 @@ def main():
     t_start=time.time()
     logfname="tx-%d.log"%(t_start)
     log=l.logger(logfname)
-    os.system("ln -s %s tx-current.log"%(logfname))
+    os.system("ln -sf %s tx-current.log"%(logfname))
     log.log("Starting TX sweep",print_msg=True)
 
     # this is the sweep configuration
@@ -180,8 +180,8 @@ def main():
                 transmit_waveform(usrp,np.uint64(t0+dt),data_100,swr_buffer,f0,log)
                 
             
-            # tune to next frequency 0.1 s before end
-            tune_at(usrp,t0+dt+s.freq_dur-0.1,f0=s.freq(i+1),gpio_state=gpio_state)
+            # tune to next frequency 0.0 s before end
+            tune_at(usrp,t0+dt+s.freq_dur-0.05,f0=s.freq(i+1),gpio_state=gpio_state)
             gpio_state=(gpio_state+1)%2
 
             # check that GPS is still locked.

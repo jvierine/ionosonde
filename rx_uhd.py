@@ -17,7 +17,7 @@ import numpy as n
 import matplotlib.pyplot as plt
 import sweep
 import iono_logger as l
-import uhd_gps_lock as gl
+import gps_lock as gl
 import stuffr
 import glob
 import re

@@ -2,7 +2,7 @@
 
 while true;
 do
-    python cc_ram.py
+    python analyze_ionograms.py
     sleep 10
 done
     

@@ -7,6 +7,7 @@ import os
 import re
 
 f=os.popen("grep refl tx-current.log|tail -60")
+#f=os.popen("grep refl tx-current.log")
 fs=[]
 ps=[]
 pm=[]
