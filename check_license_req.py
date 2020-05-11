@@ -4,10 +4,21 @@ import sweep
 import h5py 
 import numpy as n
 import matplotlib.pyplot as plt
+import analyze_spectrum as aspec
 
 s=sweep.sweep(freqs=sweep.freqs30,freq_dur=2.0)
 
 n_f=len(s.freqs)
+
+print("Measuring receiver noise floor. Make sure the transmitter is powered off")
+aspec.acquire_spectrum(ofname="meas/spec_off.h5",N_windows=1000)
+try:
+    input("Measuring the transmitted spectrum. Make sure that the transmitter is on.\nPress any key to continue.")
+except:
+    pass
+
+aspec.acquire_spectrum(ofname="meas/spec_on.h5",N_windows=10000)
+
 # this file contains no transmit
 ho=h5py.File("meas/spec_off.h5","r")
 noise_floor=ho["spec"].value/1000.0 # 1000 measurements
