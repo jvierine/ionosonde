@@ -12,7 +12,10 @@ The software is released under the GPL 3.0 license.
 
 The software relies on USRP N2x0 software defined radio hardware. The minimum requirement is:
 - Ettus Research USRP N2x0 + internal GPSDO with BasicRX or LFRX daughterboard for receiving
-- Ettus Research USRP N2x0 + internal GPSDO with BasicRX or LFRX daughterboard for receiving and BasicTX or LFTX daugherboard of transmitting. The receiver card on the transmitter can be used to measure relfected or transmitted power using a coupler.
+- Ettus Research USRP N2x0 + internal GPSDO with BasicRX or LFRX daughterboard for receiving and BasicTX or LFTX daugherboard of transmitting. The receiver card on the transmitter can be used to measure relfected or transmitted power using a directional coupler.
+- You choice of transmit and receiver antennas, and associated RF plumbing. An example is shown below.
+
+![Example implementation](figures)
 
 ## Dependencies
 
