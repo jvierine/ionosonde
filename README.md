@@ -2,7 +2,7 @@
 
 (c) 2012-2020 Juha Vierinen, Markus Floer, Mikko Syrjäsuo
 
-A basic software defined radio ionosonde implementation written purely in Python. The ionosonde uses pseudorandom phase coded continuous wave transmit waveforms. The purpose of this software is to allow building various ionospheric HF sounding and radio propagation instruments: vertical incidence sounding, oblique sounding, multi-static network with multiple transmitters and receivers.
+A basic software defined radio ionosonde implementation written purely in Python. The ionosonde uses pseudorandom phase coded continuous wave transmit waveforms. The purpose of this software is to allow building various ionospheric HF sounding and radio propagation instruments: vertical incidence sounding, oblique sounding, multi-static network with multiple transmitters and receivers, single frequency range-Doppler sounding.
 
 The software relies on GPS to keep the transmitter and receiver time synchronous, which allows the transmitter and receiver to be located in different places. It is therefore possible to also have multiple oblique receivers listening the the same transmitter. 
 
