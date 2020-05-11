@@ -116,7 +116,7 @@ def main():
     t_start=time.time()
     logfname="tx-%d.log"%(t_start)
     log=l.logger(logfname)
-    os.system("ln -s %s tx-current.log"%(logfname))
+    os.system("ln -sf %s tx-current.log"%(logfname))
     log.log("Starting TX sweep",print_msg=True)
 
     # this is the sweep configuration
