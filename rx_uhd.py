@@ -187,8 +187,8 @@ def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
                 next_sample += n_per_freq
             
             timeout=0.1
-    except KeyboardInterrupt:
-        print("Keyboard interrupt")
+    except:
+        print("interrupt")
         pass
     print("Issuing stop command...")
     
