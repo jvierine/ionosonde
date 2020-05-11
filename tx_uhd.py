@@ -19,7 +19,7 @@ import os
 
 # internal modules related with the ionosonde
 import sweep
-import uhd_gps_lock as gl
+import gps_lock as gl
 import iono_logger as l
 import iono_config
 
