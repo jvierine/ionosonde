@@ -2,9 +2,9 @@
 
 (c) 2012-2020 Juha Vierinen, Markus Floer, Mikko Syrjäsuo
 
-A basic software defined radio ionosonde implementation written purely in Python. The ionosonde uses pseudorandom phase coded continuous wave transmit waveforms. The purpose of this software is to allow building various ionospheric HF sounding and radio propagation instruments: vertical incidence sounding, oblique sounding, multi-static network with multiple transmitters and receivers, single frequency range-Doppler sounding.
+This setup of scripts implements a frequency hopping coded continuous-wave coherent target radar. The primary use of this software is for sounding the ionosphere with HF radio waves in the range of frequencies that correspond to plasma-frequencies encountered in the ionosphere. This type of a radar is also called an ionosonde when used to sound the ionosphere. The software can also be used for oblique sounding. The software is designed to allow it to be used in multi-static networks of ionospheric sounders. It is also possible to use the program for single frequency range-Doppler sounding, for e.g., studies of thermospheric gravity waves. 
 
-The software relies on GPS to keep the transmitter and receiver time synchronous, which allows the transmitter and receiver to be located in different places. The software has some checks to ensure that the transmitter and receiver clocks are synchronized while the software is running. It is therefore possible to also have multiple oblique receivers listening the the same transmitter. 
+The software is written purely in Python and it relies on the Ettus Research USRP Hardware Driver library to generate and receive radio signals. The ionosonde uses pseudorandom phase coded continuous wave transmit waveforms. The software relies on GPS to keep the transmitter and receiver time synchronous, which allows the transmitter and receiver to be located in different places. The software has some checks to ensure that the transmitter and receiver clocks are synchronized while the software is running. It is therefore possible to also have multiple oblique receivers listening the the same transmitter. 
 
 On receive, a range-Doppler spectrum of the received echoes is estimated and an ionogram is produced using the configured frequency sweep. 
 
