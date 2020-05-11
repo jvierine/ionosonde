@@ -1,4 +1,4 @@
-# Coded continuous-wave ionosonde 
+# Software defined radio ionosonde 
 
 (c) 2012-2020 Juha Vierinen, Markus Floer, Mikko Syrjäsuo
 
