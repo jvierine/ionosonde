@@ -15,7 +15,7 @@ The software relies on USRP N2x0 software defined radio hardware. The minimum re
 - Ettus Research USRP N2x0 + internal GPSDO with BasicRX or LFRX daughterboard for receiving and BasicTX or LFTX daugherboard of transmitting. The receiver card on the transmitter can be used to measure relfected or transmitted power using a directional coupler.
 - You choice of transmit and receiver antennas, and associated RF plumbing. An example is shown below.
 
-![Example implementation](figures)
+![Example implementation](figures/rf_block_diagram.png)
 
 ## Dependencies
 
