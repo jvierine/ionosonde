@@ -14,12 +14,13 @@ The software relies on USRP N2x0 software defined radio hardware. The minimum re
 - Ettus Research USRP N2x0 + internal GPSDO with BasicRX or LFRX daughterboard for receiving
 - Ettus Research USRP N2x0 + internal GPSDO with BasicRX or LFRX daughterboard for receiving and BasicTX or LFTX daugherboard of transmitting. The receiver card on the transmitter can be used to measure relfected or transmitted power using a directional coupler.
 - You choice of transmit and receiver antennas, and associated RF plumbing. An example is shown below.
+- 2 PCs - one to control the transmitter and one to control the receiver. These will often be in different places. For a monostatic radar, it is possible to use the same PC to control the transmitter and receiver. The receiver signal processing is not extremely demanding, and should work with a 10+ year old entry level CPU.  
 
 ![Example implementation](figures/rf_block_diagram.png)
 
 ## Software dependencies
 
-- Requires Linux. We've tested the program using Ubuntu 18.04 LTS. 
+- Requires Linux. We've tested the program using Ubuntu 18.04 LTS. It should be possible to adapt the code relatively easily to any operating system and platform that supports Python.  
 - Requires UHD Library 3.15. The UHD library needs to be compiled with the Python API enabled. 
 - Numpy, Matplotlib, Scipy, Psutil
 
