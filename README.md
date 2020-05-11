@@ -13,6 +13,7 @@ The software is released under the GPL 3.0 license.
 The software relies on USRP N2x0 software defined radio hardware. The minimum requirement is:
 - Ettus Research USRP N2x0 + internal GPSDO with BasicRX or LFRX daughterboard for receiving
 - Ettus Research USRP N2x0 + internal GPSDO with BasicRX or LFRX daughterboard for receiving and BasicTX or LFTX daugherboard of transmitting. The receiver card on the transmitter can be used to measure relfected or transmitted power using a directional coupler.
+- We rely on the internal Ettus Research GPSDO and use the UHD commands to interface with the GPSDO. It is possible to use another made, but you'll need to come up with an alternative interface to check for GPS lock.
 - You choice of transmit and receiver antennas, and associated RF plumbing. An example is shown below.
 - 2 PCs - one to control the transmitter and one to control the receiver. These will often be in different places. For a monostatic radar, it is possible to use the same PC to control the transmitter and receiver. The receiver signal processing is not extremely demanding, and should work with a 10+ year old entry level CPU.  
 
