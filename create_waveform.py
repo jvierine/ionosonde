@@ -33,6 +33,29 @@ def create_pseudo_random_code(clen=10000, seed=0):
     return(code)
 
 
+def create_prn_dft_code(clen=10000, seed=0):
+    """ this is a perfect code """
+    n.random.seed(seed)
+    N=int(n.sqrt(L))
+    # random phases 
+    rp=n.exp(1j*n.random.rand(N)*2*n.pi)
+    code=n.array([],dtype=n.complex64)
+    idx=n.arange(N,dtype=n.float32)
+    for i in range(N):
+        code=n.concatenate((code,rp*n.exp(1j*2.0*n.pi*float(i)*idx/float(N))))
+    code=n.array(code,dtype=n.complex64)
+    return(code)
+
+#def create_dft_code(L=10000):
+#    """ this is a perfect code """
+  #  N=int(n.sqrt(L))
+ #   code=n.array([],dtype=n.complex64)
+#    idx=n.arange(N,dtype=n.float32)
+   # for i in range(N):
+  #      code=n.concatenate((code,n.exp(1j*2.0*n.pi*float(i)*idx/float(N))))
+ #   code=n.array(code,dtype=n.complex64)
+#    return(code)
+
 # oversample a phase code by a factor of rep
 def rep_seq(x, rep=10):
     L = len(x) * rep
@@ -110,12 +133,17 @@ def waveform_to_file(station=0,
                      filter_output=False,
                      sr=1e6,
                      bandwidth=100e3,
-                     power_outside_band=0.01):
+                     power_outside_band=0.01,
+                     code_type="prn"):
 
     os.system("mkdir -p waveforms")
     ofname='waveforms/code-l%d-b%d-%06df_%dk.bin' % (clen, oversample, station,int(bandwidth/1e3))
-    
-    a = rep_seq(create_pseudo_random_code(clen=clen, seed=station),
+
+    if code_type=="prn":
+        code=create_pseudo_random_code(clen=clen, seed=station)
+    else:
+        code=create_prn_dft_code(clen=clen, seed=station)
+    a = rep_seq(,
                 rep=oversample)
     
     if filter_output:
@@ -152,6 +180,12 @@ if __name__ == '__main__':
         '-l', '--length', type=int, default=10000,
         help='''Code length (number of bauds). (default: %(default)s)''',
     )
+
+    parser.add_argument(
+        '-t', '--code_type', default="prn",
+        help='''Code type. Options: perfect, prn. (default: %(default)s)''',
+    )
+
     parser.add_argument(
         '-b', '--oversampling', type=int, default=10,
         help='''Oversampling factor (number of samples per baud).
@@ -187,5 +221,5 @@ if __name__ == '__main__':
     waveform_to_file(
         station=op.station, clen=op.length, oversample=op.oversampling,
         filter_output=op.filter, bandwidth=1e3*op.bandwidth, sr=op.sample_rate,
-        power_outside_band=op.out_of_band_power
+        power_outside_band=op.out_of_band_power, code_type=op.code_type
     )
