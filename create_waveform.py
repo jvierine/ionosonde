@@ -36,7 +36,7 @@ def create_pseudo_random_code(clen=10000, seed=0):
 def create_prn_dft_code(clen=10000, seed=0):
     """ this is a perfect code """
     n.random.seed(seed)
-    N=int(n.sqrt(L))
+    N=int(n.sqrt(clen))
     # random phases 
     rp=n.exp(1j*n.random.rand(N)*2*n.pi)
     code=n.array([],dtype=n.complex64)
