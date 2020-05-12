@@ -51,7 +51,7 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
             z=n.fromfile(fname,dtype=n.complex64)
             N=len(z)
 #            print(len(z))
-            res=p.analyze_prc(z,rfi_rem=False,spec_rfi_rem=False,dec=1)
+            res=p.analyze_prc(z,rfi_rem=False,spec_rfi_rem=False,dec=1,code_type=iono_config.code_type)
  #           print(res["res"].shape)
             plt.subplot(121)
   #          print(dt)
