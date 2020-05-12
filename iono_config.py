@@ -7,6 +7,8 @@ import sweep
 # sample rate for tx and rx
 sample_rate=1000000
 
+code_type="perfect"
+
 # minimum safe wait is 5 mins
 min_gps_lock_time=300
 # gps acquisition time can be reduced for testing purposes

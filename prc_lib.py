@@ -65,30 +65,18 @@ def periodic_convolution_matrix(envelope, rmin=0, rmax=100):
     return(result)
 
 
-B_cache = 0
-r_cache = 0
-B_cached = False
 def create_estimation_matrix(code, rmin=0, rmax=1000, cache=True):
-    global B_cache
-    global r_cache
-    global B_cached
 
-    if not cache or not B_cached:
-        r_cache = periodic_convolution_matrix(
-            envelope=code, rmin=rmin, rmax=rmax,
-        )
-        A = r_cache['A']
-        Ah = np.transpose(np.conjugate(A))
-        # least-squares estimate
-        # B=(A^H A)^{-1}A^H
-        B_cache = np.dot(np.linalg.inv(np.dot(Ah, A)), Ah)
-        
-        r_cache['B'] = B_cache
-        B_cached = True
-        return(r_cache)
-    else:
-        return(r_cache)
-
+    r_cache = periodic_convolution_matrix(envelope=code, rmin=rmin, rmax=rmax)
+    A = r_cache['A']
+    Ah = np.transpose(np.conjugate(A))
+    # least-squares estimate
+    # B=(A^H A)^{-1}A^H
+    B_cache = np.dot(np.linalg.inv(np.dot(Ah, A)), Ah)
+    
+    r_cache['B'] = B_cache
+    B_cached = True
+    return(r_cache)
 
 def analyze_prc(zin,
                 clen=10000,
@@ -102,6 +90,7 @@ def analyze_prc(zin,
                 wfun=scipy.signal.tukey,
 #                wfun=1.0,
                 gc=20,
+                code_type="prn",
                 dec=10):
     """
     Analyze pseudorandom code transmission for a block of data.
@@ -115,10 +104,15 @@ def analyze_prc(zin,
     rfi_rem = Remove RFI (whiten noise).
 
     """
-    code = create_waveform.create_pseudo_random_code(clen=clen, seed=station)
+    if code_type=="perfect":
+        code = create_waveform.create_prn_dft_code(clen=clen, seed=station)
+    else:
+        code = create_waveform.create_pseudo_random_code(clen=clen, seed=station)
     an_len=len(zin)/dec
     N = int(an_len / clen )
     res = np.zeros([N, Nranges], dtype=np.complex64)
+
+    # use cached version of (A^HA)^{-1}A^H if it exists.
     if os.path.exists("waveforms/b-%d-%d.h5"%(station,Nranges)):
         hb=h5py.File("waveforms/b-%d-%d.h5"%(station,Nranges),"r")
         B=hb["B"].value

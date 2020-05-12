@@ -143,7 +143,7 @@ def waveform_to_file(station=0,
         code=create_pseudo_random_code(clen=clen, seed=station)
     else:
         code=create_prn_dft_code(clen=clen, seed=station)
-    a = rep_seq(,
+    a = rep_seq(code,
                 rep=oversample)
     
     if filter_output:
