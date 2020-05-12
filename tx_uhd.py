@@ -9,7 +9,6 @@ Generate and TX samples using a set of waveforms, and waveform characteristics
 """
 
 import argparse
-import numpy as np
 import uhd
 import time
 import threading
@@ -76,7 +75,7 @@ def transmit_waveform(u,t0_full,waveform,swr_buffer,f0,log):
     """
     Transmit a timed burst 
     """
-    t0_ts=uhd.libpyuhd.types.time_spec(np.uint64(t0_full),0.0)
+    t0_ts=uhd.libpyuhd.types.time_spec(n.uint64(t0_full),0.0)
     stream_args=uhd.usrp.StreamArgs("fc32","sc16")
     md=uhd.types.TXMetadata()
     md.has_time_spec=True
@@ -123,41 +122,33 @@ def main():
     s=iono_config.s
     
     sample_rate=iono_config.sample_rate
+    
     # use the address configured for the transmitter
     usrp = uhd.usrp.MultiUSRP("addr=%s"%(iono_config.tx_addr))
     usrp.set_tx_rate(sample_rate)
     usrp.set_rx_rate(sample_rate)
-#    print(usrp.get_gpio_banks(0))
- #   exit(0)
     
     rx_subdev_spec=uhd.usrp.SubdevSpec(iono_config.rx_subdev)
-    tx_subdev_spec=uhd.usrp.SubdevSpec(iono_config.tx_subdev)    
+    tx_subdev_spec=uhd.usrp.SubdevSpec(iono_config.tx_subdev)
+    
     usrp.set_tx_subdev_spec(tx_subdev_spec)
     usrp.set_rx_subdev_spec(rx_subdev_spec)
 
     # wait until GPS is locked, then align USRP time with global ref
-    gl.sync_clock(usrp,log)
+    gl.sync_clock(usrp,log,min_sync_time=iono_config.min_gps_lock_time)
     
     # start with first frequency on tx and rx
     tune_req=uhd.libpyuhd.types.tune_request(s.freq(0))
     usrp.set_tx_freq(tune_req)
     usrp.set_rx_freq(tune_req)
 
-    # setup enough repetitions of the code to fill a frequency step
-    code_100 = 0.5*np.fromfile("waveforms/code-l10000-b10-000000f_100k.bin",dtype=np.complex64)
-    code_50 = 0.5*np.fromfile("waveforms/code-l10000-b10-000000f_50k.bin",dtype=np.complex64)
-    code_30 = 0.5*np.fromfile("waveforms/code-l10000-b10-000000f_30k.bin",dtype=np.complex64)    
-    n_reps=s.freq_dur*sample_rate/len(code_100)
-    data_100=np.tile(code_100,int(n_reps))
-    data_50=np.tile(code_50,int(n_reps))
-    data_30=np.tile(code_30,int(n_reps))
-
-    # hold SWR measurement
-    swr_buffer=np.empty(int(len(data_100)*0.5),dtype=n.complex64)    
+    # hold SWR measurement about half of the transmit waveform length, so
+    # we have no timing issues
+    swr_buffer=n.empty(int(0.5*sample_rate*s.freq_dur),dtype=n.complex64)
      
     # figure out when to start the cycle
     t_now=usrp.get_time_now().get_real_secs()    
-    t0=np.uint64(np.floor(t_now/(s.sweep_len_s))*s.sweep_len_s+s.sweep_len_s)
+    t0=n.uint64(n.floor(t_now/(s.sweep_len_s))*s.sweep_len_s+s.sweep_len_s)
     print("starting next sweep at %1.2f"%(s.sweep_len_s))
 
     gpio_state=0
@@ -166,28 +157,18 @@ def main():
         for i in range(s.n_freqs):
             f0,dt=s.pars(i)
             
-            bw=int(n.round(s.bw(i)*1e6))
-            print("f=%f bandwidth %f"%(f0,bw))
-            if bw == 50000:
-                print("code 50 kHz")
-                transmit_waveform(usrp,np.uint64(t0+dt),data_50,swr_buffer,f0,log)
-            elif bw == 30000:
-                print("code 30 kHz")                                
-                transmit_waveform(usrp,np.uint64(t0+dt),data_30,swr_buffer,f0,log)
-            else:
-                print("code 100 kHz")
-                # Transmit signal
-                transmit_waveform(usrp,np.uint64(t0+dt),data_100,swr_buffer,f0,log)
-                
+            print("f=%f bandwidth %d kHz"%(f0,s.bw(i)*1e3))
+            transmit_waveform(usrp,n.uint64(t0+dt),s.waveform(i),swr_buffer,f0,log)                
             
             # tune to next frequency 0.0 s before end
-            tune_at(usrp,t0+dt+s.freq_dur-0.05,f0=s.freq(i+1),gpio_state=gpio_state)
+            next_freq_idx=(i+1)%s.n_freqs
+            tune_at(usrp,t0+dt+s.freq_dur-0.05,f0=s.freq(next_freq_idx),gpio_state=gpio_state)
             gpio_state=(gpio_state+1)%2
 
             # check that GPS is still locked.
             gl.check_lock(usrp,log,exit_if_not_locked=True)
 
-        t0+=np.uint64(s.sweep_len_s)
+        t0+=n.uint64(s.sweep_len_s)
 
     
 if __name__ == "__main__":

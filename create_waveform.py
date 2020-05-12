@@ -21,12 +21,14 @@ from argparse import ArgumentParser
 import numpy as n
 import os
 import scipy.signal
+import matplotlib.pyplot as plt
 
 # seed is a way of reproducing the random code without
 # having to store all actual codes. the seed can then
 # act as a sort of station_id.
 def create_pseudo_random_code(clen=10000, seed=0):
     n.random.seed(seed)
+    # Each bit has a random phase between \phi_t = U(0,2*pi). The waveform is e^(i \phi_t).
     code = n.array(n.exp(1j*n.random.rand(clen)*2*n.pi),dtype=n.complex64)
     return(code)
 
@@ -43,7 +45,8 @@ def rep_seq(x, rep=10):
 def filter_waveform(waveform,
                     sr=1e6,
                     bandwidth=100e3,
-                    max_power_outside_band=0.01):
+                    max_power_outside_band=0.01,
+                    plot=False):
     """
     Filter the waveform in such a way that it meets a 1% out of 
     band power requirement. filter the code in such a way that there
@@ -86,6 +89,11 @@ def filter_waveform(waveform,
         print("fl %d power outside band %1.3f"%(fl,power_outside_band))
         fl+=2
     print("Using filter length of %d samples"%(fl-2))
+    
+    if plot:
+        plt.plot(a.real,a.imag,".")
+        plt.show()
+
     return(a)
     
     

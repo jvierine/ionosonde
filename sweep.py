@@ -1,85 +1,113 @@
 import numpy as n
 
 
-freqs=[[2.2,2.3],
-       [2.35,2.45],
-       [2.51,2.61],
-       [2.65,2.75],
-       [3.155,3.255],
-       [3.3,3.4],
-       [3.95,4.0],
-       [4.438,4.538],
-       [4.6,4.65],
-       [4.85,4.95],
-       [5.005,5.105],
-       [5.155,5.255],
-       [5.305,5.335],
-       [5.4,5.45],
-       [5.8,5.9],
-       [5.95,6.05],
-       [6.1,6.2],
-       [6.8,6.85],
-       [6.9,7],
-       [7.2,7.3],
-       [7.35,7.45],
-       [7.5,7.6],
-       [7.65,7.75],
-       [8.095,8.195],
-       [9.4,9.5],
-       [11.6,11.7],
-       [13.57,13.67],
-       [15.1,15.2],
-       [15.7,15.8],
-       [17.48,17.58],
-       [18.9,19.0],
-       [21.45,21.55],
-       [25.01,25.11]]
+freqs=[[2.2,2.3,0],
+       [2.35,2.45,0],
+       [2.51,2.61,0],
+       [2.65,2.75,0],
+       [3.155,3.255,0],
+       [3.3,3.4,0],
+       [3.95,4.0,0],
+       [4.438,4.538,0],
+       [4.6,4.65,0],
+       [4.85,4.95,0],
+       [5.005,5.105,0],
+       [5.155,5.255,0],
+       [5.305,5.335,0],
+       [5.4,5.45,0],
+       [5.8,5.9,0],
+       [5.95,6.05,0],
+       [6.1,6.2,0],
+       [6.8,6.85,0],
+       [6.9,7,0],
+       [7.2,7.3,0],
+       [7.35,7.45,0],
+       [7.5,7.6,0],
+       [7.65,7.75,0],
+       [8.095,8.195,0],
+       [9.4,9.5,0],
+       [11.6,11.7,0],
+       [13.57,13.67,0],
+       [15.1,15.2,0],
+       [15.7,15.8,0],
+       [17.48,17.58,0],
+       [18.9,19.0,0],
+       [21.45,21.55,0],
+       [25.01,25.11,0]]
 
-# 30 freq sweep
-freqs30=[[2.2,2.3],     
-         [2.35,2.45],   
-         [2.51,2.61],
-         [2.65,2.75],
-         [3.155,3.255],
-         [3.3,3.4],
-         [3.95,4.0],     # 50 kHz
-         [4.438,4.538],  
-         [4.6,4.65],     # 50 kHz
-         [4.85,4.95],
-         [5.005,5.105],
-         [5.155,5.255],
-         [5.305,5.335],
-         [5.4,5.45],
-         [5.8,5.9],
-         [5.95,6.05],
-         [6.1,6.2],
-         [6.8,6.85],     # 50 kHz
-         [6.9,7],  
-         [7.2,7.3],
-         [7.35,7.45],
-         [7.5,7.6],
-         [7.65,7.75],
-         [8.095,8.195],
-         [9.4,9.5],
-         [11.6,11.7],
-         [13.57,13.67],
-         [15.1,15.2],
-         [15.7,15.8],
-         [17.48,17.58]]
+# 30 freq sweep. the third column refers to the code index in
+# the list codes passed to the sweep class
+freqs30=[[2.2,2.3,0],     
+         [2.35,2.45,0],   
+         [2.51,2.61,0],
+         [2.65,2.75,0],
+         [3.155,3.255,0],
+         [3.3,3.4,0],
+         [3.95,4.0,1],     # 50 kHz
+         [4.438,4.538,0],  
+         [4.6,4.65,1],     # 50 kHz
+         [4.85,4.95,0],
+         [5.005,5.105,0],
+         [5.155,5.255,0],
+         [5.305,5.335,2],  # 30 kHz
+         [5.4,5.45,1],     # 50 kHz
+         [5.8,5.9,0],
+         [5.95,6.05,0],
+         [6.1,6.2,0],
+         [6.8,6.85,1],     # 50 kHz
+         [6.9,7,0],  
+         [7.2,7.3,0],
+         [7.35,7.45,0],
+         [7.5,7.6,0],
+         [7.65,7.75,0],
+         [8.095,8.195,0],
+         [9.4,9.5,0],
+         [11.6,11.7,0],
+         [13.57,13.67,0],
+         [15.1,15.2,0],
+         [15.7,15.8,0],
+         [17.48,17.58,0]]
 
-freqs60=[[2.2,2.3],
-         [3.155,3.255],
-         [3.95,4.0],
-         [4.6,4.65],
-         [5.005,5.105],
-         [5.4,5.45]]
+freqs60=[[2.2,2.3,0],
+         [3.155,3.255,0],
+         [3.95,4.0,0],
+         [4.6,4.65,0],
+         [5.005,5.105,0],
+         [5.4,5.45,0]]
 
 
 class sweep():
-    def __init__(self,freqs,freq_dur):
+    def __init__(self,
+                 freqs,    # list of frequencies. three values per frequency: min freq, max freq, code idx
+                 freq_dur,
+                 codes=["waveforms/code-l10000-b10-000000f_100k.bin",
+                        "waveforms/code-l10000-b10-000000f_50k.bin",
+                        "waveforms/code-l10000-b10-000000f_30k.bin"],
+                 sample_rate=1000000, # In Hz
+                 code_amp=0.5):
+        
         self.freq_dur=freq_dur
         self.n_freqs=len(freqs)
         self.freqs=freqs
+
+        self.transmit_waveforms=[]
+        self.code_len = 0
+        self.sample_rate=sample_rate
+        for c in codes:
+            wf=0.5*n.fromfile(c,dtype=n.complex64)
+            if self.code_len == 0:
+                self.code_len=len(wf)
+            else:
+                if len(wf) != self.code_len:
+                    print("Error. Not all waveforms are the same length!")
+                    exit(0)
+        
+        n_reps=int(self.freq_dur*self.sample_rate/self.code_len)
+#        data_100=n.tile(code_100,int(n_reps))
+
+        for c in codes:
+            wf=0.5*n.fromfile(c,dtype=n.complex64)
+            self.transmit_waveforms.append(n.tile(wf,n_reps))
         
         self.determine_sweep_length()
         self.t0=n.arange(self.n_freqs,dtype=n.float)*self.freq_dur
@@ -97,9 +125,14 @@ class sweep():
 
     def freq(self,i):
         return(0.5*(self.freqs[i%self.n_freqs][0]+self.freqs[i%self.n_freqs][1])*1e6)
+    
+    def waveform(self,i):
+        code_idx=self.freqs[i%self.n_freqs][2]
+        return(self.transmit_waveforms[code_idx])
 
     def pars(self,i):
         return(self.freq(i),self.t0[i%self.n_freqs])
+    
     def bw(self,i):
         return(self.freqs[i][1]-self.freqs[i][0])
     
