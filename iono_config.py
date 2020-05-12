@@ -14,17 +14,20 @@ min_gps_lock_time=0
 
 # sweep definition
 # todo: add code definition here.
-s=sweep.sweep(freqs=sweep.freqs30,
-              codes=["waveforms/code-l10000-b10-000000f_100k.bin",
-                     "waveforms/code-l10000-b10-000000f_50k.bin",
-                     "waveforms/code-l10000-b10-000000f_30k.bin"],
-              sample_rate=sample_rate,
-              freq_dur=2.0)
 
+if True:
+    s=sweep.sweep(freqs=sweep.freqs30,
+                  codes=["waveforms/code-l10000-b10-000000f_100k.bin",
+                         "waveforms/code-l10000-b10-000000f_50k.bin",
+                         "waveforms/code-l10000-b10-000000f_30k.bin"],
+                  sample_rate=sample_rate,
+                  freq_dur=2.0)
+    
 # single frequency test
-#s=sweep.sweep(freqs=[[4.6,4.65,0]],
-#              codes=["waveforms/code-l10000-b10-000000f_100k.bin"],
-#              freq_dur=60.0) # This is for OBW measurements
+if False:
+    s=sweep.sweep(freqs=[[4.6,4.7,0]],
+                  codes=["waveforms/code-l10000-b10-000000f_50k.bin"],
+                  freq_dur=60.0) # This is for OBW measurements
 
 # ram disk to store about two ionosonde cycles worth of data
 data_path="/dev/shm"

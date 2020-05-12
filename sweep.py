@@ -80,9 +80,9 @@ class sweep():
     def __init__(self,
                  freqs,    # list of frequencies. three values per frequency: min freq, max freq, code idx
                  freq_dur,
-                 codes=["waveforms/code-l10000-b10-000000f_100k.bin",
-                        "waveforms/code-l10000-b10-000000f_50k.bin",
-                        "waveforms/code-l10000-b10-000000f_30k.bin"],
+                 codes=["waveforms/code-l10000-b10-000000f_100k.bin", # code 0
+                        "waveforms/code-l10000-b10-000000f_50k.bin",  # code 1
+                        "waveforms/code-l10000-b10-000000f_30k.bin"], # code 2
                  sample_rate=1000000, # In Hz
                  code_amp=0.5):
         
@@ -94,7 +94,7 @@ class sweep():
         self.code_len = 0
         self.sample_rate=sample_rate
         for c in codes:
-            wf=0.5*n.fromfile(c,dtype=n.complex64)
+            wf=code_amp*n.fromfile(c,dtype=n.complex64)
             if self.code_len == 0:
                 self.code_len=len(wf)
             else:
