@@ -30,20 +30,22 @@ import numpy as np
 import scipy.signal
 #import digital_rf as drf
 
-def create_pseudo_random_code(clen=10000, seed=0):
-    """
-    seed is a way of reproducing the random code without
-    having to store all actual codes. the seed can then
-    act as a sort of station_id.
+import create_waveform 
 
-    """
-    np.random.seed(seed)
-    phases = np.array(
+#def create_pseudo_random_code(clen=10000, seed=0):
+#    """
+   # seed is a way of reproducing the random code without
+  #  having to store all actual codes. the seed can then
+ #   act as a sort of station_id.
+#
+  #  """
+ #   np.random.seed(seed)
+#    phases = np.array(
         #np.exp(1.0j * 2.0 * math.pi * np.random.random(clen)),
-        np.sign(np.random.randn(clen)),
-        dtype=np.complex64,
-    )
-    return(phases)
+   #     np.sign(np.random.randn(clen)),
+  #      dtype=np.complex64,
+ #   )
+#    return(phases)
 
 
 def periodic_convolution_matrix(envelope, rmin=0, rmax=100):
@@ -113,7 +115,7 @@ def analyze_prc(zin,
     rfi_rem = Remove RFI (whiten noise).
 
     """
-    code = create_pseudo_random_code(clen=clen, seed=station)
+    code = create_waveform.create_pseudo_random_code(clen=clen, seed=station)
     an_len=len(zin)/dec
     N = int(an_len / clen )
     res = np.zeros([N, Nranges], dtype=np.complex64)
