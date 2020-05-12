@@ -200,16 +200,20 @@ def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
     return
 
 def housekeeping(usrp,log,s):
-    while True:
-        t0=usrp.get_time_now().get_real_secs()
-        delete_old_files(int(t0)-int(s.sweep_len_s)*3,iono_config.data_path)
-        t0+=np.uint64(s.sweep_len_s)
+    try:
+        while True:
+            t0=usrp.get_time_now().get_real_secs()
+            delete_old_files(int(t0)-int(s.sweep_len_s)*3,iono_config.data_path)
+            t0+=np.uint64(s.sweep_len_s)
+            
+            process = psutil.Process(os.getpid())
+            log.log("Memory use %1.5f (MB)"%(process.memory_info().rss/1e6))
+            
+            time.sleep(s.sweep_len_s)
+    except:
+        print("Housekeeping thread stopped")
+        pass
         
-        process = psutil.Process(os.getpid())
-        log.log("Memory use %1.5f (MB)"%(process.memory_info().rss/1e6))
-        
-        time.sleep(s.sweep_len_s)
-    
 def main():
     """
     Start up everything and run main loop from here.

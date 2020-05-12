@@ -53,29 +53,34 @@ def rep_seq(x, rep=10):
 # that is 0.1 seconds per cycle as a coherence assumption.
 # furthermore, we use a 1 MHz bandwidth, so we oversample by a factor of 10.
 #
-def waveform_to_file(
-    station=0, clen=10000, oversample=10, filter_output=False,
-):
-    a = rep_seq(
-        create_pseudo_random_code(clen=clen, seed=station),
-        rep=oversample,
-    )
+def waveform_to_file(station=0,
+                     clen=10000,
+                     oversample=10,
+                     filter_output=False,
+                     filter_factor=1.0):
+    
+    ofname='code-l%d-b%d-%06d.bin' % (clen, oversample, station)
+    
+    a = rep_seq(create_pseudo_random_code(clen=clen, seed=station),
+                rep=oversample)
+    
     if filter_output:
         w = numpy.zeros([oversample * clen], dtype=numpy.complex64)
-        fl = (int(2*oversample*1.8))  # 100 kHz 1% outside band
-#        fl = (int(2*oversample*1.9*2.0))  # 50 kHz 1% outside band
-#        fl = (int(2*oversample*2.1*3.0))  # 30 kHz 1% outside band        
-        w[0:fl] = scipy.signal.blackmanharris(fl)
+        fl = (int(2*oversample*1.9*filter_factor)) # 100 kHz < 1% outside band
+        w[0:fl] = scipy.signal.flattop(fl)
+        print("Filter length %d samples"%(fl))
         # todo roll by fl
-        
                
         aa = numpy.fft.ifft(numpy.fft.fft(w) * numpy.fft.fft(a))
         a = aa / numpy.max(numpy.abs(aa))
         a = numpy.array(a, dtype=numpy.complex64)
+        # remove filter time shift 
         a=np.roll(a,-int(fl/2)+20)
-        a.tofile('code-l%d-b%d-%06df.bin' % (clen, oversample, station))
-    else:
-        a.tofile('code-l%d-b%d-%06d.bin' % (clen, oversample, station))
+        a.tofile(ofname)
+        
+    print("Writing file %s"%(ofname))
+    a.tofile(ofname)
+
 
 def barker_to_file(
     station=0, clen=10000, oversample=10, filter_output=False,
@@ -96,7 +101,6 @@ def barker_to_file(
 
 
 if __name__ == '__main__':
-    barker_to_file()
     parser = ArgumentParser()
     parser.add_argument(
         '-l', '--length', type=int, default=10000,
@@ -116,10 +120,15 @@ if __name__ == '__main__':
         help='''Filter waveform with Blackman-Harris window.
                 (default: %(default)s)''',
     )
+    parser.add_argument(
+        '-w', '--filter_factor', type=float, default=1.0,
+        help='''Filter length factor (1 = 100 kHz, 2=50 kHz, 3.333=30 kHz
+        (default: %(default)s)''',
+    )
 
     op = parser.parse_args()
 
     waveform_to_file(
         station=op.station, clen=op.length, oversample=op.oversampling,
-        filter_output=op.filter,
+        filter_output=op.filter, filter_factor=op.filter_factor
     )
