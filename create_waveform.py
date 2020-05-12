@@ -17,21 +17,18 @@ Coded continuous wave meteor radar, Atmos. Meas. Tech., 9, 829-839,
 doi:10.5194/amt-9-829-2016, 2016.
 
 """
-import math
 from argparse import ArgumentParser
-
 import numpy as n
-
+import os
 import scipy.signal
-
 
 # seed is a way of reproducing the random code without
 # having to store all actual codes. the seed can then
 # act as a sort of station_id.
 def create_pseudo_random_code(clen=10000, seed=0):
     n.random.seed(seed)
-    phases = n.array(n.exp(1j*n.random.rand(clen)*2*n.pi),dtype=n.complex64)
-    return(phases)
+    code = n.array(n.exp(1j*n.random.rand(clen)*2*n.pi),dtype=n.complex64)
+    return(code)
 
 
 # oversample a phase code by a factor of rep
@@ -45,7 +42,8 @@ def rep_seq(x, rep=10):
 
 def filter_waveform(waveform,
                     sr=1e6,
-                    bandwidth=100e3):
+                    bandwidth=100e3,
+                    max_power_outside_band=0.01):
     """
     Filter the waveform in such a way that it meets a 1% out of 
     band power requirement. filter the code in such a way that there
@@ -70,7 +68,7 @@ def filter_waveform(waveform,
     
     waveform_f=n.fft.fft(waveform)
     print("Searching for filter length")
-    while power_outside_band > 0.01:
+    while power_outside_band > max_power_outside_band:
         
         w[0:fl] = scipy.signal.flattop(fl)
         # filter
@@ -103,9 +101,11 @@ def waveform_to_file(station=0,
                      oversample=10,
                      filter_output=False,
                      sr=1e6,
-                     bandwidth=100e3):
-    
-    ofname='code-l%d-b%d-%06df_%dk.bin' % (clen, oversample, station,int(bandwidth/1e3))
+                     bandwidth=100e3,
+                     power_outside_band=0.01):
+
+    os.system("mkdir -p waveforms")
+    ofname='waveforms/code-l%d-b%d-%06df_%dk.bin' % (clen, oversample, station,int(bandwidth/1e3))
     
     a = rep_seq(create_pseudo_random_code(clen=clen, seed=station),
                 rep=oversample)
@@ -113,7 +113,8 @@ def waveform_to_file(station=0,
     if filter_output:
         a=filter_waveform(a,
                           sr=sr,
-                          bandwidth=bandwidth)
+                          bandwidth=bandwidth,
+                          max_power_outside_band=power_outside_band)
         
     print("Writing file %s"%(ofname))
     a.tofile(ofname)
@@ -167,10 +168,16 @@ if __name__ == '__main__':
         help='''Sample rate in Hz
         (default: %(default)s)''',
     )
+    parser.add_argument(
+        '-o', '--out_of_band_power', type=float, default=0.01,
+        help='''How much power is allowed to be out of band.
+        (default: %(default)s)''',
+    )
 
     op = parser.parse_args()
 
     waveform_to_file(
         station=op.station, clen=op.length, oversample=op.oversampling,
-        filter_output=op.filter, bandwidth=1e3*op.bandwidth, sr=op.sample_rate
+        filter_output=op.filter, bandwidth=1e3*op.bandwidth, sr=op.sample_rate,
+        power_outside_band=op.out_of_band_power
     )
