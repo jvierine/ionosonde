@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-
+#
+# Simple spectrum analyzer to measure the transmitted spectrum
+# to check that the transmitter meets frequency licensing requirements.
+#
 import sweep
 import h5py 
 import numpy as n
 import matplotlib.pyplot as plt
 
-
-acquire_new_spec=False
+acquire_new_spec=True
 
 if acquire_new_spec:
     import analyze_spectrum as aspec
-    
-
 
 s=sweep.sweep(freqs=sweep.freqs30,freq_dur=2.0)
 
