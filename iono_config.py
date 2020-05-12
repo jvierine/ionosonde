@@ -8,9 +8,9 @@ import sweep
 sample_rate=1000000
 
 # minimum safe wait is 5 mins
-#min_gps_lock_time=300
-# reduced for testing
-min_gps_lock_time=0
+min_gps_lock_time=300
+# gps acquisition time can be reduced for testing purposes
+#min_gps_lock_time=0
 
 # sweep definition
 # todo: add code definition here.
@@ -21,12 +21,14 @@ if True:
                          "waveforms/code-l10000-b10-000000f_50k.bin",
                          "waveforms/code-l10000-b10-000000f_30k.bin"],
                   sample_rate=sample_rate,
+                  code_amp=0.5,  # safe setting for waveform amplitude
                   freq_dur=2.0)
     
 # single frequency test
 if False:
     s=sweep.sweep(freqs=[[4.6,4.7,0]],
                   codes=["waveforms/code-l10000-b10-000000f_50k.bin"],
+                  code_amp=0.5,
                   freq_dur=60.0) # This is for OBW measurements
 
 # ram disk to store about two ionosonde cycles worth of data
