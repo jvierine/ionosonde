@@ -34,7 +34,12 @@ def create_pseudo_random_code(clen=10000, seed=0):
 
 
 def create_prn_dft_code(clen=10000, seed=0):
-    """ this is a perfect code """
+    """ 
+    this is a perfect code that is randomized.
+    however, it has horrible cross-correlation 
+    properties and should be avoided with multi-static 
+    radar networks.
+    """
     n.random.seed(seed)
     N=int(n.sqrt(clen))
     # random phases 
@@ -45,16 +50,6 @@ def create_prn_dft_code(clen=10000, seed=0):
         code=n.concatenate((code,rp*n.exp(1j*2.0*n.pi*float(i)*idx/float(N))))
     code=n.array(code,dtype=n.complex64)
     return(code)
-
-#def create_dft_code(L=10000):
-#    """ this is a perfect code """
-  #  N=int(n.sqrt(L))
- #   code=n.array([],dtype=n.complex64)
-#    idx=n.arange(N,dtype=n.float32)
-   # for i in range(N):
-  #      code=n.concatenate((code,n.exp(1j*2.0*n.pi*float(i)*idx/float(N))))
- #   code=n.array(code,dtype=n.complex64)
-#    return(code)
 
 # oversample a phase code by a factor of rep
 def rep_seq(x, rep=10):
@@ -183,7 +178,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '-t', '--code_type', default="prn",
-        help='''Code type. Options: perfect, prn. (default: %(default)s)''',
+        help='''Code type. Options: prn, perfect. (default: %(default)s)''',
     )
 
     parser.add_argument(

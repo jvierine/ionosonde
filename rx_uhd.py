@@ -242,7 +242,7 @@ def main():
     usrp.set_rx_subdev_spec(subdev_spec)
 
     # Synchronizing clock
-    gl.sync_clock(usrp,log)
+    gl.sync_clock(usrp,log,min_sync_time=iono_config.min_gps_lock_time)
 
     # figure out when to start the cycle.
     t_now=usrp.get_time_now().get_real_secs()

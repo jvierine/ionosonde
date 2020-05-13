@@ -8,7 +8,7 @@ import h5py
 import numpy as n
 import matplotlib.pyplot as plt
 
-acquire_new_spec=True
+acquire_new_spec=False
 
 if acquire_new_spec:
     import analyze_spectrum as aspec
@@ -33,10 +33,10 @@ if acquire_new_spec:
 ho=h5py.File("meas/spec_off.h5","r")
 noise_floor=ho["spec"].value/1000.0 # 1000 measurements
 # this one contains transmit
-if acquire_new_spec:
-    h=h5py.File("meas/spec_on.h5","r")
-else:
-    h=h5py.File("meas/spec_on_pa_22.6dBm.h5","r")
+#if acquire_new_spec:
+h=h5py.File("meas/spec_on.h5","r")
+#else:
+ #   h=h5py.File("meas/spec_on_pa_22.6dBm.h5","r")
     
 spec=h["spec"].value/10000.0  # 10000 measurements
 freq=h["freq"].value
