@@ -11,10 +11,10 @@ import create_waveform
 import prc_lib
 
 # pseudorandom code
-#code = create_waveform.create_pseudo_random_code(clen=10000, seed=0)
+code = create_waveform.create_pseudo_random_code(clen=10000, seed=0)
 
 # randomized perfect code
-code=create_waveform.create_prn_dft_code(clen=10000,seed=0)
+#code=create_waveform.create_prn_dft_code(clen=10000,seed=0)
 plt.plot(code.real)
 plt.plot(code.imag)
 plt.show()
