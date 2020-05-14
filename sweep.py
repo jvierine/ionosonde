@@ -93,8 +93,9 @@ class sweep():
         self.transmit_waveforms=[]
         self.code_len = 0
         self.sample_rate=sample_rate
+        # check code lengths
         for c in codes:
-            wf=code_amp*n.fromfile(c,dtype=n.complex64)
+            wf=n.fromfile(c,dtype=n.complex64)
             if self.code_len == 0:
                 self.code_len=len(wf)
             else:
@@ -103,7 +104,6 @@ class sweep():
                     exit(0)
         
         n_reps=int(self.freq_dur*self.sample_rate/self.code_len)
-#        data_100=n.tile(code_100,int(n_reps))
 
         for c in codes:
             wf=code_amp*n.fromfile(c,dtype=n.complex64)
