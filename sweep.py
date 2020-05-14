@@ -106,7 +106,7 @@ class sweep():
 #        data_100=n.tile(code_100,int(n_reps))
 
         for c in codes:
-            wf=0.5*n.fromfile(c,dtype=n.complex64)
+            wf=code_amp*n.fromfile(c,dtype=n.complex64)
             self.transmit_waveforms.append(n.tile(wf,n_reps))
         
         self.determine_sweep_length()
