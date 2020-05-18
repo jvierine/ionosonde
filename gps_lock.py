@@ -65,3 +65,9 @@ def sync_clock(u,log, min_sync_time=300.0):
     t_gpsdo=u.get_mboard_sensor("gps_time")
     # these should be similar
     print("pc clock %1.2f usrp clock %1.2f gpsdo %1.2f"%(t_now,t_usrp,t_gpsdo.to_int()))
+
+
+if __name__ == "__main__":
+    u = uhd.usrp.MultiUSRP()
+    locked=check_lock(u,log=None,exit_if_not_locked=False)
+    print("GPS locked %d"%(locked))
