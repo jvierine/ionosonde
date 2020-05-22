@@ -76,6 +76,7 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
     n_plot_freqs=int((fmax+0.5)/0.1)+1
     iono_p_freq=n.linspace(0,fmax+0.5,num=n_plot_freqs)
     I=n.zeros([n_plot_freqs,n_rg],dtype=n.float32)
+    IS=n.zeros([sfreqs.shape[0],n_rg],dtype=n.float32)
     n_t=int(s.freq_dur/0.1)
     all_spec=n.zeros([s.n_freqs,n_t,n_rg],dtype=n.float32)
     dt=10000.0/100e3
@@ -124,6 +125,7 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
             all_spec[i,:,:]=S
             pif=int(iono_freqs[i]/0.1)
             I[pif,:]+=n.max(S,axis=0)
+            IS[i,:]=n.max(S,axis=0)
             # normalize by median std estimate
 #            I[i,:]=I[i,:]/n.median(n.abs(S-n.median(S)))
             dBs=10.0*n.log10(n.transpose(S))
@@ -193,7 +195,11 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
                   lat=iono_config.lat,
                   lon=iono_config.lon,
                   code_type=iono_config.code_type)
-                  
+    ho=h5py.File(ofname,"a")
+    ho["I"]=IS
+    ho["I_rvec"]=rvec
+    ho["I_fvec"]=sfreqs
+    ho.close()
 #    ho=h5py.File("%s/ionogram-%d.h5"%(dname,t0),"w")
  #   ho["I"]=I
 #    ho["i_freq_Hz"]=i_fvec
