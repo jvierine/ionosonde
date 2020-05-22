@@ -17,6 +17,7 @@ station_id=0
 lat=78.1536
 lon=16.054
 
+require_gps=True
 
 # minimum safe wait is 5 mins
 #min_gps_lock_time=300
@@ -32,13 +33,13 @@ if True:
                          "waveforms/code-l10000-b10-000000f_50k.bin",
                          "waveforms/code-l10000-b10-000000f_30k.bin"],
                   sample_rate=sample_rate,
-                  code_amp=0.5,  # safe setting for waveform amplitude
+                  code_amp=0.8,  # safe setting for waveform amplitude
                   freq_dur=4.0)
     
 # single frequency test
 if False:
-    s=sweep.sweep(freqs=[[4.6,4.7,0]],
-                  codes=["waveforms/code-l10000-b10-000000f_50k.bin"],
+    s=sweep.sweep(freqs=[[5.305,5.335,0]],
+                  codes=["waveforms/code-l10000-b10-000000f_30k.bin"],
                   code_amp=0.5,
                   freq_dur=60.0) # This is for OBW measurements
 
