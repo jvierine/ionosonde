@@ -29,13 +29,13 @@ def overview_plots(t0,t1,max_r=800.0,min_r=50):
             print("bad file %s"%(f))
     print(len(v1f))
 
-    I,rvec,freq=rean.analyze_ionogram(fname=v1f[0])
+    I,rvec,freq=rean.analyze_ionogram(fname=v1f[0],use_old=True)
     
     ridx=n.where(rvec < max_r)[0]
     ridx2=n.where( (rvec < max_r) & (rvec > min_r))[0]
     n_t=len(v1f)
     n_r=len(ridx)
-    n_f=len(freq)
+    n_f=freq.shape[0]
     OR=n.zeros([n_t,n_r])
     OF=n.zeros([n_t,n_f])
 
@@ -45,7 +45,7 @@ def overview_plots(t0,t1,max_r=800.0,min_r=50):
     for fi,f in enumerate(idx):
         f=v1f[idx[fi]]
         print(f)
-        I,rvec,freq=rean.analyze_ionogram(fname=f)
+        I,rvec,freq=rean.analyze_ionogram(fname=f,use_old=True)
 #        plt.pcolormesh(I)
  #       plt.show()
   #      print(I.shape)

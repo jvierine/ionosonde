@@ -27,10 +27,14 @@ def save_raw_data(fname="tmp.h5",
                   code_type="perfect",
                   code_len=10000,
                   version=1):
+    """ 
+    save all relevant information that will allow an ionogram
+    and range-Doppler spectra to be calculated
+    """
     # 32 bit complex
     z_re=n.array(n.real(z_all),dtype=n.float16)
     z_im=n.array(n.imag(z_all),dtype=n.float16)
-    print("saving %s"%(fname))
+    print("saving raw complex voltage %s"%(fname))
     ho=h5py.File(fname,"w")
     ho["z_re"]=z_re
     ho["t0"]=t0
@@ -66,6 +70,8 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
     """
     Analyze an ionogram, make some plots, save some data
     """
+    # TODO: save raw voltage to file,
+    # then analyze raw voltage file with common program
     # figure out what cycle is ready
     n_rg=iono_config.n_range_gates#g#2000
     t0=n.uint64(n.floor(time.time()/(s.sweep_len_s))*s.sweep_len_s-s.sweep_len_s)
@@ -85,7 +91,6 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
     fvec=n.fft.fftshift(n.fft.fftfreq(n_t,d=dt))
 
     hdname=stuffr.unix2iso8601_dirname(t0)
-
     dname="%s/%s"%(iono_config.ionogram_path,hdname)
     os.system("mkdir -p %s"%(dname))
 
@@ -118,9 +123,9 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
             plt.subplot(122)
             S=n.abs(res["spec"])**2.0
 
-            sw=n.fft.fft(n.repeat(1.0/4,4),S.shape[0])
-            for rg_id in range(S.shape[1]):
-                S[:,rg_id]=n.roll(n.real(n.fft.ifft(n.fft.fft(S[:,rg_id])*sw)),-2)
+            #sw=n.fft.fft(n.repeat(1.0/4,4),S.shape[0])
+            #for rg_id in range(S.shape[1]):
+            #    S[:,rg_id]=n.roll(n.real(n.fft.ifft(n.fft.fft(S[:,rg_id])*sw)),-2)
             
             all_spec[i,:,:]=S
             pif=int(iono_freqs[i]/0.1)
@@ -173,7 +178,6 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
     plt.tight_layout()
 
     datestr=stuffr.unix2iso8601(t0)
-
     ofname="%s/%s.png"%(dname,datestr)
     print("Saving ionogram %s"%(ofname))
     plt.savefig(ofname)
@@ -195,19 +199,17 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
                   lat=iono_config.lat,
                   lon=iono_config.lon,
                   code_type=iono_config.code_type)
-    ho=h5py.File(ofname,"a")
+    iono_ofname="%s/ionogram-%s.h5"%(dname,datestr)
+    print("Saving ionogram %s"%(iono_ofname))
+    ho=h5py.File(iono_ofname,"w")
     ho["I"]=IS
     ho["I_rvec"]=rvec
+    ho["t0"]=t0
+    ho["lat"]=iono_config.lat
+    ho["lon"]=iono_config.lon
     ho["I_fvec"]=sfreqs
+    ho["ionogram_version"]=1
     ho.close()
-#    ho=h5py.File("%s/ionogram-%d.h5"%(dname,t0),"w")
- #   ho["I"]=I
-#    ho["i_freq_Hz"]=i_fvec
- #   ho["freq_Hz"]=fvec
-#    ho["range_km"]=rvec
- #   ho["spectra"]=all_spec
-  #  ho["t0"]=t0
-   # ho.close()
     
     delete_old_files(t0)
 

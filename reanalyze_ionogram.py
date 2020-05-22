@@ -2,6 +2,7 @@ import numpy as n
 import h5py
 import matplotlib.pyplot as plt
 import scipy.constants as c
+import os
 
 import create_waveform
 import stuffr
@@ -25,10 +26,30 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
                      plot_ionogram=False,
                      plot_spectra=False,
                      use_old=False,
+                     max_range=1000,
+                     min_range=0,
                      version=1):
 
 
-    h=h5py.File(fname,"a")
+    h=h5py.File(fname,"r")
+
+    t0=h["t0"].value
+    hdname=stuffr.unix2iso8601_dirname(h["t0"].value)
+    dname="%s/%s"%(iono_config.ionogram_path,hdname)
+    os.system("mkdir -p %s"%(dname))
+    datestr=stuffr.unix2iso8601(t0)            
+    iono_ofname="%s/ionogram-%s.h5"%(dname,datestr)
+    print("looking for %s"%(iono_ofname))
+    if use_old:
+        if os.path.exists(iono_ofname):
+            hi=h5py.File(iono_ofname,"r")
+            I=n.copy(hi["I"].value)
+            r=n.copy(hi["I_rvec"].value)
+            f=n.copy(hi["I_fvec"].value)
+            hi.close()
+            return(I,r,f)
+
+
     if not "version" in h.keys():
         print("Not correction file version")
         h.close()
@@ -39,13 +60,13 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
         h.close()
         return
 
-    if use_old:
-        if "I" in h.keys():
-            I=n.copy(h["I"].value)
-            I_fvec=n.copy(h["I_fvec"].value)
-            I_rvec=n.copy(h["I_rvec"].value)
-            h.close()
-            return(I,I_rvec,I_fvec)
+#    if use_old:
+#        if "I" in h.keys():
+#            I=n.copy(h["I"].value)
+#            I_fvec=n.copy(h["I_fvec"].value)
+#            I_rvec=n.copy(h["I_rvec"].value)
+#            h.close()
+#            return(I,I_rvec,I_fvec)
         
     
     # float16 re and im to complex64
@@ -90,6 +111,7 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
 
         echoes=n.zeros([N_codes,code_len],dtype=n.complex64)
         spec=n.zeros([N_codes,code_len],dtype=n.float)
+        
         for ci in range(N_codes):
             echoes[ci,:]=n.fft.ifft(n.fft.fft(z[ci,:])/WF)
             
@@ -142,18 +164,28 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
         #    plt.pcolormesh(freqs[:,0],rvec,dBI,vmin=0,vmax=20)
         plt.ylim([0,800])
         plt.colorbar()
-        plt.show()
-    if "I" in h.keys():
-        del h["I"]
-    if "I_rvec" in h.keys():
-        del h["I_rvec"]
-    if "I_fvec" in h.keys():
-        del h["I_fvec"]
-    h["I"]=IS
-    h["I_rvec"]=rvec
-    h["I_fvec"]=freqs
+        plt.xlabel("Frequency (MHz)")
+        plt.ylabel("Virtual range (km)")
+        plt.tight_layout()
+        ofname="%s/%s.png"%(dname,datestr)
+        print("Saving ionogram %s"%(ofname))
+        plt.savefig(ofname)
+        plt.clf()
+        plt.close()
+
+    print("Saving ionogram %s"%(iono_ofname))
+    
+    ho=h5py.File(iono_ofname,"w")
+    ho["I"]=IS
+    ho["I_rvec"]=rvec
+    ho["t0"]=h["t0"].value
+    ho["lat"]=h["lat"].value
+    ho["lon"]=h["lon"].value
+    ho["I_fvec"]=freqs
+    ho["ionogram_version"]=1
+    ho.close()
     h.close()
-    return(I,rvec,freqs)
+    return(IS,rvec,freqs)
                             
         
 if __name__ == "__main__":
