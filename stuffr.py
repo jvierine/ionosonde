@@ -153,7 +153,7 @@ def date2unix(year,month,day,hour,minute,second):
 def unix2date(x):
     return datetime.datetime.utcfromtimestamp(x)
 
-def unix2iso8601(x):
+def unix2iso8601(t):
     return(unix2date(t).strftime("%Y-%m-%dT%H:%M:%SZ"))
 
 def unix2iso8601_dirname(t):
