@@ -181,7 +181,7 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
     os.system("ln -sf %s latest.png"%(ofname))
 
 
-    ofname="%s/ionogram-%d.h5"%(dname,t0)
+    ofname="%s/raw-%s.h5"%(dname,datestr)
     save_raw_data(ofname,
                   t0,
                   z_all,

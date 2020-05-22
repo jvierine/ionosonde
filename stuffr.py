@@ -13,11 +13,12 @@ import datetime
 import time, re
 import pickle
 import h5py
-
+#from datetime import timezone
 # fit_velocity
 import scipy.constants
 import scipy.optimize
 
+import pytz
 # xpath-like access to nested dictionaries
 # @d ditct
 # @q query (eg., /data/stuff)
@@ -147,8 +148,12 @@ def load_object(filename):
         return(pickle.load(input))
 
 def date2unix(year,month,day,hour,minute,second):
+    t0=datetime.datetime(1970,1,1)
     t = datetime.datetime(year, month, day, hour, minute, second)
-    return(time.mktime(t.timetuple()))
+    return((t-t0).total_seconds())
+#    t.replace(tzinfo=timezone.utc)
+#    return(t.total_seconds())#imestamp())
+#    return(time.mktime(t.timetuple()))
 
 def unix2date(x):
     return datetime.datetime.utcfromtimestamp(x)
