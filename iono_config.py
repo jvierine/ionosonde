@@ -7,12 +7,21 @@ import sweep
 # sample rate for tx and rx
 sample_rate=1000000
 
+instrument_name="UNIS Longyearbyen Ionosonde"
 code_type="perfect"
 
+n_range_gates=1000
+
+station_id=0
+
+lat=78.1536
+lon=16.054
+
+
 # minimum safe wait is 5 mins
-min_gps_lock_time=300
+#min_gps_lock_time=300
 # gps acquisition time can be reduced for testing purposes
-#min_gps_lock_time=0
+min_gps_lock_time=0
 
 # sweep definition
 # todo: add code definition here.
@@ -24,7 +33,7 @@ if True:
                          "waveforms/code-l10000-b10-000000f_30k.bin"],
                   sample_rate=sample_rate,
                   code_amp=0.5,  # safe setting for waveform amplitude
-                  freq_dur=2.0)
+                  freq_dur=4.0)
     
 # single frequency test
 if False:

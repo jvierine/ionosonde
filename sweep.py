@@ -89,7 +89,7 @@ class sweep():
         self.freq_dur=freq_dur
         self.n_freqs=len(freqs)
         self.freqs=freqs
-
+        self.codes=codes
         self.transmit_waveforms=[]
         self.code_len = 0
         self.sample_rate=sample_rate

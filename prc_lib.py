@@ -28,6 +28,7 @@ import stuffr
 
 import numpy as np
 import scipy.signal
+import scipy.fftpack as sf
 #import digital_rf as drf
 
 import create_waveform 
@@ -85,11 +86,12 @@ def analyze_prc(zin,
                 rfi_rem=True,
                 spec_rfi_rem=False,
                 cache=True,
-                gc_rem=True,
+                gc_rem=False,
 #                wfun=scipy.signal.blackmanharris(N),
                 wfun=scipy.signal.tukey,
 #                wfun=1.0,
                 gc=20,
+                fft_filter=False,
                 code_type="prn",
                 dec=10):
     """
@@ -111,6 +113,7 @@ def analyze_prc(zin,
     an_len=len(zin)/dec
     N = int(an_len / clen )
     res = np.zeros([N, Nranges], dtype=np.complex64)
+#    reso = np.zeros([N, Nranges], dtype=np.complex64)
 
     # use cached version of (A^HA)^{-1}A^H if it exists.
     if os.path.exists("waveforms/b-%d-%d.h5"%(station,Nranges)):
@@ -135,13 +138,23 @@ def analyze_prc(zin,
         bg=np.median(z,axis=0)
         z=z-bg
 #    print(len(z))
+    if fft_filter:
+        S=np.zeros(clen,dtype=np.float32)
+        for i in np.arange(N):
+            S+=np.abs(sf.fft(z[i,:]))**2.0
+        S=np.sqrt(S/float(N))
     for i in np.arange(N):
 #        z = stuffr.decimate(zin[(i*clen*dec):((i+1)*clen*dec)],dec=dec)
         # B=(A^H A)^{-1}A^H
         # B*z = (A^H A)^{-1}A^H*z = x_ml
         # z = measurement
         # res[i,:] = backscattered echo complex amplitude
-        res[i, :] = np.dot(B, z[i,:])
+        if fft_filter:
+            zw=np.array(sf.ifft(sf.fft(z[i,:])/S),dtype=np.complex64)
+        else:
+            zw=z[i,:]
+        res[i, :] = np.dot(B, zw)
+#        res[i,:] = reso[i,:]#/np.median(np.abs(reso[i,:]))
     if gc_rem:
         for i in range(gc,Nranges):
             res[:,i]=res[:,i]-np.median(res[:,i])
