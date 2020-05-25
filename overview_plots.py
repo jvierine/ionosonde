@@ -13,6 +13,8 @@ def overview_plots(t0,t1,max_r=800.0,min_r=50):
     
     t=[]
     v1f=[]
+    dtt=[]
+        
     for f in fl:
         try:
             h=h5py.File(f,"r")
@@ -41,11 +43,13 @@ def overview_plots(t0,t1,max_r=800.0,min_r=50):
 
     t=n.array(t)
     idx=n.argsort(t)
-    t=n.sort(t)
+#    t=n.sort(t)
     for fi,f in enumerate(idx):
         f=v1f[idx[fi]]
         print(f)
         I,rvec,freq=rean.analyze_ionogram(fname=f,use_old=True)
+        dtt.append(stuffr.unix2date(t[idx[fi]]))
+        
 #        plt.pcolormesh(I)
  #       plt.show()
   #      print(I.shape)
@@ -59,9 +63,9 @@ def overview_plots(t0,t1,max_r=800.0,min_r=50):
     dBOF=dBOF-n.nanmedian(dBOF)
     dBOF[n.isnan(dBOF)]=-3
     t=n.array(t)
-    plt.pcolormesh(t,rvec[ridx],n.transpose(dBOR),vmin=-3,vmax=20)
+    plt.pcolormesh(dtt,rvec[ridx],n.transpose(dBOR),vmin=-3,vmax=20)
     plt.show()
-    plt.pcolormesh(t,0.5*(freq[:,0]+freq[:,1]),n.transpose(dBOF),vmin=-3,vmax=20)
+    plt.pcolormesh(dtt,0.5*(freq[:,0]+freq[:,1]),n.transpose(dBOF),vmin=-3,vmax=20)
     plt.show()
 
         
@@ -69,6 +73,6 @@ def overview_plots(t0,t1,max_r=800.0,min_r=50):
     
 if __name__ == "__main__":
     overview_plots(t0=stuffr.date2unix(2020,5,22,0,0,0),
-                   t1=stuffr.date2unix(2020,5,24,0,0,0))
+                   t1=stuffr.date2unix(2020,5,26,0,0,0))
 
 
