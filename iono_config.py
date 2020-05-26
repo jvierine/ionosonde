@@ -24,6 +24,8 @@ require_gps=True
 # gps acquisition time can be reduced for testing purposes
 min_gps_lock_time=0
 
+range_shift=5
+
 # sweep definition
 # todo: add code definition here.
 

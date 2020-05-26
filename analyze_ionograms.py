@@ -95,6 +95,8 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
     os.system("mkdir -p %s"%(dname))
 
     z_all=n.zeros([s.n_freqs,int(s.freq_dur*100000)],dtype=n.complex64)
+
+    noise_floors=[]
     
     for i in range(s.n_freqs):
         fname="%s/raw-%d-%03d.bin"%(data_path,t0,i)
@@ -111,6 +113,8 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
             tvec=n.arange(N/10000.0)*dt
             dBr=10.0*n.log10(n.transpose(n.abs(res["res"])**2.0))
             noise_floor=n.nanmedian(dBr)
+            noise_floor_0=noise_floor
+            noise_floors.append(noise_floor_0)
             dBr=dBr-noise_floor
             plt.pcolormesh(tvec,rvec,dBr,vmin=-3,vmax=30.0)
             plt.xlabel("Time (s)")
@@ -136,12 +140,12 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
             dBs=10.0*n.log10(n.transpose(S))
             noise_floor=n.nanmedian(dBs)
             dBs=dBs-noise_floor
-            plt.pcolormesh(fvec,rvec,dBs,vmin=-3,vmax=30.0)
+            plt.pcolormesh(fvec,rvec-iono_config.range_shift*1.5,dBs,vmin=-3,vmax=30.0)
             plt.ylim([0,500])
             
             plt.title("Range-Doppler Power (dB)\nnoise_floor=%1.2f (dB)"%(noise_floor))
             plt.xlabel("Frequency (Hz)")
-            plt.ylabel("Range (km)")
+            plt.ylabel("Virtual range (km)")
             
             
             plt.colorbar()
@@ -164,14 +168,16 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
         dB[:,i]=dB[:,i]-n.nanmedian(dB[:,i])
         
     dB[n.isnan(dB)]=-3
+
+    noise_floor_0=n.mean(n.array(noise_floors))
     
     plt.figure(figsize=(1.5*8,1.5*6))
-    plt.pcolormesh(n.concatenate((iono_p_freq,[fmax+0.1])),rvec,dB,vmin=-3,vmax=20.0)
+    plt.pcolormesh(n.concatenate((iono_p_freq,[fmax+0.1])),rvec-iono_config.range_shift*1.5, dB,vmin=-3,vmax=20.0)
     plt.title("%s %s\nnoise_floor=%1.2f (dB)"%(iono_config.instrument_name,
                                                stuffr.unix2datestr(t0),
-                                               noise_floor))
+                                               noise_floor_0))
     plt.xlabel("Frequency (MHz)")
-    plt.ylabel("Range (km)")
+    plt.ylabel("Virtual range (km)")
     plt.colorbar()
     plt.ylim([0,800.0])
     plt.xlim([n.min(iono_freqs)-0.5,n.max(iono_freqs)+0.5])

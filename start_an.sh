@@ -3,6 +3,6 @@
 while true;
 do
     python analyze_ionograms.py
-    sleep 10
+    python overview_plots.py
 done
     
