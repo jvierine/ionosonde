@@ -8,7 +8,7 @@ import reanalyze_ionogram as rean
 import stuffr
 import iono_config
 
-def overview_plots(t0,t1,max_r=300,gc=20):
+def overview_plots(t0,t1,max_r=500,gc=20):
     fl=glob.glob("results/*/ionogram*.h5")
     fl.sort()
     
@@ -70,7 +70,7 @@ def overview_plots(t0,t1,max_r=300,gc=20):
     t=n.array(t)
     plt.figure(figsize=(1.5*8,1.5*6))
     # 30 km range shift
-    plt.pcolormesh(dtt,rvec-iono_config.range_shift*1.5,n.transpose(dBOR),vmin=-3,vmax=20)
+    plt.pcolormesh(dtt,rvec-iono_config.range_shift*1.5,n.transpose(dBOR),vmin=0,vmax=10)
     plt.colorbar()
     plt.xlabel("Time (UTC)")
     plt.ylabel("Virtual range (km)")
@@ -82,7 +82,7 @@ def overview_plots(t0,t1,max_r=300,gc=20):
 #    plt.show()
 
     plt.figure(figsize=(1.5*8,1.5*6))    
-    plt.pcolormesh(dtt,0.5*(freq[:,0]+freq[:,1]),n.transpose(dBOF),vmin=-3,vmax=20)
+    plt.pcolormesh(dtt,0.5*(freq[:,0]+freq[:,1]),n.transpose(dBOF),vmin=0,vmax=10)
     plt.colorbar()    
     plt.xlabel("Time (UTC)")
     plt.ylabel("Frequency (MHz)")

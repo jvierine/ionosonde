@@ -209,6 +209,7 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
     print("Saving ionogram %s"%(iono_ofname))
     ho=h5py.File(iono_ofname,"w")
     ho["I"]=IS
+    ho["spec"]=all_spec
     ho["I_rvec"]=rvec
     ho["t0"]=t0
     ho["lat"]=iono_config.lat
