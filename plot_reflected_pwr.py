@@ -22,7 +22,8 @@ for l in f.readlines():
 
 plt.figure(figsize=(8,4))
 plt.subplot(121)
-plt.plot(fs,ps,".",label="True")
+fs=n.array(fs)
+plt.plot(fs/1e6,ps,".",label="True")
 #plt.plot(fs,pm,".",label="Input")
 #plt.legend()
 plt.xlabel("Frequency (MHz)")
@@ -34,7 +35,7 @@ plt.subplot(122)
 p_tx=0.5
 ps=n.array(ps)
 p_ref=10**(ps/10.0)*1e-3
-plt.plot(fs,(1.0+n.sqrt(p_ref/p_tx))/(1.0-n.sqrt(p_ref/p_tx)) ,".",label="True")
+plt.plot(fs/1e6,(1.0+n.sqrt(p_ref/p_tx))/(1.0-n.sqrt(p_ref/p_tx)) ,".",label="True")
 #plt.plot(fs,pm,".",label="Input")
 #plt.legend()
 plt.xlabel("Frequency (MHz)")
