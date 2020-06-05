@@ -22,6 +22,7 @@ import numpy as n
 import os
 import scipy.signal
 import matplotlib.pyplot as plt
+import iono_config
 
 # seed is a way of reproducing the random code without
 # having to store all actual codes. the seed can then
@@ -97,7 +98,7 @@ def filter_waveform(waveform,
         # scale maximum amplitude to unity
         a = aa / n.max(n.abs(aa))
         a = n.array(a, dtype=n.complex64)
-        # remove filter time shift 
+        # remove filter time shift add a fixed shift of 20 samples
         a=n.roll(a,-int(fl/2)+20)
         # power spectrum
         S=n.fft.fftshift(n.abs(n.fft.fft(a))**2.0)

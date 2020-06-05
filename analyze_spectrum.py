@@ -44,4 +44,4 @@ def acquire_spectrum(freq=12.5e6,
     
 
 if __name__ == "__main__":
-    acquire_spectrum()
+    acquire_spectrum(N_windows=100)
