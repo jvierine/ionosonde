@@ -19,6 +19,8 @@ lon=16.054
 
 require_gps=True
 
+save_raw_voltage=False
+
 # minimum safe wait is 5 mins
 #min_gps_lock_time=300
 # gps acquisition time can be reduced for testing purposes

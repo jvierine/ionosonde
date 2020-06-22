@@ -194,22 +194,23 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
 
 
     ofname="%s/raw-%s.h5"%(dname,datestr)
-    save_raw_data(ofname,
-                  t0,
-                  z_all,
-                  s.freqs,
-                  iono_config.station_id,
-                  sr=100000,
-                  freq_dur=s.freq_dur,
-                  codes=s.codes,
-                  lat=iono_config.lat,
-                  lon=iono_config.lon,
-                  code_type=iono_config.code_type)
+    if iono_config.save_raw_voltage:
+        save_raw_data(ofname,
+                      t0,
+                      z_all,
+                      s.freqs,
+                      iono_config.station_id,
+                      sr=100000,
+                      freq_dur=s.freq_dur,
+                      codes=s.codes,
+                      lat=iono_config.lat,
+                      lon=iono_config.lon,
+                      code_type=iono_config.code_type)
     iono_ofname="%s/ionogram-%s.h5"%(dname,datestr)
     print("Saving ionogram %s"%(iono_ofname))
     ho=h5py.File(iono_ofname,"w")
-    ho["I"]=IS
-    ho["spec"]=all_spec
+    ho["I"]=IS    
+#    ho["spec"]=all_spec
     ho["I_rvec"]=rvec
     ho["t0"]=t0
     ho["lat"]=iono_config.lat

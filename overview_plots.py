@@ -29,7 +29,11 @@ def overview_plots(t0,t1,max_r=500,gc=20):
             h.close()
         except:
             print("bad file %s"%(f))
- #   print(len(v1f))
+    #   print(len(v1f))
+    if len(v1f)== 0:
+        print("no data")
+        return
+    
     h=h5py.File(v1f[0],"r")
     n_f=len(h["I_fvec"].value)
     freq=n.copy(h["I_fvec"].value)
