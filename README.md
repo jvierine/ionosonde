@@ -10,6 +10,10 @@ On receive, a range-Doppler spectrum of the received echoes is estimated and an 
 
 The software is released under the GPL 3.0 license. 
 
+## A software defined ionosonde at the polar cap
+
+The first prototype system has been deployed on the island of Svalbard as being operated by the UNIS (University Center of Svalbard) to study the occurrence of polar cap sporadic E. Here is a <a href="http://kho.unis.no/Ionosonde/">link</a> to the latest soundings. The ionosonde operates with a sparse set of frequencies due to frequency licensing limitations. 
+
 ## Hardware
 
 The software relies on USRP N2x0 software defined radio hardware. The minimum requirement is:
