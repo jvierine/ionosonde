@@ -1,5 +1,7 @@
 import numpy as n
 import glob
+import matplotlib as mpl
+mpl.use('Agg')  # This is needed for scripts (i.e. running without X-windows)
 import matplotlib.pyplot as plt
 import h5py
 import time

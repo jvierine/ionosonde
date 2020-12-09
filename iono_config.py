@@ -22,7 +22,9 @@ require_gps=True
 # minimum safe wait is 5 mins
 #min_gps_lock_time=300
 # gps acquisition time can be reduced for testing purposes
-min_gps_lock_time=0
+min_gps_lock_time=300
+
+store_raw_voltage=False
 
 range_shift=5
 

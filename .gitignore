@@ -1,0 +1,12 @@
+# Exclude various log-files
+logs/
+*.log
+*.pyc
+results
+
+# Emacs and other backups
+\#*\#
+*~
+.\#*
+
+

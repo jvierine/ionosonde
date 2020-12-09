@@ -85,6 +85,7 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
     IS=n.zeros([sfreqs.shape[0],n_rg],dtype=n.float32)
     n_t=int(s.freq_dur/0.1)
     all_spec=n.zeros([s.n_freqs,n_t,n_rg],dtype=n.float32)
+    all_res=n.zeros([s.n_freqs,n_t,n_rg],dtype=n.complex64)
     dt=10000.0/100e3
     
     rvec=n.arange(float(n_rg))*1.5
@@ -132,6 +133,7 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
             #    S[:,rg_id]=n.roll(n.real(n.fft.ifft(n.fft.fft(S[:,rg_id])*sw)),-2)
             
             all_spec[i,:,:]=S
+            all_res[i,:,:]=res["res"]
             pif=int(iono_freqs[i]/0.1)
             I[pif,:]+=n.max(S,axis=0)
             IS[i,:]=n.max(S,axis=0)
@@ -194,22 +196,25 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
 
 
     ofname="%s/raw-%s.h5"%(dname,datestr)
-    save_raw_data(ofname,
-                  t0,
-                  z_all,
-                  s.freqs,
-                  iono_config.station_id,
-                  sr=100000,
-                  freq_dur=s.freq_dur,
-                  codes=s.codes,
-                  lat=iono_config.lat,
-                  lon=iono_config.lon,
-                  code_type=iono_config.code_type)
+    if iono_config.store_raw_voltage:
+        save_raw_data(ofname,
+                      t0,
+                      z_all,
+                      s.freqs,
+                      iono_config.station_id,
+                      sr=100000,
+                      freq_dur=s.freq_dur,
+                      codes=s.codes,
+                      lat=iono_config.lat,
+                      lon=iono_config.lon,
+                      code_type=iono_config.code_type)
+
     iono_ofname="%s/ionogram-%s.h5"%(dname,datestr)
     print("Saving ionogram %s"%(iono_ofname))
     ho=h5py.File(iono_ofname,"w")
     ho["I"]=IS
-    ho["spec"]=all_spec
+    ho["v_re"]=n.array(n.real(all_res),dtype=n.float16)
+    ho["v_im"]=n.array(n.imag(all_res),dtype=n.float16)
     ho["I_rvec"]=rvec
     ho["t0"]=t0
     ho["lat"]=iono_config.lat
@@ -223,5 +228,6 @@ def analyze_latest_sweep(s,data_path="/dev/shm"):
 if __name__ == "__main__":
     
     s=iono_config.s
-    print("Starting analysis")
+    print("Starting analysis...")
     analyze_latest_sweep(s)
+    print("Analysis done.")
