@@ -1,6 +1,6 @@
 # Software defined radio ionosonde 
 
-(c) 2012-2020 Juha Vierinen, Markus Floer, Mikko Syrjäsuo
+(c) 2012-2020 Juha Vierinen, Markus Floer, Mikko Syrjäsuo, Peje Nilsson
 
 This setup of scripts implements a frequency hopping coded continuous-wave radar. The primary use of this software is for sounding the ionosphere with HF radio waves in the range of frequencies that correspond to plasma-frequencies encountered in the ionosphere. This type of a radar is also called an ionosonde when used to sound the ionosphere. The software can be used for both vertical and oblique sounding, and it is designed to be suitable for building a multi-static network of ionospheric sounders with multiple transmitters and receivers. It is also possible to use the program for single frequency range-Doppler sounding, for e.g., studies of thermospheric gravity waves. 
 
