@@ -222,7 +222,8 @@ def main():
     Start up everything and run main loop from here.
     """
     # setup a logger
-    logfile="rx-%d.log"%(time.time())
+    logfile="logs/rx-%d.log"%(time.time())
+    os.system("mkdir -p logs")
     log=l.logger(logfile)
     log.log("Starting receiver")
     os.system("rm rx-current.log;ln -s %s rx-current.log"%(logfile))

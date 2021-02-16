@@ -5,9 +5,6 @@ import stuffr
 
 def check_lock(u,log=None,exit_if_not_locked=False):
     locked=u.get_mboard_sensor("gps_locked").to_bool()
-    if log == None:
-        print(u.get_mboard_sensor("gps_gprmc"))
-        print(u.get_mboard_sensor("gps_gpgga"))
         
     f=open("gps.log","a")
     f.write("%s lock=%d\n"%(stuffr.unix2datestr(time.time()),locked))
@@ -73,5 +70,23 @@ def sync_clock(u,log, min_sync_time=300.0):
 
 if __name__ == "__main__":
     u = uhd.usrp.MultiUSRP()
+    print(u.get_mboard_sensor("gps_gprmc"))
+    print(u.get_mboard_sensor("gps_gpgga"))
     locked=check_lock(u,log=None,exit_if_not_locked=False)
     print("GPS locked %d"%(locked))
+
+    # pins 1 and 2
+    out=0x01 | 0x02
+    gpio_line=0xff # pin 0 and 1
+    u.set_gpio_attr("TXA","OUT",out,gpio_line,0)
+    time.sleep(5)
+    # pin 2
+    out=0x00 | 0x02
+    gpio_line=0xff # pin 0 and 1
+    u.set_gpio_attr("TXA","OUT",out,gpio_line,0)
+    time.sleep(5)
+    # pin 1
+    out=0x01 | 0x00
+    gpio_line=0xff # pin 0 and 1
+    u.set_gpio_attr("TXA","OUT",out,gpio_line,0)
+    time.sleep(5)

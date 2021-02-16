@@ -38,21 +38,17 @@ def tune_at(u,t0,ic,f0=4e6,gpio_state=0):
     u.set_tx_freq(tune_req)
     u.set_rx_freq(tune_req)
 
-    
+    # toggle pin 1/16 for watchdog
     if gpio_state == 0:
         out=0x00
     else:
         out=0x01
-    gpio_line=0x01 # pin 0
-    print("Watchdog TX A GPIO pin 0=%d"%(out))
-    u.set_gpio_attr("TXA","OUT",out,gpio_line,0)
+    gpio_line=0xff
+    # toggle pin 2/16 for antenna select
+    if f0/1e6 > ic.antenna_select_freq:
+        out= out | 0x02
     
-    gpio_line=0x02 # pin 1
-    if f0/1e6 < ic.antenna_select_freq:
-        out=0x00
-    else:
-        out=0x01
-    print("Antenna select TX A GPIO pin 1=%d"%(out))        
+    print("Watchdog TX A GPIO=%d"%(out))
     u.set_gpio_attr("TXA","OUT",out,gpio_line,0)
     
     u.clear_command_time()
@@ -80,6 +76,8 @@ def rx_swr(u,t0,recv_buffer,f0,log,ic):
     num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=float(N/ic.sample_rate)+1.0)
     pwr=n.mean(n.abs(recv_buffer)**2.0)
     rx_stream=None
+    if pwr <= 0.0:
+        pwr=1e-99
     refl_pwr_dBm=10.0*n.log10(pwr)+ic.reflected_power_cal_dB
     log.log("reflected pwr %1.4f (MHz) %1.4f (dBm)"%(f0,refl_pwr_dBm))
 
@@ -125,7 +123,8 @@ def main():
     The main loop for the ionosonde transmitter
     """
     t_start=time.time()
-    logfname="tx-%d.log"%(t_start)
+    os.system("mkdir -p logs")
+    logfname="logs/tx-%d.log"%(t_start)
     log=l.logger(logfname)
     os.system("ln -sf %s tx-current.log"%(logfname))
     log.log("Starting TX sweep",print_msg=True)
@@ -170,7 +169,7 @@ def main():
         for i in range(s.n_freqs):
             f0,dt=s.pars(i)
             
-            print("f=%f code %s"%(f0,s.code(i)))
+            print("f=%f code %s"%(f0/1e6,s.code(i)))
             transmit_waveform(usrp,n.uint64(t0+dt),s.waveform(i),swr_buffer,f0,log,ic)                
             
             # tune to next frequency 0.0 s before end
