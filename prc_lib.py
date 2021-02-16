@@ -33,20 +33,6 @@ import scipy.fftpack as sf
 
 import create_waveform 
 
-#def create_pseudo_random_code(clen=10000, seed=0):
-#    """
-   # seed is a way of reproducing the random code without
-  #  having to store all actual codes. the seed can then
- #   act as a sort of station_id.
-#
-  #  """
- #   np.random.seed(seed)
-#    phases = np.array(
-        #np.exp(1.0j * 2.0 * math.pi * np.random.random(clen)),
-   #     np.sign(np.random.randn(clen)),
-  #      dtype=np.complex64,
- #   )
-#    return(phases)
 
 
 def periodic_convolution_matrix(envelope, rmin=0, rmax=100):
@@ -87,9 +73,7 @@ def analyze_prc(zin,
                 spec_rfi_rem=False,
                 cache=True,
                 gc_rem=False,
-#                wfun=scipy.signal.blackmanharris(N),
                 wfun=scipy.signal.tukey,
-#                wfun=1.0,
                 gc=20,
                 fft_filter=False,
                 code_type="prn",
@@ -108,22 +92,25 @@ def analyze_prc(zin,
     """
     if code_type=="perfect":
         code = create_waveform.create_prn_dft_code(clen=clen, seed=station)
+    elif:
+        code_type=="barker39":
+        code = create_waveform.create_barker39(clen=clen)
     else:
         code = create_waveform.create_pseudo_random_code(clen=clen, seed=station)
     an_len=len(zin)/dec
     N = int(an_len / clen )
     res = np.zeros([N, Nranges], dtype=np.complex64)
-#    reso = np.zeros([N, Nranges], dtype=np.complex64)
+
 
     # use cached version of (A^HA)^{-1}A^H if it exists.
-    if os.path.exists("waveforms/b-%d-%d.h5"%(station,Nranges)):
-        hb=h5py.File("waveforms/b-%d-%d.h5"%(station,Nranges),"r")
+    if os.path.exists("waveforms/b-%d-%d-%s.h5"%(station,Nranges,code_type)):
+        hb=h5py.File("waveforms/b-%d-%d-%s.h5"%(station,Nranges,code_type),"r")
         B=hb["B"].value
         hb.close()
     else:
         r = create_estimation_matrix(code=code, cache=cache, rmax=Nranges)
         B = r['B']        
-        hb=h5py.File("waveforms/b-%d-%d.h5"%(station,Nranges),"w")
+        hb=h5py.File("waveforms/b-%d-%d-%s.h5"%(station,Nranges,code_type),"w")
         hb["B"]=B
         hb.close()        
         
