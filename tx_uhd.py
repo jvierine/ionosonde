@@ -22,10 +22,13 @@ import gps_lock as gl
 import iono_logger as l
 import iono_config
 
-def tune_at(u,t0,f0=4e6,gpio_state=0):
+def tune_at(u,t0,ic,f0=4e6,gpio_state=0):
     """ 
     tune radio to frequency f0 at t0_full 
     use a timed command.
+    
+    Toggle watchdog pin 1/16 on TX DB
+    Control antenna selector pin 2/16 on TX DB based on configuration
     """
     u.clear_command_time()
     t0_ts=uhd.libpyuhd.types.time_spec(t0)
@@ -34,22 +37,32 @@ def tune_at(u,t0,f0=4e6,gpio_state=0):
     tune_req=uhd.libpyuhd.types.tune_request(f0)
     u.set_tx_freq(tune_req)
     u.set_rx_freq(tune_req)
+
     
     if gpio_state == 0:
         out=0x00
     else:
         out=0x01
     gpio_line=0x01 # pin 0
-    print("TX A GPIO pin 0=%d"%(out))
+    print("Watchdog TX A GPIO pin 0=%d"%(out))
     u.set_gpio_attr("TXA","OUT",out,gpio_line,0)
+    
+    gpio_line=0x02 # pin 1
+    if f0/1e6 < ic.antenna_select_freq:
+        out=0x00
+    else:
+        out=0x01
+    print("Antenna select TX A GPIO pin 1=%d"%(out))        
+    u.set_gpio_attr("TXA","OUT",out,gpio_line,0)
+    
     u.clear_command_time()
 
-def tx_send(tx_stream,waveform,md,timeout=11.0):
+def tx_send(tx_stream,waveform,md,ic,timeout=11.0):
     # this command will block until everything is in the transmit
     # buffer.
-    tx_stream.send(waveform,md,timeout=(len(waveform)/float(iono_config.sample_rate))+1.0)
+    tx_stream.send(waveform,md,timeout=(len(waveform)/float(ic.sample_rate))+1.0)
 
-def rx_swr(u,t0,recv_buffer,f0,log):
+def rx_swr(u,t0,recv_buffer,f0,log,ic):
     """
     Receive samples for a reflected power measurement
     USRP output connected to input with 35 dB attenuation gives 
@@ -64,13 +77,13 @@ def rx_swr(u,t0,recv_buffer,f0,log):
     stream_cmd.time_spec=uhd.types.TimeSpec(t0)
     rx_stream.issue_stream_cmd(stream_cmd)    
     md=uhd.types.RXMetadata()
-    num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=float(N/iono_config.sample_rate)+1.0)
+    num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=float(N/ic.sample_rate)+1.0)
     pwr=n.mean(n.abs(recv_buffer)**2.0)
     rx_stream=None
-    refl_pwr_dBm=10.0*n.log10(pwr)+iono_config.reflected_power_cal_dB
+    refl_pwr_dBm=10.0*n.log10(pwr)+ic.reflected_power_cal_dB
     log.log("reflected pwr %1.4f (MHz) %1.4f (dBm)"%(f0,refl_pwr_dBm))
 
-def transmit_waveform(u,t0_full,waveform,swr_buffer,f0,log):
+def transmit_waveform(u,t0_full,waveform,swr_buffer,f0,log,ic):
     """
     Transmit a timed burst 
     """
@@ -93,12 +106,12 @@ def transmit_waveform(u,t0_full,waveform,swr_buffer,f0,log):
     try:
         # transmit the code
         tx_stream=u.get_tx_stream(stream_args)
-        tx_thread = threading.Thread(target=tx_send,args=(tx_stream,waveform,md))
+        tx_thread = threading.Thread(target=tx_send,args=(tx_stream,waveform,md,ic))
         tx_thread.daemon=True # exit if parent thread exits
         tx_thread.start()
 
         # do an swr measurement
-        rx_thread = threading.Thread(target=rx_swr,args=(u,t0_full,swr_buffer,f0,log))
+        rx_thread = threading.Thread(target=rx_swr,args=(u,t0_full,swr_buffer,f0,log,ic))
         rx_thread.daemon=True # exit if parent thread exits
         rx_thread.start()
         tx_thread.join()
@@ -121,7 +134,7 @@ def main():
     ic=iono_config.get_config()
     s=ic.s
     
-    sample_rate=iono_config.sample_rate
+    sample_rate=ic.sample_rate
     
     # use the address configured for the transmitter
     usrp = uhd.usrp.MultiUSRP("addr=%s"%(ic.tx_addr))
@@ -157,12 +170,12 @@ def main():
         for i in range(s.n_freqs):
             f0,dt=s.pars(i)
             
-            print("f=%f code %s"%(f0,s.codes[s.pars(i)[1]]))
-            transmit_waveform(usrp,n.uint64(t0+dt),s.waveform(i),swr_buffer,f0,log)                
+            print("f=%f code %s"%(f0,s.code(i)))
+            transmit_waveform(usrp,n.uint64(t0+dt),s.waveform(i),swr_buffer,f0,log,ic)                
             
             # tune to next frequency 0.0 s before end
             next_freq_idx=(i+1)%s.n_freqs
-            tune_at(usrp,t0+dt+s.freq_dur-0.05,f0=s.freq(next_freq_idx),gpio_state=gpio_state)
+            tune_at(usrp,t0+dt+s.freq_dur-0.05,ic,f0=s.freq(next_freq_idx),gpio_state=gpio_state)
             gpio_state=(gpio_state+1)%2
             
             # check that GPS is still locked.

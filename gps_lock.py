@@ -5,6 +5,9 @@ import stuffr
 
 def check_lock(u,log=None,exit_if_not_locked=False):
     locked=u.get_mboard_sensor("gps_locked").to_bool()
+    if log == None:
+        print(u.get_mboard_sensor("gps_gprmc"))
+        print(u.get_mboard_sensor("gps_gpgga"))
         
     f=open("gps.log","a")
     f.write("%s lock=%d\n"%(stuffr.unix2datestr(time.time()),locked))
@@ -23,8 +26,8 @@ def sync_clock(u,log, min_sync_time=300.0):
     t0=time.time()
         
     not_locked_for_long_enough=True
-    if min_sync_time < 10:
-        min_sync_time=20.0
+#    if min_sync_time < 10:
+#        min_sync_time=20.0
     
     while not_locked_for_long_enough:
         time_locked=time.time()-t0
