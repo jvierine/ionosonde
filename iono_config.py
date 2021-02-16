@@ -12,6 +12,7 @@ except ImportError as e:
     import configparser2 as configparser
     
 import json
+import create_waveform
 
 class iono_config:
     def __init__(self,fname=None):
@@ -45,8 +46,33 @@ class iono_config:
         
         self.range_shift=int(json.loads(c["config"]["range_shift"]))
         
-        self.codes=json.loads(c["config"]["codes"])
-        self.code_type=json.loads(c["config"]["code_type"])                
+#        self.codes=json.loads(c["config"]["codes"])
+        self.short_name=json.loads(c["config"]["short_name"])
+
+        self.code_len=json.loads(c["config"]["code_len"])        
+        self.code_types=json.loads(c["config"]["code_type"])
+        self.pulse_lengths=json.loads(c["config"]["pulse_length"])
+        self.ipps=json.loads(c["config"]["ipp"])
+        self.bws=json.loads(c["config"]["bw"])        
+
+        print("Creating waveforms")
+        self.n_codes=len(self.code_types)
+        self.codes=[]
+        self.orig_codes=[]
+        for i in range(self.n_codes):
+            cfname,ocode=create_waveform.waveform_to_file(station=self.station_id,
+                                                          clen=self.code_len,
+                                                          oversample=self.dec,
+                                                          filter_output=True,
+                                                          sr=self.sample_rate,
+                                                          bandwidth=self.bws[i],
+                                                          power_outside_band=0.01,
+                                                          pulse_length=self.pulse_lengths[i],
+                                                          ipp=self.ipps[i],
+                                                          code_type=self.code_types[i])
+            self.codes.append(cfname)
+            self.orig_codes.append(ocode)
+
         self.freqs=json.loads(c["config"]["freqs"])
         self.n_freqs=len(self.freqs)
         for fi in range(len(self.freqs)):
@@ -60,6 +86,8 @@ class iono_config:
         self.frequency_duration=json.loads(c["config"]["frequency_duration"])
         
         self.antenna_select_freq=float(json.loads(c["config"]["antenna_select_freq"]))
+
+        self.gps_holdover_time=float(json.loads(c["config"]["gps_holdover_time"]))        
         
         self.tx_addr=json.loads(c["config"]["tx_addr"])
         self.rx_addr=json.loads(c["config"]["rx_addr"])

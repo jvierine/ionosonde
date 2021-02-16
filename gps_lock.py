@@ -3,6 +3,7 @@ import time
 import uhd
 import stuffr
 
+
 def check_lock(u,log=None,exit_if_not_locked=False):
     locked=u.get_mboard_sensor("gps_locked").to_bool()
         
@@ -68,6 +69,26 @@ def sync_clock(u,log, min_sync_time=300.0):
     print("pc clock %1.2f usrp clock %1.2f gpsdo %1.2f"%(t_now,t_usrp,t_gpsdo.to_int()))
 
 
+class gpsdo_monitor:
+    def __init__(self,u,log,holdover_time=1800.0):
+        self.u=u
+        self.t_last_locked=time.time()
+        self.holdover_time=holdover_time
+        self.log=log
+        
+    def check(self):
+        locked=check_lock(self.u,log=self.log, exit_if_not_locked=False)
+        if not locked:
+            delta_t = time.time()-self.t_last_locked
+            if delta_t > self.holdover_time:
+                self.log.log("Lost GPS lock for %1.2f seconds. Exiting"%(delta_t))
+                exit(0)
+            else:
+                self.log.log("Lost GPS lock for %1.2f seconds"%(delta_t))
+        else:
+            self.t_last_locked=time.time()
+
+            
 if __name__ == "__main__":
     u = uhd.usrp.MultiUSRP()
     print(u.get_mboard_sensor("gps_gprmc"))
@@ -75,18 +96,3 @@ if __name__ == "__main__":
     locked=check_lock(u,log=None,exit_if_not_locked=False)
     print("GPS locked %d"%(locked))
 
-    # pins 1 and 2
-    out=0x01 | 0x02
-    gpio_line=0xff # pin 0 and 1
-    u.set_gpio_attr("TXA","OUT",out,gpio_line,0)
-    time.sleep(5)
-    # pin 2
-    out=0x00 | 0x02
-    gpio_line=0xff # pin 0 and 1
-    u.set_gpio_attr("TXA","OUT",out,gpio_line,0)
-    time.sleep(5)
-    # pin 1
-    out=0x01 | 0x00
-    gpio_line=0xff # pin 0 and 1
-    u.set_gpio_attr("TXA","OUT",out,gpio_line,0)
-    time.sleep(5)

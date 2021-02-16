@@ -47,8 +47,9 @@ def tune_at(u,t0,ic,f0=4e6,gpio_state=0):
     # toggle pin 2/16 for antenna select
     if f0/1e6 > ic.antenna_select_freq:
         out= out | 0x02
-    
-    print("Watchdog TX A GPIO=%d"%(out))
+
+    bits="{:02b}".format(out)
+    print("Watchdog TX A GPIO=%s"%(bits))
     u.set_gpio_attr("TXA","OUT",out,gpio_line,0)
     
     u.clear_command_time()
@@ -148,6 +149,7 @@ def main():
 
     # wait until GPS is locked, then align USRP time with global ref
     gl.sync_clock(usrp,log,min_sync_time=ic.min_gps_lock_time)
+    gps_mon=gl.gpsdo_monitor(usrp,log,ic.gps_holdover_time)
     
     # start with first frequency on tx and rx
     tune_req=uhd.libpyuhd.types.tune_request(s.freq(0))
@@ -178,7 +180,7 @@ def main():
             gpio_state=(gpio_state+1)%2
             
             # check that GPS is still locked.
-            gl.check_lock(usrp,log,exit_if_not_locked=True)
+            gps_mon.check()
 
         t0+=n.uint64(s.sweep_len_s)
 

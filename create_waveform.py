@@ -27,10 +27,17 @@ import iono_config
 # seed is a way of reproducing the random code without
 # having to store all actual codes. the seed can then
 # act as a sort of station_id.
-def create_pseudo_random_code(clen=10000, seed=0):
+def create_pseudo_random_code(clen=10000, seed=0, pulse_length=-1, ipp=1000):
     n.random.seed(seed)
     # Each bit has a random phase between \phi_t = U(0,2*pi). The waveform is e^(i \phi_t).
     code = n.array(n.exp(1j*n.random.rand(clen)*2*n.pi),dtype=n.complex64)
+
+    if pulse_length > 0:
+        # if a pulse length is specified, notch everything to zero after pulse
+        n_pulses=int(clen/ipp)
+        for i in range(n_pulses):
+            code[ (i*ipp + pulse_length): ((i+1)*ipp) ] = 0.0
+    
     return(code)
 
 
@@ -130,13 +137,15 @@ def waveform_to_file(station=0,
                      sr=1e6,
                      bandwidth=100e3,
                      power_outside_band=0.01,
+                     pulse_length=-1,
+                     ipp=1000,
                      code_type="prn"):
 
     os.system("mkdir -p waveforms")
     ofname='waveforms/code-l%d-b%d-%06df_%dk.bin' % (clen, oversample, station,int(bandwidth/1e3))
 
     if code_type=="prn":
-        code=create_pseudo_random_code(clen=clen, seed=station)
+        code=create_pseudo_random_code(clen=clen, seed=station, pulse_length=pulse_length, ipp=ipp)
     else:
         code=create_prn_dft_code(clen=clen, seed=station)
     a = rep_seq(code,
@@ -150,6 +159,7 @@ def waveform_to_file(station=0,
         
     print("Writing file %s"%(ofname))
     a.tofile(ofname)
+    return(ofname,code)
 
 
 def barker_to_file(
@@ -207,6 +217,16 @@ if __name__ == '__main__':
         (default: %(default)s)''',
     )
     parser.add_argument(
+        '-p', '--pulse_length', type=float, default=-1,
+        help='''Pulse length (default 100% duty-cycle)
+        (default: %(default)s)''',
+    )
+    parser.add_argument(
+        '-i', '--ipp', type=float, default=1000,
+        help='''How many samples is the pulse spacing
+        (default: %(default)s)''',
+    )
+    parser.add_argument(
         '-o', '--out_of_band_power', type=float, default=0.01,
         help='''How much power is allowed to be out of band.
         (default: %(default)s)''',
@@ -217,5 +237,6 @@ if __name__ == '__main__':
     waveform_to_file(
         station=op.station, clen=op.length, oversample=op.oversampling,
         filter_output=op.filter, bandwidth=1e3*op.bandwidth, sr=op.sample_rate,
-        power_outside_band=op.out_of_band_power, code_type=op.code_type
+        power_outside_band=op.out_of_band_power, code_type=op.code_type,
+        ipp=op.ipp, pulse_length=op.pulse_length
     )
