@@ -118,23 +118,24 @@ def main():
     log.log("Starting TX sweep",print_msg=True)
 
     # this is the sweep configuration
-    s=iono_config.s
+    ic=iono_config.get_config()
+    s=ic.s
     
     sample_rate=iono_config.sample_rate
     
     # use the address configured for the transmitter
-    usrp = uhd.usrp.MultiUSRP("addr=%s"%(iono_config.tx_addr))
+    usrp = uhd.usrp.MultiUSRP("addr=%s"%(ic.tx_addr))
     usrp.set_tx_rate(sample_rate)
     usrp.set_rx_rate(sample_rate)
     
-    rx_subdev_spec=uhd.usrp.SubdevSpec(iono_config.rx_subdev)
-    tx_subdev_spec=uhd.usrp.SubdevSpec(iono_config.tx_subdev)
+    rx_subdev_spec=uhd.usrp.SubdevSpec(ic.rx_subdev)
+    tx_subdev_spec=uhd.usrp.SubdevSpec(ic.tx_subdev)
     
     usrp.set_tx_subdev_spec(tx_subdev_spec)
     usrp.set_rx_subdev_spec(rx_subdev_spec)
 
     # wait until GPS is locked, then align USRP time with global ref
-    gl.sync_clock(usrp,log,min_sync_time=iono_config.min_gps_lock_time)
+    gl.sync_clock(usrp,log,min_sync_time=ic.min_gps_lock_time)
     
     # start with first frequency on tx and rx
     tune_req=uhd.libpyuhd.types.tune_request(s.freq(0))
@@ -156,14 +157,14 @@ def main():
         for i in range(s.n_freqs):
             f0,dt=s.pars(i)
             
-            print("f=%f bandwidth %d kHz"%(f0,s.bw(i)*1e3))
+            print("f=%f code %s"%(f0,s.codes[s.pars(i)[1]]))
             transmit_waveform(usrp,n.uint64(t0+dt),s.waveform(i),swr_buffer,f0,log)                
             
             # tune to next frequency 0.0 s before end
             next_freq_idx=(i+1)%s.n_freqs
             tune_at(usrp,t0+dt+s.freq_dur-0.05,f0=s.freq(next_freq_idx),gpio_state=gpio_state)
             gpio_state=(gpio_state+1)%2
-
+            
             # check that GPS is still locked.
             gl.check_lock(usrp,log,exit_if_not_locked=True)
 

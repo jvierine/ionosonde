@@ -199,17 +199,20 @@ def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
     exit(0)
     return
 
-def housekeeping(usrp,log,s):
+def housekeeping(usrp,log,ic):
+    """
+    Delete raw voltage files in ringbuffer
+    """
     try:
         while True:
             t0=usrp.get_time_now().get_real_secs()
-            delete_old_files(int(t0)-int(s.sweep_len_s)*3,iono_config.data_path)
-            t0+=np.uint64(s.sweep_len_s)
+            delete_old_files(int(t0)-int(ic.s.sweep_len_s)*3,ic.data_path)
+            t0+=np.uint64(ic.s.sweep_len_s)
             
             process = psutil.Process(os.getpid())
             log.log("Memory use %1.5f (MB)"%(process.memory_info().rss/1e6))
             
-            time.sleep(s.sweep_len_s)
+            time.sleep(ic.s.sweep_len_s)
     except:
         print("Housekeeping thread stopped")
         pass
@@ -223,26 +226,28 @@ def main():
     log=l.logger(logfile)
     log.log("Starting receiver")
     os.system("rm rx-current.log;ln -s %s rx-current.log"%(logfile))
+
+    ic=iono_config.get_config()
     
-    s=iono_config.s
+    s=ic.s
     log.log("Sweep freqs:")
     log.log(str(s.freqs))
     log.log("Sweep length %1.2f s Freq step %1.2f"%(s.sweep_len_s,s.freq_dur))
 
     # Configuring USRP
-    sample_rate=iono_config.sample_rate
+    sample_rate=ic.sample_rate
 
     # number of samples per freq
     N=int(sample_rate*s.freq_dur)
 
     # configure usrp
-    usrp = uhd.usrp.MultiUSRP("addr=%s,recv_buff_size=500000000"%(iono_config.rx_addr))
+    usrp = uhd.usrp.MultiUSRP("addr=%s,recv_buff_size=500000000"%(ic.rx_addr))
     usrp.set_rx_rate(sample_rate)
-    subdev_spec=uhd.usrp.SubdevSpec(iono_config.rx_subdev)
+    subdev_spec=uhd.usrp.SubdevSpec(ic.rx_subdev)
     usrp.set_rx_subdev_spec(subdev_spec)
 
     # Synchronizing clock
-    gl.sync_clock(usrp,log,min_sync_time=iono_config.min_gps_lock_time)
+    gl.sync_clock(usrp,log,min_sync_time=ic.min_gps_lock_time)
 
     # figure out when to start the cycle.
     t_now=usrp.get_time_now().get_real_secs()
@@ -255,7 +260,7 @@ def main():
     
     
     # start reading data
-    housekeeping_thread=threading.Thread(target=housekeeping,args=(usrp,log,s))
+    housekeeping_thread=threading.Thread(target=housekeeping,args=(usrp,log,ic))
     housekeeping_thread.daemon=True
     housekeeping_thread.start()
 
