@@ -137,7 +137,7 @@ class iono_config:
         print("Sweep configuration")
         for i in range(self.n_freqs):
             out +="t=%1.2f s f=%1.2f MHz code=%s\n"%(i*self.frequency_duration,self.freqs[i][0],self.codes[self.freqs[i][1]])
-        out+="Total ionogram durtion %1.2f s\n"%(self.n_freqs*self.frequency_duration)
+        out+="Total ionogram duration %1.2f s\n"%(self.n_freqs*self.frequency_duration)
         return(out)
 
     
