@@ -19,7 +19,7 @@ import os
 # internal modules related with the ionosonde
 import sweep
 import gps_lock as gl
-import iono_logger as l
+import iono_logger
 import iono_config
 
 def tune_at(u,t0,ic,f0=4e6,gpio_state=0):

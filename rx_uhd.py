@@ -16,7 +16,7 @@ import threading
 import numpy as n
 import matplotlib.pyplot as plt
 import sweep
-import iono_logger as l
+import iono_logger
 import gps_lock as gl
 import stuffr
 import glob
