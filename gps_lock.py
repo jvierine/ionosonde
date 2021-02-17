@@ -70,29 +70,35 @@ def sync_clock(u,log, min_sync_time=300.0):
 
 
 class gpsdo_monitor:
-    def __init__(self,u,log,holdover_time=1800.0):
+    def __init__(self,u,log,holdover_time=1800.0,exit_on_lost_lock=True):
         self.u=u
         self.t_last_locked=time.time()
         self.holdover_time=holdover_time
         self.log=log
+        self.exit_on_lost_lock=exit_on_lost_lock
         
     def check(self):
         locked=check_lock(self.u,log=self.log, exit_if_not_locked=False)
+        lock_lost=False
         if not locked:
             delta_t = time.time()-self.t_last_locked
             if delta_t > self.holdover_time:
                 self.log.log("Lost GPS lock for %1.2f seconds. Exiting"%(delta_t))
-                exit(0)
+                lock_lost=True
+                if self.exit_on_lost_lock:
+                    exit(0)
             else:
                 self.log.log("Lost GPS lock for %1.2f seconds"%(delta_t))
         else:
             self.t_last_locked=time.time()
+        return(lock_lost)
 
             
 if __name__ == "__main__":
     u = uhd.usrp.MultiUSRP()
     print(u.get_mboard_sensor("gps_gprmc"))
     print(u.get_mboard_sensor("gps_gpgga"))
+    print(u.get_mboard_sensor("gps_time"))
     locked=check_lock(u,log=None,exit_if_not_locked=False)
     print("GPS locked %d"%(locked))
 

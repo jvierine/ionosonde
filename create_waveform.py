@@ -112,7 +112,7 @@ def filter_waveform(waveform,
         P_tot=n.sum(S)
         P_in=n.sum(S[fidx])
         power_outside_band = 1.0-P_in/P_tot
-        print("fl %d power outside band %1.3f"%(fl,power_outside_band))
+        #print("fl %d power outside band %1.3f"%(fl,power_outside_band))
         fl+=2
     print("Using filter length of %d samples"%(fl-2))
     

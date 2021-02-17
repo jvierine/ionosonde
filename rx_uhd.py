@@ -71,12 +71,13 @@ def write_to_file(recv_buffer,fname,log,dec=10,fl=20):
 #    obuf=stuffr.decimate(recv_buffer,dec=dec)
     obuf.tofile(fname)
 
-def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
+def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
     """
     New receive script, which processes data incoming from the usrp
     one packet at a time.
     """
-
+    s=ic.s
+    gps_mon=gl.gpsdo_monitor(u,log,exit_on_lost_lock=False)
     # sweep timing and frequencies
     fvec=[]
     t0s=[]    
@@ -167,7 +168,7 @@ def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
                 wr_buff[:]=output_buffer[n.mod(idx0+n.arange(n_per_freq,dtype=n.uint64),bl)]
 
                 # spin of a thread to write all samples obtained while sounding this frequency
-                wr_thread=threading.Thread(target=write_to_file,args=(wr_buff,"%s/raw-%d-%03d.bin"%(iono_config.data_path,cycle_t0,freq_num),log))
+                wr_thread=threading.Thread(target=write_to_file,args=(wr_buff,"%s/raw-%d-%03d.bin"%(ic.data_dir,cycle_t0,freq_num),log))
                 wr_thread.start()
                 freq_num += 1
     
@@ -180,7 +181,8 @@ def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
                     cycle_t0 += s.sweep_len_s
                     freq_num=0
                     sweep_num+=1
-                    locked=gl.check_lock(u,log,exit_if_not_locked=False)
+                    
+                    locked=gps_mon.check()
                     log.log("Starting new cycle at %1.2f"%(cycle_t0))
             
                 # we've got a full freq step
@@ -192,9 +194,9 @@ def receive_continuous(u,t0,t_now,s,log,sample_rate=1000000.0):
         pass
     print("Issuing stop command...")
     
-    stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.stop_cont)
-    rx_stream.issue_stream_cmd(stream_cmd)
-    time.sleep(1)
+#    stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.stop_cont)
+#    rx_stream.issue_stream_cmd(stream_cmd)
+#    time.sleep(1)
     print("Stream stopped")
     exit(0)
     return
@@ -206,7 +208,7 @@ def housekeeping(usrp,log,ic):
     try:
         while True:
             t0=usrp.get_time_now().get_real_secs()
-            delete_old_files(int(t0)-int(ic.s.sweep_len_s)*3,ic.data_path)
+            delete_old_files(int(t0)-int(ic.s.sweep_len_s)*3,ic.data_dir)
             t0+=np.uint64(ic.s.sweep_len_s)
             
             process = psutil.Process(os.getpid())
@@ -266,7 +268,7 @@ def main():
     housekeeping_thread.start()
 
     # infinitely loop on receive
-    receive_continuous(usrp,t0,t_now,s,log)
+    receive_continuous(usrp,t0,t_now,ic,log)
     
 if __name__ == "__main__":
     main()
