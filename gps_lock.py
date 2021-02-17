@@ -79,19 +79,19 @@ class gpsdo_monitor:
         
     def check(self):
         locked=check_lock(self.u,log=self.log, exit_if_not_locked=False)
-        lock_lost=False
+        locked_on_avg=True
         if not locked:
             delta_t = time.time()-self.t_last_locked
             if delta_t > self.holdover_time:
                 self.log.log("Lost GPS lock for %1.2f seconds. Exiting"%(delta_t))
-                lock_lost=True
+                locked_on_avg=False
                 if self.exit_on_lost_lock:
                     exit(0)
             else:
                 self.log.log("Lost GPS lock for %1.2f seconds"%(delta_t))
         else:
             self.t_last_locked=time.time()
-        return(lock_lost)
+        return(locked_on_avg)
 
             
 if __name__ == "__main__":

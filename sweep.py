@@ -68,6 +68,10 @@ class sweep():
         """ what code is being transmitted on cycle i """
         return(self.codes[self.freqs[i%self.n_freqs][1]])
     
+    def code_idx(self,i):
+        """ what code is being transmitted on cycle i """
+        return(self.freqs[i%self.n_freqs][1])
+    
 #    def bw(self,i):
  #       return(self.freqs[i][1]-self.freqs[i][0])
     

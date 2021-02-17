@@ -52,7 +52,7 @@ def periodic_convolution_matrix(envelope, rmin=0, rmax=100):
     return(result)
 
 
-def create_estimation_matrix(code, rmin=0, rmax=1000, cache=True):
+def create_estimation_matrix(code, rmin=0, rmax=1000):
 
     r_cache = periodic_convolution_matrix(envelope=code, rmin=rmin, rmax=rmax)
     A = r_cache['A']
@@ -65,73 +65,51 @@ def create_estimation_matrix(code, rmin=0, rmax=1000, cache=True):
     B_cached = True
     return(r_cache)
 
-def analyze_prc(zin,
-                clen=10000,
-                station=0,
-                Nranges=1000,
-                rfi_rem=True,
-                spec_rfi_rem=False,
-                cache=True,
-                gc_rem=False,
-                wfun=scipy.signal.tukey,
-                gc=20,
-                fft_filter=False,
-                code_type="prn",
-                dec=10):
-    """
-    Analyze pseudorandom code transmission for a block of data.
-
-    idx0 = start idx
-    an_len = analysis length
-    clen = code length
-    station = random seed for pseudorandom code
-    cache = Do we cache (\conj(A^T)\*A)^{-1}\conj{A}^T for linear least squares
-        solution (significant speedup)
-    rfi_rem = Remove RFI (whiten noise).
-
-    """
-    if code_type=="perfect":
-        code = create_waveform.create_prn_dft_code(clen=clen, seed=station)
-    elif:
-        code_type=="barker39":
-        code = create_waveform.create_barker39(clen=clen)
-    else:
-        code = create_waveform.create_pseudo_random_code(clen=clen, seed=station)
-    an_len=len(zin)/dec
+def analyze_prc2(z,
+                 code,
+                 cache_idx=0,
+                 n_ranges=1000,
+                 rfi_rem=False,
+                 spec_rfi_rem=False,
+                 cache=True,
+                 gc_rem=False,
+                 wfun=scipy.signal.tukey,
+                 gc=20,
+                 fft_filter=False):
+    
+    an_len=len(z)
+    clen=len(code)
     N = int(an_len / clen )
-    res = np.zeros([N, Nranges], dtype=np.complex64)
-
+    res = np.zeros([N, n_ranges], dtype=np.complex64)
 
     # use cached version of (A^HA)^{-1}A^H if it exists.
-    if os.path.exists("waveforms/b-%d-%d-%s.h5"%(station,Nranges,code_type)):
-        hb=h5py.File("waveforms/b-%d-%d-%s.h5"%(station,Nranges,code_type),"r")
-        B=hb["B"].value
+    cache_file="waveforms/cache-%d.h5"%(cache_idx)
+    
+    if os.path.exists(cache_file):
+        hb=h5py.File(cache_file,"r")
+        B=np.copy(hb["B"][()])
         hb.close()
     else:
-        r = create_estimation_matrix(code=code, cache=cache, rmax=Nranges)
+        r = create_estimation_matrix(code=code, rmax=n_ranges)
         B = r['B']        
-        hb=h5py.File("waveforms/b-%d-%d-%s.h5"%(station,Nranges,code_type),"w")
+        hb=h5py.File(cache_file,"w")
         hb["B"]=B
         hb.close()        
         
-    spec = np.zeros([N, Nranges], dtype=np.complex64)
+    spec = np.zeros([N, n_ranges], dtype=np.complex64)
 
-    if dec > 1:
-        z=stuffr.decimate(zin,dec=dec)
-    else:
-        z=zin
     z.shape=(N,clen)
+    
     if rfi_rem:
         bg=np.median(z,axis=0)
         z=z-bg
-#    print(len(z))
+
     if fft_filter:
         S=np.zeros(clen,dtype=np.float32)
         for i in np.arange(N):
             S+=np.abs(sf.fft(z[i,:]))**2.0
         S=np.sqrt(S/float(N))
     for i in np.arange(N):
-#        z = stuffr.decimate(zin[(i*clen*dec):((i+1)*clen*dec)],dec=dec)
         # B=(A^H A)^{-1}A^H
         # B*z = (A^H A)^{-1}A^H*z = x_ml
         # z = measurement
@@ -141,13 +119,13 @@ def analyze_prc(zin,
         else:
             zw=z[i,:]
         res[i, :] = np.dot(B, zw)
-#        res[i,:] = reso[i,:]#/np.median(np.abs(reso[i,:]))
+
     if gc_rem:
-        for i in range(gc,Nranges):
+        for i in range(gc,n_ranges):
             res[:,i]=res[:,i]-np.median(res[:,i])
 
     window=wfun(N)
-    for i in np.arange(Nranges):
+    for i in np.arange(n_ranges):
         spec[:, i] = np.fft.fftshift(np.fft.fft(
             window * res[:, i]
         ))
@@ -156,7 +134,7 @@ def analyze_prc(zin,
         median_spec = np.zeros(N, dtype=np.float32)
         for i in np.arange(N):
             median_spec[i] = np.median(np.abs(spec[i, :]))
-        for i in np.arange(Nranges):
+        for i in np.arange(n_ranges):
             spec[:, i] = spec[:, i] / median_spec[:]
     ret = {}
     ret['res'] = res

@@ -193,10 +193,13 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
         print("interrupt")
         pass
     print("Issuing stop command...")
+    stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.stop_cont)
+    rx_stream.issue_stream_cmd(stream_cmd)
     
-#    stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.stop_cont)
-#    rx_stream.issue_stream_cmd(stream_cmd)
-#    time.sleep(1)
+    num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=0.1)
+    while(num_rx_samps != 0):
+        print("Clearing buffer")
+        num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=0.1)
     print("Stream stopped")
     exit(0)
     return

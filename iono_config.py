@@ -15,12 +15,13 @@ import json
 import create_waveform
 
 class iono_config:
-    def __init__(self,fname=None):
+    def __init__(self,fname=None,write_waveforms=True, quiet=True):
         c=configparser.ConfigParser()
-
+        self.quiet=quiet
         if fname != None:
             if os.path.exists(fname):
-                print("reading %s"%(fname))
+                if not quiet:
+                    print("reading %s"%(fname))
                 c.read(fname)
             else:
                 print("configuration file %s doesn't exist."%(fname))
@@ -55,7 +56,8 @@ class iono_config:
         self.ipps=json.loads(c["config"]["ipp"])
         self.bws=json.loads(c["config"]["bw"])        
 
-        print("Creating waveforms")
+        if not quiet:
+            print("Creating waveforms")
         self.n_codes=len(self.code_types)
         self.codes=[]
         self.orig_codes=[]
@@ -69,7 +71,9 @@ class iono_config:
                                                           power_outside_band=0.01,
                                                           pulse_length=self.pulse_lengths[i],
                                                           ipp=self.ipps[i],
-                                                          code_type=self.code_types[i])
+                                                          code_type=self.code_types[i],
+                                                          write_file=write_waveforms)
+
             self.codes.append(cfname)
             self.orig_codes.append(ocode)
 
@@ -136,11 +140,11 @@ class iono_config:
 
     
 
-def get_config():
-    print(sys.argv)
+def get_config(write_waveforms=True):
     if len(sys.argv) != 2:
-        print(len(sys.argv))
-    c=iono_config(sys.argv[1])
+        print("provide configuration file as argument!")
+        exit(0)
+    c=iono_config(sys.argv[1],write_waveforms=write_waveforms)
     return(c)
 
 

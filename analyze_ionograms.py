@@ -13,6 +13,7 @@ import stuffr
 import sweep
 import h5py
 import iono_config
+import scipy.constants as c
 
 def save_raw_data(fname="tmp.h5",
                   t0=0,
@@ -20,13 +21,8 @@ def save_raw_data(fname="tmp.h5",
                   freqs=0,
                   station=0,
                   sr=100e3,
-                  freq_dur=4,
-                  codes=[],
-                  lat=78.1536,
-                  lon=16.054,
-                  code_type="perfect",
-                  code_len=10000,
-                  version=1):
+                  freq_dur=4):
+
     """ 
     save all relevant information that will allow an ionogram
     and range-Doppler spectra to be calculated
@@ -40,14 +36,8 @@ def save_raw_data(fname="tmp.h5",
     ho["t0"]=t0
     ho["z_im"]=z_im
     ho["freqs"]=freqs
-    ho["codes"]=codes
-    ho["code_type"]=code_type
     ho["freq_dur"]=freq_dur
     ho["sample_rate"]=sr
-    ho["lat"]=lat
-    ho["lon"]=lon
-    ho["code_len"]=code_len
-    ho["version"]=version
     ho["station_id"]=station
     ho.close()
 
@@ -73,9 +63,10 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
     # TODO: save raw voltage to file,
     # then analyze raw voltage file with common program
     # figure out what cycle is ready
+    s=ic.s
     n_rg=ic.n_range_gates
     t0=n.uint64(n.floor(time.time()/(s.sweep_len_s))*ic.s.sweep_len_s-ic.s.sweep_len_s)
-
+    
     sfreqs=n.array(ic.s.freqs)
     iono_freqs=sfreqs[:,0]
     fmax=n.max(iono_freqs)
@@ -85,12 +76,12 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
     IS=n.zeros([sfreqs.shape[0],n_rg],dtype=n.float32)
 
     # number of transmit "pulses"
-    n_t=int(ic.s.freq_dur*1000000/ic.ipp)
+    n_t=int(ic.s.freq_dur*1000000/(ic.code_len*ic.dec))
     
     all_spec=n.zeros([ic.s.n_freqs,n_t,n_rg],dtype=n.float32)
     
     # IPP length
-    dt=ic.ipp/1e6
+    dt=ic.dec*ic.code_len/1e6
 
     # range step
     dr = ic.dec*c.c/ic.sample_rate/2.0/1e3
@@ -99,7 +90,7 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
     fvec=n.fft.fftshift(n.fft.fftfreq(n_t,d=dt))
 
     hdname=stuffr.unix2iso8601_dirname(t0)
-    dname="%s/%s"%(iono_config.ionogram_path,hdname)
+    dname="%s/%s"%(ic.ionogram_path,hdname)
     os.system("mkdir -p %s"%(dname))
 
     z_all=n.zeros([ic.s.n_freqs,int(ic.s.freq_dur*100000)],dtype=n.complex64)
@@ -112,11 +103,17 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
             z=n.fromfile(fname,dtype=n.complex64)
             z_all[i,:]=z
             N=len(z)
-            res=p.analyze_prc(z,rfi_rem=False,spec_rfi_rem=True,dec=1,code_type=iono_config.code_type,Nranges=n_rg)
+            code_idx=ic.s.code_idx(i)
+            res=p.analyze_prc2(z,
+                               code=ic.orig_codes[code_idx],
+                               cache_idx=code_idx,
+                               rfi_rem=False,
+                               spec_rfi_rem=True,
+                               n_ranges=n_rg)
 
             plt.subplot(121)
             
-            tvec=n.arange(int(N/ic.ipp),dtype=n.float64)*dt
+            tvec=n.arange(int(N/ic.code_len),dtype=n.float64)*dt
             dBr=10.0*n.log10(n.transpose(n.abs(res["res"])**2.0))
             noise_floor=n.nanmedian(dBr)
             noise_floor_0=noise_floor
@@ -181,7 +178,7 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
     noise_floor_0=n.mean(n.array(noise_floors))
     
     plt.figure(figsize=(1.5*8,1.5*6))
-    plt.pcolormesh(n.concatenate((iono_p_freq,[fmax+0.1])),rvec-iono_config.range_shift*1.5, dB,vmin=-3,vmax=20.0)
+    plt.pcolormesh(n.concatenate((iono_p_freq,[fmax+0.1])),rvec-ic.range_shift*1.5, dB,vmin=-3,vmax=20.0)
     plt.title("%s %s\nnoise_floor=%1.2f (dB)"%(ic.instrument_name,
                                                stuffr.unix2datestr(t0),
                                                noise_floor_0))
@@ -203,18 +200,15 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
 
 
     ofname="%s/raw-%s.h5"%(dname,datestr)
-    if iono_config.save_raw_voltage:
+    if ic.save_raw_voltage:
         save_raw_data(ofname,
                       t0,
                       z_all,
                       ic.s.freqs,
                       ic.station_id,
                       sr=ic.sample_rate/ic.dec,
-                      freq_dur=ic.s.freq_dur,
-                      codes=ic.s.codes,
-                      lat=ic.lat,
-                      lon=ic.lon,
-                      code_type=ic.code_type)
+                      freq_dur=ic.s.freq_dur)
+
         
     iono_ofname="%s/ionogram-%s.h5"%(dname,datestr)
     print("Saving ionogram %s"%(iono_ofname))
@@ -232,6 +226,6 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
 
 if __name__ == "__main__":
 
-    ic=iono_config.get_config()
-    print("Starting analysis")
+    ic=iono_config.get_config(write_waveforms=False)
+    print("Starting analysis %f"%(time.time()))
     analyze_latest_sweep(ic)

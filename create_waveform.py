@@ -96,7 +96,7 @@ def filter_waveform(waveform,
     fidx=n.where(n.abs(fvec) < bandwidth/2.0)[0]
     
     waveform_f=n.fft.fft(waveform)
-    print("Searching for filter length")
+#    print("Searching for filter length")
     while power_outside_band > max_power_outside_band:
         
         w[0:fl] = scipy.signal.flattop(fl)
@@ -114,7 +114,7 @@ def filter_waveform(waveform,
         power_outside_band = 1.0-P_in/P_tot
         #print("fl %d power outside band %1.3f"%(fl,power_outside_band))
         fl+=2
-    print("Using filter length of %d samples"%(fl-2))
+#    print("Using filter length of %d samples"%(fl-2))
     
     if plot:
         plt.plot(a.real,a.imag,".")
@@ -139,7 +139,9 @@ def waveform_to_file(station=0,
                      power_outside_band=0.01,
                      pulse_length=-1,
                      ipp=1000,
-                     code_type="prn"):
+                     code_type="prn",
+                     write_file=True):
+
 
     os.system("mkdir -p waveforms")
     ofname='waveforms/code-l%d-b%d-%06df_%dk.bin' % (clen, oversample, station,int(bandwidth/1e3))
@@ -156,9 +158,10 @@ def waveform_to_file(station=0,
                           sr=sr,
                           bandwidth=bandwidth,
                           max_power_outside_band=power_outside_band)
-        
-    print("Writing file %s"%(ofname))
-    a.tofile(ofname)
+
+    if write_file:        
+        print("Writing file %s"%(ofname))
+        a.tofile(ofname)
     return(ofname,code)
 
 
