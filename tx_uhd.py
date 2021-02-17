@@ -123,12 +123,8 @@ def main():
     """
     The main loop for the ionosonde transmitter
     """
-    t_start=time.time()
-    os.system("mkdir -p logs")
-    logfname="logs/tx-%d.log"%(t_start)
-    log=l.logger(logfname)
-    os.system("ln -sf %s tx-current.log"%(logfname))
-    log.log("Starting TX sweep",print_msg=True)
+    # setup a logger
+    log = iono_logger.logger("rx-")
 
     # this is the sweep configuration
     ic=iono_config.get_config()
