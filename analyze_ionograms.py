@@ -110,7 +110,8 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
                                rfi_rem=False,
                                spec_rfi_rem=True,
                                n_ranges=n_rg)
-
+            
+            plt.figure(figsize=(1.5*8,1.5*6))
             plt.subplot(121)
             
             tvec=n.arange(int(N/ic.code_len),dtype=n.float64)*dt
@@ -119,11 +120,11 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
             noise_floor_0=noise_floor
             noise_floors.append(noise_floor_0)
             dBr=dBr-noise_floor
-            plt.pcolormesh(tvec,rvec,dBr,vmin=-3,vmax=30.0)
+            plt.pcolormesh(tvec,rvec-ic.range_shift*dr,dBr,vmin=-3,vmax=30.0)
             plt.xlabel("Time (s)")
             plt.title("Range-Time Power f=%d (dB)\nnoise_floor=%1.2f (dB)"%(i,noise_floor))
             plt.ylabel("Range (km)")
-            plt.ylim([0,500])
+            plt.ylim([-10,ic.max_plot_range])
             
             
             plt.colorbar()
@@ -146,7 +147,7 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
             noise_floor=n.nanmedian(dBs)
             dBs=dBs-noise_floor
             plt.pcolormesh(fvec,rvec-ic.range_shift*dr,dBs,vmin=-3,vmax=30.0)
-            plt.ylim([0,500])
+            plt.ylim([-10,ic.max_plot_range])
             
             plt.title("Range-Doppler Power (dB)\nnoise_floor=%1.2f (dB)"%(noise_floor))
             plt.xlabel("Frequency (Hz)")
@@ -185,7 +186,7 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
     plt.xlabel("Frequency (MHz)")
     plt.ylabel("Virtual range (km)")
     plt.colorbar()
-    plt.ylim([0,800.0])
+    plt.ylim([0,ic.max_plot_range])
     plt.xlim([n.min(iono_freqs)-0.5,n.max(iono_freqs)+0.5])
     plt.tight_layout()
 
