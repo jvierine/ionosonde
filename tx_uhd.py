@@ -124,7 +124,7 @@ def main():
     The main loop for the ionosonde transmitter
     """
     # setup a logger
-    log = l.logger("tx-")
+    log = iono_logger.logger("tx-")
 
     # this is the sweep configuration
     ic=iono_config.get_config()
