@@ -227,11 +227,7 @@ def main():
     Start up everything and run main loop from here.
     """
     # setup a logger
-    logfile="logs/rx-%d.log"%(time.time())
-    os.system("mkdir -p logs")
-    log=l.logger(logfile)
-    log.log("Starting receiver")
-    os.system("rm rx-current.log;ln -s %s rx-current.log"%(logfile))
+    log = iono_logger.logger("rx-")
 
     ic=iono_config.get_config()
     
