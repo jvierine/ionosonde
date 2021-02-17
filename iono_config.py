@@ -90,6 +90,8 @@ class iono_config:
         self.frequency_duration=json.loads(c["config"]["frequency_duration"])
         
         self.antenna_select_freq=float(json.loads(c["config"]["antenna_select_freq"]))
+        
+        self.max_plot_range=float(json.loads(c["config"]["max_plot_range"]))        
 
         self.gps_holdover_time=float(json.loads(c["config"]["gps_holdover_time"]))        
         

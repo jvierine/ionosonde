@@ -186,7 +186,7 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
     plt.xlabel("Frequency (MHz)")
     plt.ylabel("Virtual range (km)")
     plt.colorbar()
-    plt.ylim([0,ic.max_plot_range])
+    plt.ylim([-10,ic.max_plot_range])
     plt.xlim([n.min(iono_freqs)-0.5,n.max(iono_freqs)+0.5])
     plt.tight_layout()
 
