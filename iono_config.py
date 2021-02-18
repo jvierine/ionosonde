@@ -62,6 +62,9 @@ class iono_config:
         self.codes=[]
         self.orig_codes=[]
         for i in range(self.n_codes):
+            if n.mod(int(self.code_len),int(self.ipps[i])) != 0:
+                print("Code length %d must be a multiple of IPP %d. This is not the case. Exiting."%(self.code_len,self.ipps[i]))
+                exit(0)
             cfname,ocode=create_waveform.waveform_to_file(station=self.station_id,
                                                           clen=self.code_len,
                                                           oversample=self.dec,
