@@ -90,7 +90,11 @@ class iono_config:
         
         self.transmit_amplitude=float(json.loads(c["config"]["transmit_amplitude"]))
         
-        self.frequency_duration=json.loads(c["config"]["frequency_duration"])
+        self.frequency_duration=float(json.loads(c["config"]["frequency_duration"]))
+
+        if n.mod(int(self.frequency_duration*self.sample_rate),int(self.code_len*self.dec)) != 0:
+            print("frequency_duration (%1.2f s) needs to be a multiple of code_length (%1.2f s)"%(self.frequency_duration,self.code_len*self.dec/self.sample_rate))
+            exit(0)
         
         self.antenna_select_freq=float(json.loads(c["config"]["antenna_select_freq"]))
         
