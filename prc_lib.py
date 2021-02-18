@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+#
+# Code adapted from digital rf.
+# 
 # ----------------------------------------------------------------------------
 # Copyright (c) 2017 Massachusetts Institute of Technology (MIT)
 # All rights reserved.
@@ -7,7 +10,8 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Script for analyzing pseudorandom-coded waveforms.
+"""
+Script for analyzing pseudorandom-coded waveforms.
 
 See the following paper for a description and application of the technique:
 
@@ -29,11 +33,8 @@ import stuffr
 import numpy as np
 import scipy.signal
 import scipy.fftpack as sf
-#import digital_rf as drf
 
 import create_waveform 
-
-
 
 def periodic_convolution_matrix(envelope, rmin=0, rmax=100):
     """
