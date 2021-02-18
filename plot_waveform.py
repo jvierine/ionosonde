@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Simple script that allows you to plot the complex transmit waveform
 # and the power spectrum of it.

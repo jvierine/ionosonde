@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Demonstrate the use of internal gpsdo and set launch time on a N200.
 #

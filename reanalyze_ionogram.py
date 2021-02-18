@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import numpy as n
 import h5py
 import matplotlib.pyplot as plt

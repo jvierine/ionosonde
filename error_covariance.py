@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
-# Investigate code performance using the 
+# Investigate code performance using the
 # error covariance matrix of the estimated complex
 # radar scatter voltage
 #

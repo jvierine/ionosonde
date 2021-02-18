@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #
 # An attempt to translate the main functionality my main
 # R radio signal packages gursipr and stuffr to python.
