@@ -111,7 +111,8 @@ class iono_config:
         self.rx_subdev=json.loads(c["config"]["rx_subdev"])
         
         self.ionogram_path=json.loads(c["config"]["ionogram_path"])
-        
+        self.ionogram_dirname=json.loads(c["config"]["ionogram_dirname"])
+
         self.reflected_power_cal_dB=json.loads(c["config"]["reflected_power_cal_dB"])
 
         try:

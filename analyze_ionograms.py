@@ -89,7 +89,7 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
     rvec=n.arange(float(n_rg))*dr
     fvec=n.fft.fftshift(n.fft.fftfreq(n_t,d=dt))
 
-    hdname=stuffr.unix2iso8601_dirname(t0)
+    hdname=stuffr.unix2iso8601_dirname(t0, ic)
     dname="%s/%s"%(ic.ionogram_path,hdname)
     os.system("mkdir -p %s"%(dname))
 
