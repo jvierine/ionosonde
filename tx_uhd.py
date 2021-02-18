@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 #
-# Copyright 2020, Juha Vierinen, Markus Floer
-#
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 """

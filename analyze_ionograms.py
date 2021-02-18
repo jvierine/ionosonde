@@ -120,9 +120,10 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
             noise_floor_0=noise_floor
             noise_floors.append(noise_floor_0)
             dBr=dBr-noise_floor
-            plt.pcolormesh(tvec,rvec-ic.range_shift*dr,dBr,vmin=-3,vmax=30.0)
+            dB_max=n.nanmax(dBr)
+            plt.pcolormesh(tvec,rvec-ic.range_shift*dr,dBr,vmin=-3,vmax=ic.max_plot_dB)
             plt.xlabel("Time (s)")
-            plt.title("Range-Time Power f=%d (dB)\nnoise_floor=%1.2f (dB)"%(i,noise_floor))
+            plt.title("Range-Time Power f=%d (dB)\nnoise_floor=%1.2f (dB) peak SNR=%1.2f"%(i,noise_floor,dB_max))
             plt.ylabel("Range (km)")
             plt.ylim([-10,ic.max_plot_range])
             
@@ -146,10 +147,11 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
             dBs=10.0*n.log10(n.transpose(S))
             noise_floor=n.nanmedian(dBs)
             dBs=dBs-noise_floor
-            plt.pcolormesh(fvec,rvec-ic.range_shift*dr,dBs,vmin=-3,vmax=30.0)
+            max_dB=n.nanmax(dBs)
+            plt.pcolormesh(fvec,rvec-ic.range_shift*dr,dBs,vmin=-3,vmax=ic.max_plot_dB)
             plt.ylim([-10,ic.max_plot_range])
             
-            plt.title("Range-Doppler Power (dB)\nnoise_floor=%1.2f (dB)"%(noise_floor))
+            plt.title("Range-Doppler Power (dB)\nnoise_floor=%1.2f (dB) peak SNR=%1.2f (dB)"%(noise_floor,max_dB))
             plt.xlabel("Frequency (Hz)")
             plt.ylabel("Virtual range (km)")
             
@@ -179,10 +181,12 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
     noise_floor_0=n.mean(n.array(noise_floors))
     
     plt.figure(figsize=(1.5*8,1.5*6))
-    plt.pcolormesh(n.concatenate((iono_p_freq,[fmax+0.1])),rvec-ic.range_shift*1.5, dB,vmin=-3,vmax=20.0)
-    plt.title("%s %s\nnoise_floor=%1.2f (dB)"%(ic.instrument_name,
-                                               stuffr.unix2datestr(t0),
-                                               noise_floor_0))
+    max_dB=n.nanmax(dB)
+    plt.pcolormesh(n.concatenate((iono_p_freq,[fmax+0.1])),rvec-ic.range_shift*1.5, dB,vmin=-3,vmax=ic.max_plot_dB)
+    plt.title("%s %s\nnoise_floor=%1.2f (dB) peak SNR=%1.2f"%(ic.instrument_name,
+                                                              stuffr.unix2datestr(t0),
+                                                              noise_floor_0,
+                                                              max_dB))
     plt.xlabel("Frequency (MHz)")
     plt.ylabel("Virtual range (km)")
     plt.colorbar()
