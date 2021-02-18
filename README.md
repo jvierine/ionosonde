@@ -2,9 +2,9 @@
 
 (c) 2012-2021 Juha Vierinen, Markus Floer, Mikko Syrjäsuo, Peje Nilsson
 
-This setup of scripts implements a frequency hopping coded continuous-wave radar. The primary use of this software is for sounding the ionosphere with HF radio waves in the range of frequencies that correspond to plasma-frequencies encountered in the ionosphere. This type of a radar is also called an ionosonde when used to sound the ionosphere. The software can be used for both vertical and oblique sounding, and it is designed to be suitable for building a multi-static network of ionospheric sounders with multiple transmitters and receivers. It is also possible to use the program for single frequency range-Doppler sounding, for e.g., studies of thermospheric gravity waves. 
+This setup of scripts implements a frequency hopping radar. The primary use of this software is for sounding the ionosphere with HF radio waves in the range of frequencies that correspond to plasma-frequencies encountered in the ionosphere. This type of a radar is also called an ionosonde when used to sound the ionosphere. The software can be used for both vertical and oblique sounding, and it is designed to be suitable for building a multi-static network of ionospheric sounders with multiple transmitters and receivers. It is also possible to use the program for single frequency range-Doppler sounding, for e.g., studies of thermospheric gravity waves.  
 
-The software is written purely in Python and it relies on the Ettus Research USRP Hardware Driver library to generate and receive radio signals. The ionosonde uses pseudorandom phase coded continuous wave transmit waveforms. The software relies on GPS to keep the transmitter and receiver time synchronous, which allows the transmitter and receiver to be located in different places. It is therefore easy to also have multiple oblique receivers listening the the same transmitter. The software does not require internet to operate, which makes it possible to operate receivers and transmitters with very low infrastructure. 
+The software is written purely in Python and it relies on the Ettus Research USRP Hardware Driver library to generate and receive radio signals. The ionosonde uses pseudorandom phase coded transmit waveforms with arbitrary duty-cycle. This means that both pulsed and continuous-wave transmit waveforms are supported. The software relies on GPS to keep the transmitter and receiver time synchronous, which allows the transmitter and receiver to be located in different places. It is therefore easy to also have multiple oblique receivers listening the the same transmitter. The software does not require internet to operate, which makes it possible to operate receivers and transmitters with very low infrastructure. 
 
 On receive, a range-Doppler spectrum of the received echoes is estimated and an ionogram is produced using the configured frequency sweep. 
 
@@ -18,10 +18,10 @@ The first prototype system has been deployed on the island of Svalbard as being 
 
 The software relies on USRP N2x0 software defined radio hardware. The minimum requirement is:
 - Ettus Research USRP N2x0 + internal GPSDO with BasicRX or LFRX daughterboard for receiving
-- Ettus Research USRP N2x0 + internal GPSDO with BasicRX or LFRX daughterboard for receiving and BasicTX or LFTX daugherboard of transmitting. The receiver card on the transmitter can be used to measure relfected or transmitted power using a directional coupler.
-- We rely on the internal Ettus Research GPSDO and use the UHD commands to interface with the GPSDO. It is possible to use another made, but you'll need to come up with an alternative interface to check for GPS lock.
+- Ettus Research USRP N2x0 + internal GPSDO with BasicRX or LFRX daughterboard for receiving and BasicTX or LFTX daugherboard of transmitting. The receiver card on the transmitter can be used to measure reflected or transmitted power using a directional coupler.
+- We rely on the internal Ettus Research GPSDO and use the UHD commands to interface with the GPSDO. It is possible to use another make of GPS clock, but you'll need to come up with an alternative interface to check for GPS lock. 
 - You choice of transmit and receiver antennas, and associated RF plumbing. An example is shown below.
-- 2 PCs - one to control the transmitter and one to control the receiver. These will often be in different places. For a monostatic radar, it is possible to use the same PC to control the transmitter and receiver. The receiver signal processing is not extremely demanding, and should work with a 10+ year old entry level CPU.  
+- PC - You can run the transmit and receive programs on the same computer. If the transmitter and receiver are in different locations, you'll need two PCs.The receiver signal processing is not extremely demanding, and should work with a 10+ year old entry level CPU.  
 
 ![Example implementation](figures/rf_block_diagram.png)
 
