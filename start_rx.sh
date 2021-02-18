@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 source config.sh
 
@@ -7,4 +7,4 @@ do
     python3 rx_uhd.py $IONO_CONFIG
     sleep 10
 done
-    
+
