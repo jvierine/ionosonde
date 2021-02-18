@@ -36,7 +36,7 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
     h=h5py.File(fname,"r")
 
     t0=h["t0"].value
-    hdname=stuffr.unix2iso8601_dirname(h["t0"].value)
+    hdname=stuffr.unix2iso8601_dirname(h["t0"].value, ic)
     dname="%s/%s"%(ic.ionogram_path, hdname)
     os.system("mkdir -p %s"%(dname))
     datestr=stuffr.unix2iso8601(t0)            

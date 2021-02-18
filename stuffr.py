@@ -162,8 +162,8 @@ def unix2date(x):
 def unix2iso8601(t):
     return(unix2date(t).strftime("%Y-%m-%dT%H:%M:%SZ"))
 
-def unix2iso8601_dirname(t):
-    return(unix2date(t).strftime("%Y-%m-%dT%H:00:00Z"))
+def unix2iso8601_dirname(t, ic):
+    return(unix2date(t).strftime(ic.ionogram_dirname))
 
 
 def sec2dirname(t):
