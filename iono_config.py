@@ -93,7 +93,9 @@ class iono_config:
         
         self.max_plot_range=float(json.loads(c["config"]["max_plot_range"]))        
 
-        self.gps_holdover_time=float(json.loads(c["config"]["gps_holdover_time"]))        
+        self.gps_holdover_time=float(json.loads(c["config"]["gps_holdover_time"]))
+
+        self.max_plot_dB=float(json.loads(c["config"]["max_plot_dB"]))
         
         self.tx_addr=json.loads(c["config"]["tx_addr"])
         self.rx_addr=json.loads(c["config"]["rx_addr"])
