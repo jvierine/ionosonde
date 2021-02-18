@@ -29,14 +29,15 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
                      use_old=False,
                      max_range=1000,
                      min_range=0,
-                     version=1):
+                     version=1,
+                     ic=iono_config.get_config()):
 
 
     h=h5py.File(fname,"r")
 
     t0=h["t0"].value
     hdname=stuffr.unix2iso8601_dirname(h["t0"].value)
-    dname="%s/%s"%(iono_config.ionogram_path,hdname)
+    dname="%s/%s"%(ic.ionogram_path, hdname)
     os.system("mkdir -p %s"%(dname))
     datestr=stuffr.unix2iso8601(t0)            
     iono_ofname="%s/ionogram-%s.h5"%(dname,datestr)
@@ -157,7 +158,7 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
         dBI=dBI-noise_floor
         dBI[n.isnan(dBI)]=-3
         plt.pcolormesh(n.concatenate((iono_p_freq,[fmax+0.1])),rvec,dBI,vmin=-3,vmax=20.0)
-        plt.title("%s %s\nNoise floor=%1.2f (dB)"%(iono_config.instrument_name,
+        plt.title("%s %s\nNoise floor=%1.2f (dB)"%(ic.instrument_name,
                                                    stuffr.unix2datestr(h["t0"].value),
                                                    noise_floor))
 
@@ -190,9 +191,11 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
                             
         
 if __name__ == "__main__":
+    ic = iono_config.get_config(write_waveforms=False)
     I,rvec,freq=analyze_ionogram(fname="results/2020-05-21T16-00-00/ionogram-1590076920.h5",
                                  avg_spec=False,
                                  plot_ionogram=False,
                                  plot_spectra=False,
-                                 version=1)
-    
+                                 version=1,
+                                 ic)
+
