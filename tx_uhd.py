@@ -19,6 +19,8 @@ import sweep
 import gps_lock as gl
 import iono_logger
 import iono_config
+from datetime import datetime, timedelta
+
 
 def tune_at(u,t0,ic,f0=4e6,gpio_state=0):
     """ 
@@ -90,14 +92,24 @@ def transmit_waveform(u,t0_full,waveform,swr_buffer,f0,log,ic):
     md=uhd.types.TXMetadata()
     md.has_time_spec=True
     md.time_spec=t0_ts
-    
-    print("transmit start at %1.2f"%(t0_full))
-    
+
+    t0_full_dt = datetime.fromtimestamp(t0_full)
+    print("transmit start at %1.2f (%s)" % (t0_full, t0_full_dt.strftime("%FT%T.%f")[:-3]))
+
     # wait for moment right before transmit
     t_now=u.get_time_now().get_real_secs()
-    print("setup time %1.2f"%(t_now))
+    t_now_dt = datetime.fromtimestamp(t_now)
+    print("setup time %1.2f (%s)" % (t_now, t_now_dt.strftime("%FT%T.%f")[:-3]))
     if t_now > t0_full:
-        log.log("Delayed start for transmit %1.2f %1.2f"%(t_now,t0_full))
+        log.log(
+            "Delayed start for transmit %1.2f (%s)  %1.2f (%s)"
+            % (
+                t_now,
+                t_now_dt.strftime("%FT%T.%f")[:-3],
+                t0_full,
+                t0_full_dt.strftime("%FT%T.%f")[:-3]
+            )
+        )
     if t0_full-t_now > 0.1:
         time.sleep(t0_full-t_now-0.1)
 
@@ -162,7 +174,8 @@ def main():
 
     gpio_state=0
     while True:
-        log.log("Starting sweep at %1.2f"%(t0))
+        t0_dt = datetime.fromtimestamp(t0)
+        log.log("Starting sweep at %1.2f (%s)" % (t0, t0_dt.strftime("%FT%T.%f")[:-3]))
         for i in range(s.n_freqs):
             f0,dt=s.pars(i)
             

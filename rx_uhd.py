@@ -24,6 +24,8 @@ import iono_config
 import scipy.signal
 import os
 import psutil
+from datetime import datetime, timedelta
+
 
 def tune_at(u,t0,f0=4e6):
     """
@@ -171,8 +173,17 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
                 freq_num += 1
 
                 # setup tuning for next frequency
-                tune_at(u,cycle_t0 + (freq_num+1)*s.freq_dur,f0=s.freq(freq_num+1))
-                print("Tuning to %1.2f at %1.2f"%(s.freq(freq_num+1)/1e6,cycle_t0 + (freq_num+1)*s.freq_dur))
+                tune_time = cycle_t0 + (freq_num + 1) * s.freq_dur
+                tune_time_dt = datetime.fromtimestamp(tune_time)
+                tune_at(u, tune_time, f0=s.freq(freq_num + 1))
+                print(
+                    "Tuning to %1.2f at %1.2f (%s)"
+                    % (
+                        s.freq(freq_num + 1) / 1e6,
+                        tune_time,
+                        tune_time_dt.strftime("%FT%T.%f")[:-3]
+                    )
+                )
 
                 # the cycle is over
                 if freq_num == s.n_freqs:
@@ -181,7 +192,13 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
                     sweep_num+=1
 
                     locked=gps_mon.check()
-                    log.log("Starting new cycle at %1.2f"%(cycle_t0))
+                    log.log(
+                        "Starting new cycle at %1.2f"
+                        % (
+                            cycle_t0,
+                            datetime.fromtimestamp(cycle_t0).strftime("%FT%T.%f")[:-3]
+                        )
+                    )
 
                 # we've got a full freq step
                 next_sample += n_per_freq
@@ -251,8 +268,19 @@ def main():
 
     # figure out when to start the cycle.
     t_now=usrp.get_time_now().get_real_secs()
+    t_now_dt = datetime.fromtimestamp(t_now)
     t0=np.uint64(np.floor(t_now/(s.sweep_len_s))*s.sweep_len_s+s.sweep_len_s)
-    print("starting next sweep at %1.2f in %1.2f s, time now %1.2f"%(t0,t0-t_now,t_now))
+    t0_dt = datetime.fromtimestamp(t0)
+    print(
+        "starting next sweep at %1.2f (%s) in %1.2f s, time now %1.2f (%s)"
+        % (
+            t0,
+            t0_dt.strftime("%FT%T.%f")[:-3],
+            t0-t_now,
+            t_now,
+            t_now_dt.strftime("%FT%T.%f")[:-3]
+        )
+    )
 
     # start with initial frequency
     tune_req=uhd.libpyuhd.types.tune_request(s.freq(0))
