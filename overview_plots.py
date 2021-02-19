@@ -12,7 +12,7 @@ import iono_config
 def overview_plots(t0,t1,max_r=500,gc=20):
     fl=glob.glob("results/*/ionogram*.h5")
     fl.sort()
-    
+
     t=[]
     v1f=[]
     dtt=[]
@@ -34,7 +34,7 @@ def overview_plots(t0,t1,max_r=500,gc=20):
     if len(v1f)== 0:
         print("no data")
         return
-    
+
     h=h5py.File(v1f[0],"r")
     n_f=len(h["I_fvec"].value)
     freq=n.copy(h["I_fvec"].value)
@@ -65,7 +65,7 @@ def overview_plots(t0,t1,max_r=500,gc=20):
         OR[fi,:]=n.max(I[:,0:max_r],axis=0)
         OF[fi,:]=n.max(I[:,gc:max_r],axis=1)
         h.close()
-        
+
     dBOR=10.0*n.log10(OR)
     dBOF=10.0*n.log10(OF)
     dBOF[n.isinf(dBOF)]=n.nan
@@ -86,9 +86,9 @@ def overview_plots(t0,t1,max_r=500,gc=20):
     plt.clf()
 #    plt.show()
 
-    plt.figure(figsize=(1.5*8,1.5*6))    
+    plt.figure(figsize=(1.5*8,1.5*6))
     plt.pcolormesh(dtt,0.5*(freq[:,0]+freq[:,1]),n.transpose(dBOF),vmin=0,vmax=10)
-    plt.colorbar()    
+    plt.colorbar()
     plt.xlabel("Time (UTC)")
     plt.ylabel("Frequency (MHz)")
 
@@ -99,9 +99,9 @@ def overview_plots(t0,t1,max_r=500,gc=20):
     plt.clf()
 #    plt.show()
 
-        
 
-    
+
+
 if __name__ == "__main__":
     #stuffr.date2unix(2020,5,25,0,0,0)
     #stuffr.date2unix(2020,5,27,0,0,0)

@@ -34,7 +34,7 @@ import numpy as np
 import scipy.signal
 import scipy.fftpack as sf
 
-import create_waveform 
+import create_waveform
 
 def periodic_convolution_matrix(envelope, rmin=0, rmax=100):
     """
@@ -61,7 +61,7 @@ def create_estimation_matrix(code, rmin=0, rmax=1000):
     # least-squares estimate
     # B=(A^H A)^{-1}A^H
     B_cache = np.dot(np.linalg.inv(np.dot(Ah, A)), Ah)
-    
+
     r_cache['B'] = B_cache
     B_cached = True
     return(r_cache)
@@ -77,7 +77,7 @@ def analyze_prc2(z,
                  wfun=scipy.signal.tukey,
                  gc=20,
                  fft_filter=False):
-    
+
     an_len=len(z)
     clen=len(code)
     N = int(an_len / clen )
@@ -85,22 +85,22 @@ def analyze_prc2(z,
 
     # use cached version of (A^HA)^{-1}A^H if it exists.
     cache_file="waveforms/cache-%d.h5"%(cache_idx)
-    
+
     if os.path.exists(cache_file):
         hb=h5py.File(cache_file,"r")
         B=np.copy(hb["B"][()])
         hb.close()
     else:
         r = create_estimation_matrix(code=code, rmax=n_ranges)
-        B = r['B']        
+        B = r['B']
         hb=h5py.File(cache_file,"w")
         hb["B"]=B
-        hb.close()        
-        
+        hb.close()
+
     spec = np.zeros([N, n_ranges], dtype=np.complex64)
 
     z.shape=(N,clen)
-    
+
     if rfi_rem:
         bg=np.median(z,axis=0)
         z=z-bg

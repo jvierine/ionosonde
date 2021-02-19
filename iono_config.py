@@ -10,7 +10,7 @@ try:
     import configparser
 except ImportError as e:
     import configparser2 as configparser
-    
+
 import json
 import create_waveform
 
@@ -26,35 +26,35 @@ class iono_config:
             else:
                 print("configuration file %s doesn't exist."%(fname))
                 exit(0)
-                
+
         self.fname=fname
         self.instrument_name=json.loads(c["config"]["instrument_name"])
         self.n_range_gates=int(json.loads(c["config"]["n_range_gates"]))
         self.station_id=json.loads(c["config"]["station_id"])
 
         self.lat=int(json.loads(c["config"]["lat"]))
-        self.lon=int(json.loads(c["config"]["lon"]))        
+        self.lon=int(json.loads(c["config"]["lon"]))
         self.require_gps=bool(json.loads(c["config"]["require_gps"]))
         self.save_raw_voltage=bool(json.loads(c["config"]["save_raw_voltage"]))
         self.min_gps_lock_time=json.loads(c["config"]["min_gps_lock_time"])
-        
+
         self.rx_channel=json.loads(c["config"]["rx_channel"])
-        
+
         self.sample_rate=int(json.loads(c["config"]["sample_rate"]))
-        self.dec=int(json.loads(c["config"]["dec"]))        
-        
+        self.dec=int(json.loads(c["config"]["dec"]))
+
         self.data_dir=json.loads(c["config"]["data_dir"])
-        
+
         self.range_shift=int(json.loads(c["config"]["range_shift"]))
-        
+
 #        self.codes=json.loads(c["config"]["codes"])
         self.short_name=json.loads(c["config"]["short_name"])
 
-        self.code_len=json.loads(c["config"]["code_len"])        
+        self.code_len=json.loads(c["config"]["code_len"])
         self.code_types=json.loads(c["config"]["code_type"])
         self.pulse_lengths=json.loads(c["config"]["pulse_length"])
         self.ipps=json.loads(c["config"]["ipp"])
-        self.bws=json.loads(c["config"]["bw"])        
+        self.bws=json.loads(c["config"]["bw"])
 
         if not quiet:
             print("Creating waveforms")
@@ -86,8 +86,8 @@ class iono_config:
             # center frequency
             self.freqs[fi][0]=float(self.freqs[fi][0])
             # code index
-            self.freqs[fi][1]=int(self.freqs[fi][1])            
-        
+            self.freqs[fi][1]=int(self.freqs[fi][1])
+
         self.transmit_amplitude=float(json.loads(c["config"]["transmit_amplitude"]))
         
         self.frequency_duration=float(json.loads(c["config"]["frequency_duration"]))
@@ -97,19 +97,19 @@ class iono_config:
             exit(0)
         
         self.antenna_select_freq=float(json.loads(c["config"]["antenna_select_freq"]))
-        
-        self.max_plot_range=float(json.loads(c["config"]["max_plot_range"]))        
+
+        self.max_plot_range=float(json.loads(c["config"]["max_plot_range"]))
 
         self.gps_holdover_time=float(json.loads(c["config"]["gps_holdover_time"]))
 
         self.max_plot_dB=float(json.loads(c["config"]["max_plot_dB"]))
-        
+
         self.tx_addr=json.loads(c["config"]["tx_addr"])
         self.rx_addr=json.loads(c["config"]["rx_addr"])
-        
+
         self.tx_subdev=json.loads(c["config"]["tx_subdev"])
         self.rx_subdev=json.loads(c["config"]["rx_subdev"])
-        
+
         self.ionogram_path=json.loads(c["config"]["ionogram_path"])
         self.ionogram_dirname=json.loads(c["config"]["ionogram_dirname"])
 
@@ -119,7 +119,7 @@ class iono_config:
             os.mkdir(self.ionogram_path)
         except:
             pass
-        
+
         if not os.path.exists(self.ionogram_path):
             print("Output directory %s doesn't exists and cannot be created"%(self.ionogram_path))
             exit(0)
@@ -127,7 +127,7 @@ class iono_config:
             os.mkdir(self.ionogram_path)
         except:
             pass
-        
+
         if not os.path.exists(self.data_dir):
             print("Output directory %s doesn't exists and cannot be created"%(self.data_dir))
             exit(0)
@@ -137,7 +137,7 @@ class iono_config:
                            sample_rate=self.sample_rate,
                            code_amp=self.transmit_amplitude,  # safe setting for waveform amplitude
                            freq_dur=self.frequency_duration)
-            
+
     def __str__(self):
         out="Configuration\n"
         for e in dir(self):
@@ -150,7 +150,7 @@ class iono_config:
         out+="Total ionogram duration %1.2f s\n"%(self.n_freqs*self.frequency_duration)
         return(out)
 
-    
+
 
 def get_config(write_waveforms=True):
     if len(sys.argv) != 2:

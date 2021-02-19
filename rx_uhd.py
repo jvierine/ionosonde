@@ -26,8 +26,8 @@ import os
 import psutil
 
 def tune_at(u,t0,f0=4e6):
-    """ 
-    tune radio to frequency f0 at t0_full 
+    """
+    tune radio to frequency f0 at t0_full
     use a timed command.
     """
     u.clear_command_time()
@@ -53,7 +53,7 @@ def delete_old_files(t0,data_path="/dev/shm"):
                 os.system("rm %s"%(f))
         except:
             print("Error deleting file %s"%(f))
-            
+
 
 def write_to_file(recv_buffer,fname,log,dec=10,fl=20):
     print("writing to file %s"%(fname))
@@ -78,14 +78,14 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
     gps_mon=gl.gpsdo_monitor(u,log,exit_on_lost_lock=False)
     # sweep timing and frequencies
     fvec=[]
-    t0s=[]    
+    t0s=[]
     for i in range(s.n_freqs):
         f,t=s.pars(i)
         fvec.append(f)
         t0s.append(t)
 
     # setup usrp to stream continuously, starting at t0
-    stream_args=uhd.usrp.StreamArgs("fc32","sc16")    
+    stream_args=uhd.usrp.StreamArgs("fc32","sc16")
     rx_stream=u.get_rx_stream(stream_args)
     stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.start_cont)
     stream_cmd.stream_now=False
@@ -117,15 +117,15 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
     # samples since 1970 for the previous packet (no previous packet at first)
     prev_samples = -1
 
-    # samples since 1970 for the first packet. 
+    # samples since 1970 for the first packet.
     samples0=int(stream_cmd.time_spec.get_full_secs())*int(sample_rate) + int(stream_cmd.time_spec.get_frac_secs()*sample_rate)
-    
+
     # number of samples per frequency in the sweep
     n_per_freq=int(s.freq_dur*sample_rate)
-    n_per_sweep=int(s.sweep_len_s*sample_rate)    
+    n_per_sweep=int(s.sweep_len_s*sample_rate)
 
     sweep_num=0
-    freq_num=0    
+    freq_num=0
     next_sample = samples0 + n_per_freq
     cycle_t0 = t0
 
@@ -139,53 +139,53 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
                 # shit happened. we probably lost a packet. gotta try again
                 log.log("dropped packet. number of received samples is 0")
                 continue
-            
+
             # the start of the buffer is at this sample index
             samples=int(md.time_spec.get_full_secs())*int(sample_rate) + int(md.time_spec.get_frac_secs()*sample_rate)
 
             # this is how many samples we have jumped forward.
             step = samples-prev_samples
-    
+
             if prev_samples == -1:
                 step = num_rx_samps
-            
+
             if step != 363 or num_rx_samps != 363:
                 log.log("anomalous step %d num_rx_samps %d "%(step,num_rx_samps))
-            
+
             prev_samples=samples
 
             # write the result into the output buffer
             output_buffer[ n.mod(bi+n.arange(num_rx_samps,dtype=n.uint64),bl) ]=recv_buffer
 
             bi=bi+step
-        
+
             if samples > next_sample:
                 # this should be correct now.
                 idx0=sweep_num*n_per_sweep+freq_num*n_per_freq
-                
+
                 wr_buff[:]=output_buffer[n.mod(idx0+n.arange(n_per_freq,dtype=n.uint64),bl)]
 
                 # spin of a thread to write all samples obtained while sounding this frequency
                 wr_thread=threading.Thread(target=write_to_file,args=(wr_buff,"%s/raw-%d-%03d.bin"%(ic.data_dir,cycle_t0,freq_num),log))
                 wr_thread.start()
                 freq_num += 1
-    
+
                 # setup tuning for next frequency
                 tune_at(u,cycle_t0 + (freq_num+1)*s.freq_dur,f0=s.freq(freq_num+1))
                 print("Tuning to %1.2f at %1.2f"%(s.freq(freq_num+1)/1e6,cycle_t0 + (freq_num+1)*s.freq_dur))
-                
+
                 # the cycle is over
                 if freq_num == s.n_freqs:
                     cycle_t0 += s.sweep_len_s
                     freq_num=0
                     sweep_num+=1
-                    
+
                     locked=gps_mon.check()
                     log.log("Starting new cycle at %1.2f"%(cycle_t0))
-            
+
                 # we've got a full freq step
                 next_sample += n_per_freq
-            
+
             timeout=0.1
     except:
         print("interrupt")
@@ -193,7 +193,7 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
     print("Issuing stop command...")
     stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.stop_cont)
     rx_stream.issue_stream_cmd(stream_cmd)
-    
+
     num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=0.1)
     while(num_rx_samps != 0):
         print("Clearing buffer")
@@ -211,15 +211,15 @@ def housekeeping(usrp,log,ic):
             t0=usrp.get_time_now().get_real_secs()
             delete_old_files(int(t0)-int(ic.s.sweep_len_s)*3,ic.data_dir)
             t0+=np.uint64(ic.s.sweep_len_s)
-            
+
             process = psutil.Process(os.getpid())
             log.log("Memory use %1.5f (MB)"%(process.memory_info().rss/1e6))
-            
+
             time.sleep(ic.s.sweep_len_s)
     except:
         print("Housekeeping thread stopped")
         pass
-        
+
 def main():
     """
     Start up everything and run main loop from here.
@@ -228,7 +228,7 @@ def main():
     log = iono_logger.logger("rx-")
 
     ic=iono_config.get_config()
-    
+
     s=ic.s
     log.log("Sweep freqs:")
     log.log(str(s.freqs))
@@ -257,8 +257,8 @@ def main():
     # start with initial frequency
     tune_req=uhd.libpyuhd.types.tune_request(s.freq(0))
     usrp.set_rx_freq(tune_req)
-    
-    
+
+
     # start reading data
     housekeeping_thread=threading.Thread(target=housekeeping,args=(usrp,log,ic))
     housekeeping_thread.daemon=True
@@ -266,6 +266,6 @@ def main():
 
     # infinitely loop on receive
     receive_continuous(usrp,t0,t_now,ic,log)
-    
+
 if __name__ == "__main__":
     main()

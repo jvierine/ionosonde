@@ -21,7 +21,7 @@ print u.get_mboard_sensor("gps_gprmc")
 print u.get_mboard_sensor("gps_time")
 print u.get_mboard_sensor("gps_locked")  # is the gps clock locked?
 print u.get_mboard_sensor("gps_servo")
-print u.get_mboard_sensor("ref_locked")  
+print u.get_mboard_sensor("ref_locked")
 print u.get_mboard_sensor("mimo_locked")
 tnow = u.get_time_last_pps().get_real_secs()
 tstart = math.ceil(tnow)+10.0
@@ -33,7 +33,7 @@ print "Time of last PPS %1.2f Starting sampling at %1.2f"%(tnow,tstart)
 #fg.start()
 #while True:
 #    time.sleep(1)
-    
+
 
 
 

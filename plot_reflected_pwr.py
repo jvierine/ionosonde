@@ -16,7 +16,7 @@ for l in f.readlines():
     f0=float(re.search(".* reflected pwr (.*) \(MHz\) (.*) \(dBm\).*",l).group(1))
     p=float(re.search(".* reflected pwr (.*) \(MHz\) (.*) \(dBm\).*",l).group(2))
     fs.append(f0)
-    # 15 for coupling loss, 20 + 15 for attenuators 
+    # 15 for coupling loss, 20 + 15 for attenuators
     ps.append(p+15+20+15)
     pm.append(p)
 

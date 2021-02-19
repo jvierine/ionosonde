@@ -20,7 +20,7 @@ def incoh_an(z,code,nr=500):
 #    for fi in range(code_len):
  #       S[:,fi]=S[:,fi]-n.median(S[:,fi])
     return(S)
-        
+
 
 def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00Z/raw-2020-05-22T09:30:00.h5",
                      avg_spec=False,
@@ -39,7 +39,7 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
     hdname=stuffr.unix2iso8601_dirname(h["t0"].value, ic)
     dname="%s/%s"%(ic.ionogram_path, hdname)
     os.system("mkdir -p %s"%(dname))
-    datestr=stuffr.unix2iso8601(t0)            
+    datestr=stuffr.unix2iso8601(t0)
     iono_ofname="%s/ionogram-%s.h5"%(dname,datestr)
     print("looking for %s"%(iono_ofname))
     if use_old:
@@ -56,7 +56,7 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
         print("Not correction file version")
         h.close()
         return
-    
+
     if h["version"].value != version:
         print("Not correct file version")
         h.close()
@@ -69,8 +69,8 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
 #            I_rvec=n.copy(h["I_rvec"].value)
 #            h.close()
 #            return(I,I_rvec,I_fvec)
-        
-    
+
+
     # float16 re and im to complex64
     z_all=n.array(h["z_re"].value+h["z_im"].value*1j,dtype=n.complex64)
     freqs=h["freqs"].value
@@ -95,7 +95,7 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
     n_plot_freqs=int((fmax+0.5)/0.1)+1
     iono_p_freq=n.linspace(0,fmax+0.5,num=n_plot_freqs)
     I=n.zeros([n_plot_freqs,code_len],dtype=n.float32)
-    
+
 
     wf=create_waveform.create_prn_dft_code(clen=code_len,seed=station_id)
     WF=n.fft.fft(wf)
@@ -107,19 +107,19 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
         z=n.copy(z_all[i,:])
         z=z-n.mean(z)
 
-        
+
         N_codes=len(z)/code_len
         z.shape=(N_codes,code_len)
 
         echoes=n.zeros([N_codes,code_len],dtype=n.complex64)
         spec=n.zeros([N_codes,code_len],dtype=n.float)
-        
+
         for ci in range(N_codes):
             echoes[ci,:]=n.fft.ifft(n.fft.fft(z[ci,:])/WF)
-            
+
         # remove edge effect when hopping in frequency
         echoes[N_codes-1,:]=echoes[N_codes-2,:]
-        
+
         for ri in range(code_len):
             spec[:,ri]=n.fft.fftshift(n.abs(n.fft.fft(echoes[:,ri]))**2.0)
         for fi in range(N_codes):
@@ -154,7 +154,7 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
     if plot_ionogram:
         dBI=n.transpose(10.0*n.log10(I))
         dBI[n.isinf(dBI)]=n.nan
-        noise_floor=n.nanmedian(dBI)    
+        noise_floor=n.nanmedian(dBI)
         dBI=dBI-noise_floor
         dBI[n.isnan(dBI)]=-3
         plt.pcolormesh(n.concatenate((iono_p_freq,[fmax+0.1])),rvec,dBI,vmin=-3,vmax=20.0)
@@ -162,7 +162,7 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
                                                    stuffr.unix2datestr(h["t0"].value),
                                                    noise_floor))
 
-        plt.xlim([n.min(iono_freqs)-0.5,n.max(iono_freqs)+0.5])    
+        plt.xlim([n.min(iono_freqs)-0.5,n.max(iono_freqs)+0.5])
         #    plt.pcolormesh(freqs[:,0],rvec,dBI,vmin=0,vmax=20)
         plt.ylim([0,800])
         plt.colorbar()
@@ -176,7 +176,7 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
         plt.close()
 
     print("Saving ionogram %s"%(iono_ofname))
-    
+
     ho=h5py.File(iono_ofname,"w")
     ho["I"]=IS
     ho["I_rvec"]=rvec
@@ -188,8 +188,8 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
     ho.close()
     h.close()
     return(IS,rvec,freqs)
-                            
-        
+
+
 if __name__ == "__main__":
     ic = iono_config.get_config(write_waveforms=False)
     I,rvec,freq=analyze_ionogram(fname="results/2020-05-21T16-00-00/ionogram-1590076920.h5",

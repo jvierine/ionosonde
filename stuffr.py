@@ -217,7 +217,7 @@ def comprz_dB(xx,fr=0.05):
     return(10.0*numpy.log10(xx))
 
 def decimate(x,dec=2):
-    """ 
+    """
     low pass filter and decimate
     """
     Nout = int(math.floor(len(x)/dec))

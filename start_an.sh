@@ -28,5 +28,6 @@ do
     # calculate number of seconds to wait until next sweep
     WAIT=$(((SWEEP_LEN+EXTRA) - (S % SWEEP_LEN)))
     echo "Waiting $WAIT seconds"
+    date -d @$((S+WAIT))
     sleep $WAIT
 done

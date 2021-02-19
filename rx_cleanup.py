@@ -27,7 +27,7 @@ if __name__ == "__main__":
     s=iono_config.s
     while True:
         print("deleting")
-        # figure out when to start the cycle. 
+        # figure out when to start the cycle.
         t0=np.uint64(np.floor(time.time()/(s.sweep_len_s))*s.sweep_len_s)-5*s.sweep_len_s
         delete_old_files(t0,data_path=iono_config.data_path)
         time.sleep(s.sweep_len_s)

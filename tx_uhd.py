@@ -78,7 +78,8 @@ def rx_swr(u,t0,recv_buffer,f0,log,ic):
     if pwr <= 0.0:
         pwr=1e-99
     refl_pwr_dBm=10.0*n.log10(pwr)+ic.reflected_power_cal_dB
-    log.log("reflected pwr %1.4f (MHz) %1.4f (dBm)"%(f0,refl_pwr_dBm))
+    log.log("reflected pwr %1.4f (MHz) %1.4f (dBm)" % (f0/1e6, refl_pwr_dBm))
+
 
 def transmit_waveform(u,t0_full,waveform,swr_buffer,f0,log,ic):
     """

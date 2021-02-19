@@ -37,20 +37,20 @@ def create_pseudo_random_code(clen=10000, seed=0, pulse_length=-1, ipp=1000):
         n_pulses=int(clen/ipp)
         for i in range(n_pulses):
             code[ (i*ipp + pulse_length): ((i+1)*ipp) ] = 0.0
-    
+
     return(code)
 
 
 def create_prn_dft_code(clen=10000, seed=0):
-    """ 
+    """
     this is a perfect code that is randomized.
-    however, it has horrible cross-correlation 
-    properties and should be avoided with multi-static 
+    however, it has horrible cross-correlation
+    properties and should be avoided with multi-static
     radar networks.
     """
     n.random.seed(seed)
     N=int(n.sqrt(clen))
-    # random phases 
+    # random phases
     rp=n.exp(1j*n.random.rand(N)*2*n.pi)
     code=n.array([],dtype=n.complex64)
     idx=n.arange(N,dtype=n.float32)
@@ -74,13 +74,13 @@ def filter_waveform(waveform,
                     max_power_outside_band=0.01,
                     plot=False):
     """
-    Filter the waveform in such a way that it meets a 1% out of 
+    Filter the waveform in such a way that it meets a 1% out of
     band power requirement. filter the code in such a way that there
     is a delay of 200 microseconds at DC.  Assumes that waveform is periodic.
-    
-    The 200 microsecond delay is to ensure that the transmit pulse is 
-    well above the 0 range gate in a monostatic case, so that we 
-    can keep an eye on the direct transmitted signal range as 
+
+    The 200 microsecond delay is to ensure that the transmit pulse is
+    well above the 0 range gate in a monostatic case, so that we
+    can keep an eye on the direct transmitted signal range as
     part of the procedure of making sure that the transmitter and
     receiver are in sync
     """
@@ -94,11 +94,11 @@ def filter_waveform(waveform,
     fvec=n.fft.fftshift(n.fft.fftfreq(len(waveform),d=1.0/sr))
     # which frequency bins are in the band
     fidx=n.where(n.abs(fvec) < bandwidth/2.0)[0]
-    
+
     waveform_f=n.fft.fft(waveform)
 #    print("Searching for filter length")
     while power_outside_band > max_power_outside_band:
-        
+
         w[0:fl] = scipy.signal.flattop(fl)
         # filter
         aa = n.fft.ifft(n.fft.fft(w) * waveform_f)
@@ -115,14 +115,14 @@ def filter_waveform(waveform,
         #print("fl %d power outside band %1.3f"%(fl,power_outside_band))
         fl+=2
 #    print("Using filter length of %d samples"%(fl-2))
-    
+
     if plot:
         plt.plot(a.real,a.imag,".")
         plt.show()
 
     return(a)
-    
-    
+
+
 
 #
 # lets use 0.1 s code cycle and coherence assumption
@@ -152,14 +152,14 @@ def waveform_to_file(station=0,
         code=create_prn_dft_code(clen=clen, seed=station)
     a = rep_seq(code,
                 rep=oversample)
-    
+
     if filter_output:
         a=filter_waveform(a,
                           sr=sr,
                           bandwidth=bandwidth,
                           max_power_outside_band=power_outside_band)
 
-    if write_file:        
+    if write_file:
         print("Writing file %s"%(ofname))
         a.tofile(ofname)
     return(ofname,code)
