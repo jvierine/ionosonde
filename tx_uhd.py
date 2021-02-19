@@ -13,6 +13,7 @@ import threading
 import numpy as n
 import matplotlib.pyplot as plt
 import os
+import signal
 
 # internal modules related with the ionosonde
 import sweep
@@ -20,6 +21,15 @@ import gps_lock as gl
 import iono_logger
 import iono_config
 from datetime import datetime, timedelta
+
+
+Exit = False        # Used to signal an orderly exit
+
+
+def orderlyExit(signalNumber, frame):
+    global Exit
+    # Signal that we want to exit after current sweep
+    Exit = True
 
 
 def tune_at(u,t0,ic,f0=4e6,gpio_state=0):
@@ -140,9 +150,12 @@ def main():
     # this is the sweep configuration
     ic=iono_config.get_config()
     s=ic.s
-    
+
+    # register signals to be caught
+    signal.signal(signal.SIGUSR1, orderlyExit)
+
     sample_rate=ic.sample_rate
-    
+
     # use the address configured for the transmitter
     usrp = uhd.usrp.MultiUSRP("addr=%s"%(ic.tx_addr))
     usrp.set_tx_rate(sample_rate)
@@ -173,7 +186,7 @@ def main():
     print("starting next sweep at %1.2f"%(s.sweep_len_s))
 
     gpio_state=0
-    while True:
+    while not Exit:
         t0_dt = datetime.fromtimestamp(t0)
         log.log("Starting sweep at %1.2f (%s)" % (t0, t0_dt.strftime("%FT%T.%f")[:-3]))
         for i in range(s.n_freqs):

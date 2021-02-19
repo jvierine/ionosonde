@@ -24,7 +24,17 @@ import iono_config
 import scipy.signal
 import os
 import psutil
+import signal
 from datetime import datetime, timedelta
+
+
+Exit = False        # Used to signal an orderly exit
+
+
+def orderlyExit(signalNumber, frame):
+    global Exit
+    # Signal that we want to exit after current sweep
+    Exit = True
 
 
 def tune_at(u,t0,f0=4e6):
@@ -135,7 +145,7 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
 
     locked=True
     try:
-        while locked:
+        while locked and not Exit:
             num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=timeout)
             if num_rx_samps == 0:
                 # shit happened. we probably lost a packet. gotta try again
@@ -245,8 +255,11 @@ def main():
     log = iono_logger.logger("rx-")
 
     ic=iono_config.get_config()
-
     s=ic.s
+
+    # register signals to be caught
+    signal.signal(signal.SIGUSR1, orderlyExit)
+
     log.log("Sweep freqs:")
     log.log(str(s.freqs))
     log.log("Sweep length %1.2f s Freq step %1.2f"%(s.sweep_len_s,s.freq_dur))
