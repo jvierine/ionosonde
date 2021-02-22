@@ -247,15 +247,16 @@ def housekeeping(usrp,log,ic):
         print("Housekeeping thread stopped")
         pass
 
-def main():
+
+def main(config):
     """
     Start up everything and run main loop from here.
     """
     # setup a logger
     log = iono_logger.logger("rx-")
 
-    ic=iono_config.get_config()
-    s=ic.s
+    ic = iono_config.get_config(config=config)
+    s = ic.s
 
     # register signals to be caught
     signal.signal(signal.SIGUSR1, orderlyExit)
@@ -308,5 +309,13 @@ def main():
     # infinitely loop on receive
     receive_continuous(usrp,t0,t_now,ic,log)
 
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-c', '--config',
+        default="config/default.ini",
+        help='''Configuration file. (default: %(default)s)''',
+    )
+    op = parser.parse_args()
+    main(config=op.config)
