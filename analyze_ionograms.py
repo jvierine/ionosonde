@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import matplotlib
-matplotlib.use("Agg")
 import numpy as n
 import matplotlib.pyplot as plt
 import prc_lib as p
@@ -14,6 +13,9 @@ import sweep
 import h5py
 import iono_config
 import scipy.constants as c
+
+matplotlib.use("Agg")
+
 
 def save_raw_data(fname="tmp.h5",
                   t0=0,
