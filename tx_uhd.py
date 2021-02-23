@@ -139,8 +139,9 @@ def transmit_waveform(u,t0_full,waveform,swr_buffer,f0,log,ic):
         tx_stream=None
     except:
         exit(0)
-    
-def main():
+
+
+def main(config):
     """
     The main loop for the ionosonde transmitter
     """
@@ -148,8 +149,8 @@ def main():
     log = iono_logger.logger("tx-")
 
     # this is the sweep configuration
-    ic=iono_config.get_config()
-    s=ic.s
+    ic = iono_config.get_config(config=config)
+    s = ic.s
 
     # register signals to be caught
     signal.signal(signal.SIGUSR1, orderlyExit)
@@ -205,6 +206,13 @@ def main():
 
         t0+=n.uint64(s.sweep_len_s)
 
-    
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-c', '--config',
+        default="config/default.ini",
+        help='''Configuration file. (default: %(default)s)''',
+    )
+    op = parser.parse_args()
+    main(config=op.config)

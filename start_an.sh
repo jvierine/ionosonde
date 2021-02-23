@@ -19,7 +19,7 @@ rm -f waveforms/cache*.h5
 
 while true;
 do
-    python3 analyze_ionograms.py $IONO_CONFIG
+    python3 analyze_ionograms.py --config=$IONO_CONFIG
 #     python3 overview_plots.py $IONO_CONFIG
 
     # current time in seconds

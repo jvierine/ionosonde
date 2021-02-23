@@ -151,15 +151,14 @@ class iono_config:
         return(out)
 
 
-
-def get_config(write_waveforms=True):
-    if len(sys.argv) != 2:
-        print("provide configuration file as argument!")
-        exit(0)
-    c=iono_config(sys.argv[1],write_waveforms=write_waveforms)
-    return(c)
+def get_config(config="config/default.ini", write_waveforms=True):
+    c = iono_config(config, write_waveforms=write_waveforms)
+    return c
 
 
 if __name__ == "__main__":
-    c=get_config()
+    if len(sys.argv) != 2:
+        print("provide configuration file as argument!")
+        exit(0)
+    c=get_config(config=sys.argv[1])
     print(c)

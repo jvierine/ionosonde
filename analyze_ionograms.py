@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+import argparse
 import matplotlib
-matplotlib.use("Agg")
 import numpy as n
 import matplotlib.pyplot as plt
 import prc_lib as p
@@ -14,6 +14,9 @@ import sweep
 import h5py
 import iono_config
 import scipy.constants as c
+
+matplotlib.use("Agg")
+
 
 def save_raw_data(fname="tmp.h5",
                   t0=0,
@@ -229,8 +232,15 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
 
     delete_old_files(t0)
 
-if __name__ == "__main__":
 
-    ic=iono_config.get_config(write_waveforms=False)
-    print("Starting analysis %f"%(time.time()))
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-c', '--config',
+        default="config/default.ini",
+        help='''Configuration file. (default: %(default)s)''',
+    )
+    op = parser.parse_args()
+
+    ic = iono_config.get_config(config=op.config, write_waveforms=False)
     analyze_latest_sweep(ic)
