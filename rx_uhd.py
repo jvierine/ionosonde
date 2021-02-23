@@ -96,7 +96,8 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
         fvec.append(f)
         t0s.append(t)
         
-    # maybe we wait until a few seconds before next sweep?
+    # it seems that waiting until a few seconds before the sweep start
+    # helps to keep the ethernet link "alive" for the start of streaming
     t_now=u.get_time_now().get_real_secs()
     while t0-t_now > 5.0:
         t_now=u.get_time_now().get_real_secs()
