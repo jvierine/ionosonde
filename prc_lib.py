@@ -76,7 +76,8 @@ def analyze_prc2(z,
                  gc_rem=False,
                  wfun=scipy.signal.tukey,
                  gc=20,
-                 fft_filter=False):
+                 fft_filter=False,
+                 cw_rem=True):
 
     an_len=len(z)
     clen=len(code)
@@ -100,6 +101,9 @@ def analyze_prc2(z,
     spec = np.zeros([N, n_ranges], dtype=np.complex64)
 
     z.shape=(N,clen)
+    if cw_rem:
+        for ri in np.arange(clen):
+            z[:,ri]=z[:,ri]-np.mean(z[1:(N-1),ri])
 
     if rfi_rem:
         bg=np.median(z,axis=0)
@@ -125,21 +129,37 @@ def analyze_prc2(z,
         for i in range(gc,n_ranges):
             res[:,i]=res[:,i]-np.median(res[:,i])
 
-    window=wfun(N)
+    window=1.0#wfun(N)
+    # ignore first and last, where frequency transition occurs
+    res[0,:]=0.0
+    res[N-1,:]=0.0
     for i in np.arange(n_ranges):
         spec[:, i] = np.fft.fftshift(np.fft.fft(
             window * res[:, i]
         ))
 
+    spec_snr=np.zeros(spec.shape,dtype=np.float32)
+
     if spec_rfi_rem:
-        median_spec = np.zeros(N, dtype=np.float32)
+        median_spec = np.zeros(N, dtype=np.complex64)
+        noise_floor = np.zeros(N, dtype=np.float32)        
+        spec_std = np.zeros(N, dtype=np.float32)
+        
         for i in np.arange(N):
-            median_spec[i] = np.median(np.abs(spec[i, :]))
+            median_spec[i] = np.median(spec[i, :])
+            noise_floor[i] = np.median(np.abs(spec[i, :])**2.0)
+            spec_std[i] = np.median(np.abs(spec[i,:]-median_spec[i]))
         for i in np.arange(n_ranges):
-            spec[:, i] = spec[:, i] / median_spec[:]
+            # signal to noise ratio, frequency dependent
+            spec_snr[:,i]= (np.abs(spec[:,i])**2.0-noise_floor)/noise_floor
+            # noise standard deviation normalized power.
+            spec[:, i] = (spec[:, i]-median_spec)/spec_std
+
+    spec_snr[spec_snr < 0]=1e-3
     ret = {}
     ret['res'] = res
     ret['spec'] = spec
+    ret['spec_snr'] = spec_snr    
     return(ret)
 
 

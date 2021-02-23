@@ -95,7 +95,15 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
         f,t=s.pars(i)
         fvec.append(f)
         t0s.append(t)
-
+        
+    # maybe we wait until a few seconds before next sweep?
+    t_now=u.get_time_now().get_real_secs()
+    while t0-t_now > 5.0:
+        t_now=u.get_time_now().get_real_secs()
+        print("Waiting for setup %1.2f"%(t0-t_now))
+        time.sleep(1)
+    t_now=u.get_time_now().get_real_secs()        
+        
     # setup usrp to stream continuously, starting at t0
     stream_args=uhd.usrp.StreamArgs("fc32","sc16")
     rx_stream=u.get_rx_stream(stream_args)
@@ -141,6 +149,7 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
     next_sample = samples0 + n_per_freq
     cycle_t0 = t0
 
+    # setup tuning for next frequency
     tune_at(u,t0+s.freq_dur,f0=s.freq(1))
 
     locked=True
@@ -148,7 +157,7 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
         while locked and not Exit:
             num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=timeout)
             if num_rx_samps == 0:
-                # shit happened. we probably lost a packet. gotta try again
+                # shit happened. we probably lost a packet. 
                 log.log("dropped packet. number of received samples is 0")
                 continue
 
@@ -285,7 +294,8 @@ def main(config):
     # figure out when to start the cycle.
     t_now=usrp.get_time_now().get_real_secs()
     t_now_dt = datetime.fromtimestamp(t_now)
-    t0=np.uint64(np.floor(t_now/(s.sweep_len_s))*s.sweep_len_s+s.sweep_len_s)
+    # add 5 secs for setup time
+    t0=np.uint64(np.floor((t_now+5.0)/(s.sweep_len_s))*s.sweep_len_s+s.sweep_len_s)
     t0_dt = datetime.fromtimestamp(t0)
     print(
         "starting next sweep at %1.2f (%s) in %1.2f s, time now %1.2f (%s)"

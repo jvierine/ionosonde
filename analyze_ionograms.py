@@ -73,8 +73,11 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
     sfreqs=n.array(ic.s.freqs)
     iono_freqs=sfreqs[:,0]
     fmax=n.max(iono_freqs)
-    n_plot_freqs=int((fmax+0.5)/0.1)+1
-    iono_p_freq=n.linspace(0,fmax+0.5,num=n_plot_freqs)
+    #
+    plot_df=0.1
+    
+    n_plot_freqs=int((fmax+0.5)/plot_df)
+    iono_p_freq=n.arange(n_plot_freqs)*plot_df#n.linspace(0,fmax+0.5,num=n_plot_freqs)
     I=n.zeros([n_plot_freqs,n_rg],dtype=n.float32)
     IS=n.zeros([sfreqs.shape[0],n_rg],dtype=n.float32)
 
@@ -90,6 +93,7 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
     dr = ic.dec*c.c/ic.sample_rate/2.0/1e3
 
     rvec=n.arange(float(n_rg))*dr
+    p_rvec=n.arange(float(n_rg)+1)*dr
     fvec=n.fft.fftshift(n.fft.fftfreq(n_t,d=dt))
 
     hdname=stuffr.unix2iso8601_dirname(t0, ic)
@@ -119,13 +123,14 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
             plt.subplot(121)
 
             tvec=n.arange(int(N/ic.code_len),dtype=n.float64)*dt
+            p_tvec=n.arange(int(N/ic.code_len)+1,dtype=n.float64)*dt            
             dBr=10.0*n.log10(n.transpose(n.abs(res["res"])**2.0))
             noise_floor=n.nanmedian(dBr)
             noise_floor_0=noise_floor
             noise_floors.append(noise_floor_0)
             dBr=dBr-noise_floor
             dB_max=n.nanmax(dBr)
-            plt.pcolormesh(tvec,rvec-ic.range_shift*dr,dBr,vmin=-3,vmax=ic.max_plot_dB)
+            plt.pcolormesh(p_tvec,p_rvec-ic.range_shift*dr,dBr,vmin=0,vmax=ic.max_plot_dB)
             plt.xlabel("Time (s)")
             plt.title("Range-Time Power f=%d (dB)\nnoise_floor=%1.2f (dB) peak SNR=%1.2f"%(i,noise_floor,dB_max))
             plt.ylabel("Range (km)")
@@ -134,7 +139,8 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
 
             plt.colorbar()
             plt.subplot(122)
-            S=n.abs(res["spec"])**2.0
+#            S=n.abs(res["spec"])**2.0
+            S=res["spec_snr"]
 
             #sw=n.fft.fft(n.repeat(1.0/4,4),S.shape[0])
             #for rg_id in range(S.shape[1]):
@@ -142,17 +148,18 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
 
             all_spec[i,:,:]=S
             # 100 kHz steps for ionogram freqs
-            pif=int(iono_freqs[i]/0.1)
+            pif=n.argmin(n.abs(iono_freqs[i]-iono_p_freq))
+#            pif=int(iono_freqs[i]/0.1)
+
+            # collect peak SNR across all doppler frequencies
             I[pif,:]+=n.max(S,axis=0)
             IS[i,:]=n.max(S,axis=0)
 
-            # normalize by median std estimate
-#            I[i,:]=I[i,:]/n.median(n.abs(S-n.median(S)))
+            # SNR in dB scale
             dBs=10.0*n.log10(n.transpose(S))
             noise_floor=n.nanmedian(dBs)
-            dBs=dBs-noise_floor
             max_dB=n.nanmax(dBs)
-            plt.pcolormesh(fvec,rvec-ic.range_shift*dr,dBs,vmin=-3,vmax=ic.max_plot_dB)
+            plt.pcolormesh(fvec,rvec-ic.range_shift*dr,dBs,vmin=0,vmax=ic.max_plot_dB)
             plt.ylim([-10,ic.max_plot_range])
 
             plt.title("Range-Doppler Power (dB)\nnoise_floor=%1.2f (dB) peak SNR=%1.2f (dB)"%(noise_floor,max_dB))
@@ -186,7 +193,7 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
 
     plt.figure(figsize=(1.5*8,1.5*6))
     max_dB=n.nanmax(dB)
-    plt.pcolormesh(n.concatenate((iono_p_freq,[fmax+0.1])),rvec-ic.range_shift*1.5, dB,vmin=-3,vmax=ic.max_plot_dB)
+    plt.pcolormesh(n.concatenate((iono_p_freq,[fmax+0.1])),rvec-ic.range_shift*1.5, dB,vmin=0,vmax=ic.max_plot_dB)
     plt.title("%s %s\nnoise_floor=%1.2f (dB) peak SNR=%1.2f"%(ic.instrument_name,
                                                               stuffr.unix2datestr(t0),
                                                               noise_floor_0,
