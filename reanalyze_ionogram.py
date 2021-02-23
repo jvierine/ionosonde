@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import numpy as n
 import h5py
 import matplotlib.pyplot as plt
@@ -191,11 +192,19 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
 
 
 if __name__ == "__main__":
-    ic = iono_config.get_config(write_waveforms=False)
-    I,rvec,freq=analyze_ionogram(fname="results/2020-05-21T16-00-00/ionogram-1590076920.h5",
-                                 avg_spec=False,
-                                 plot_ionogram=False,
-                                 plot_spectra=False,
-                                 version=1,
-                                 ic)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-c', '--config',
+        default="config/default.ini",
+        help='''Configuration file. (default: %(default)s)''',
+    )
+    op = parser.parse_args()
+
+    ic = iono_config.get_config(config=op.config, write_waveforms=False)
+    I,rvec,freq = analyze_ionogram(fname="results/2020-05-21T16-00-00/ionogram-1590076920.h5",
+                                   avg_spec=False,
+                                   plot_ionogram=False,
+                                   plot_spectra=False,
+                                   version=1,
+                                   ic=ic)
 
