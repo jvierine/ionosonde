@@ -2,6 +2,9 @@
 
 source config.sh
 
+# remove old raw files
+rm /dev/shm/raw*.bin
+
 # remove cache
 rm -f waveforms/cache*.h5
 

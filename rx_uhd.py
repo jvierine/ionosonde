@@ -25,7 +25,7 @@ import scipy.signal
 import os
 import psutil
 from datetime import datetime, timedelta
-
+import traceback
 
 def tune_at(u,t0,f0=4e6):
     """
@@ -193,7 +193,7 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
 
                     locked=gps_mon.check()
                     log.log(
-                        "Starting new cycle at %1.2f"
+                        "Starting new cycle at %1.2f (%s)"
                         % (
                             cycle_t0,
                             datetime.fromtimestamp(cycle_t0).strftime("%FT%T.%f")[:-3]
@@ -205,6 +205,8 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
 
             timeout=0.1
     except:
+        traceback.print_exc()
+        traceback.print_stack()
         print("interrupt")
         pass
     print("Issuing stop command...")
