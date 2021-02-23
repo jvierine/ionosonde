@@ -3,6 +3,8 @@
 source config.sh
 
 # remove old raw files
+# todo: read directory from config file.
+# maybe this is best done at startup of rx_uhd.py
 rm /dev/shm/raw*.bin
 
 # remove cache

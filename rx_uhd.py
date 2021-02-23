@@ -71,6 +71,7 @@ def write_to_file(recv_buffer,fname,log,dec=10,fl=20):
     print("writing to file %s"%(fname))
 
     # filter and decimate with Blackmann-Harris window
+    # todo, use a windowed LPF, which has a bandwidth matched to the transmit bandwidth. this is pretty much hard coded for 100 kHz
     w = n.zeros(fl, dtype=n.complex64)
     w[0:fl] = scipy.signal.blackmanharris(fl)
     # filter, time shift, decimate, and cast to complex64 data type
@@ -188,6 +189,7 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
                 wr_buff[:]=output_buffer[n.mod(idx0+n.arange(n_per_freq,dtype=n.uint64),bl)]
 
                 # spin of a thread to write all samples obtained while sounding this frequency
+                # todo: pass decimtaiton option, and pass transmit bandwidth
                 wr_thread=threading.Thread(target=write_to_file,args=(wr_buff,"%s/raw-%d-%03d.bin"%(ic.data_dir,cycle_t0,freq_num),log))
                 wr_thread.start()
                 freq_num += 1

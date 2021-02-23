@@ -30,7 +30,8 @@ import h5py
 from argparse import ArgumentParser
 import stuffr
 
-import numpy as np
+import numpy as np  # this is for those who can't cope with numpy as n
+import numpy as n   # this saves one character of code each time
 import scipy.signal
 import scipy.fftpack as sf
 
@@ -77,6 +78,7 @@ def analyze_prc2(z,
                  wfun=scipy.signal.tukey,
                  gc=20,
                  fft_filter=False,
+                 time_variable_noise=False,
                  cw_rem=True):
 
     an_len=len(z)
@@ -101,6 +103,7 @@ def analyze_prc2(z,
     spec = np.zeros([N, n_ranges], dtype=np.complex64)
 
     z.shape=(N,clen)
+    
     if cw_rem:
         for ri in np.arange(clen):
             z[:,ri]=z[:,ri]-np.mean(z[1:(N-1),ri])
@@ -129,6 +132,11 @@ def analyze_prc2(z,
         for i in range(gc,n_ranges):
             res[:,i]=res[:,i]-np.median(res[:,i])
 
+    if time_variable_noise:
+        for i in np.arange(N):
+            noise_amp=np.median(np.abs(res[i,:]))
+            res[i,:]=res[i,:]/noise_amp
+
     window=1.0#wfun(N)
     # ignore first and last, where frequency transition occurs
     res[0,:]=0.0
@@ -149,6 +157,7 @@ def analyze_prc2(z,
             median_spec[i] = np.median(spec[i, :])
             noise_floor[i] = np.median(np.abs(spec[i, :])**2.0)
             spec_std[i] = np.median(np.abs(spec[i,:]-median_spec[i]))
+            
         for i in np.arange(n_ranges):
             # signal to noise ratio, frequency dependent
             spec_snr[:,i]= (np.abs(spec[:,i])**2.0-noise_floor)/noise_floor

@@ -30,6 +30,7 @@ class sweep():
 
         n_reps=int(self.freq_dur*self.sample_rate/self.code_len)
 
+        # todo: use waveforms created in iono_config
         for c in codes:
             wf=code_amp*n.fromfile(c,dtype=n.complex64)
             self.transmit_waveforms.append(n.tile(wf,n_reps))

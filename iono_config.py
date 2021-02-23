@@ -66,6 +66,9 @@ class iono_config:
                 if n.mod(int(self.code_len),int(self.ipps[i])) != 0:
                     print("Code length %d must be a multiple of IPP %d. This is not the case. Exiting."%(self.code_len,self.ipps[i]))
                     exit(0)
+            # todo. we should avoid dumping the waveforms to files
+            # for all but debugging purposes. the waveforms
+            # created here (ocode) should be directly fed into sweep.
             cfname,ocode=create_waveform.waveform_to_file(station=self.station_id,
                                                           clen=self.code_len,
                                                           oversample=self.dec,

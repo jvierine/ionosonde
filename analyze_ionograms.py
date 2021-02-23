@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import argparse
 import matplotlib
+matplotlib.use("Agg")
+
 import numpy as n
 import matplotlib.pyplot as plt
 import prc_lib as p
@@ -15,7 +17,6 @@ import h5py
 import iono_config
 import scipy.constants as c
 
-matplotlib.use("Agg")
 
 
 def save_raw_data(fname="tmp.h5",
@@ -166,8 +167,8 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
             plt.xlabel("Frequency (Hz)")
             plt.ylabel("Virtual range (km)")
 
-
-            plt.colorbar()
+            cb=plt.colorbar()
+            cb.set_label("SNR (dB)")
             plt.tight_layout()
 
             plt.savefig("%s/iono-%03d.png"%(dname,i))
@@ -200,7 +201,10 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
                                                               max_dB))
     plt.xlabel("Frequency (MHz)")
     plt.ylabel("Virtual range (km)")
-    plt.colorbar()
+    #plt.colorbar()
+    cb=plt.colorbar()
+    cb.set_label("SNR (dB)")
+    
     plt.ylim([-10,ic.max_plot_range])
     plt.xlim([n.min(iono_freqs)-0.5,n.max(iono_freqs)+0.5])
     plt.tight_layout()
@@ -250,5 +254,6 @@ if __name__ == "__main__":
     )
     op = parser.parse_args()
 
+    # don't create waveform files.
     ic = iono_config.get_config(config=op.config, write_waveforms=False)
     analyze_latest_sweep(ic)
