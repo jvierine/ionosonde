@@ -174,7 +174,7 @@ def dirname2unix(dirn):
     return(date2unix(int(r.group(1)),int(r.group(2)),int(r.group(3)),int(r.group(4)),int(r.group(5)),int(r.group(6))))
 
 def unix2datestr(x):
-    return(unix2date(x).strftime('%Y-%m-%d %H:%M:%S'))
+    return(unix2date(x).strftime('%Y-%m-%d %H:%M:%S %Z'))
 
 def compr(x,fr=0.001):
     sh = x.shape
