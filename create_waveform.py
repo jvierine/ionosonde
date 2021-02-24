@@ -23,6 +23,18 @@ import os
 import scipy.signal
 import matplotlib.pyplot as plt
 import iono_config
+import scipy.signal as ss
+
+def lpf(dec=10,om_factor=1.0,filter_len=4):
+    """ a better lpf """
+    om0=om_factor*2.0*n.pi/dec
+    dec2=filter_len*dec
+    m=n.array(n.arange(filter_len*dec),dtype=n.float32)
+    m=m-n.mean(m)
+    # windowed low pass filter
+    wfun=n.array(ss.hann(len(m))*n.sin(om0*(m+1e-6))/(n.pi*(m+1e-6)),dtype=n.complex64)
+    return(wfun)
+
 
 # seed is a way of reproducing the random code without
 # having to store all actual codes. the seed can then

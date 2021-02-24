@@ -22,6 +22,7 @@ import re
 import os
 import iono_config
 import scipy.signal
+import scipy.signal as ss
 import os
 import psutil
 import signal
@@ -66,14 +67,21 @@ def delete_old_files(t0,data_path="/dev/shm"):
         except:
             print("Error deleting file %s"%(f))
 
+def lpf(dec=10,filter_len=4):
+    """ a better lpf """
+    om0=2.0*n.pi/dec
+    dec2=filter_len*dec
+    m=n.array(n.arange(filter_len*dec),dtype=n.float32)
+    m=m-n.mean(m)
+    # windowed low pass filter
+    wfun=n.array(ss.hann(len(m))*n.sin(om0*(m+1e-6))/(n.pi*(m+1e-6)),dtype=n.complex64)
+    return(wfun)
 
-def write_to_file(recv_buffer,fname,log,dec=10,fl=20):
+def write_to_file(recv_buffer,fname,log,dec=10):
     print("writing to file %s"%(fname))
 
-    # filter and decimate with Blackmann-Harris window
-    # todo, use a windowed LPF, which has a bandwidth matched to the transmit bandwidth. this is pretty much hard coded for 100 kHz
-    w = n.zeros(fl, dtype=n.complex64)
-    w[0:fl] = scipy.signal.blackmanharris(fl)
+    w=lpf(dec=dec)
+    fl=len(w)
     # filter, time shift, decimate, and cast to complex64 data type
     obuf=n.array(n.roll(n.fft.ifft(n.fft.fft(w,len(recv_buffer))*n.fft.fft(recv_buffer)),-int(fl/2))[0:len(recv_buffer):dec],dtype=n.complex64)
 
