@@ -262,14 +262,13 @@ def housekeeping(usrp,log,ic):
         pass
 
 
-def main(config):
+def main(ic):
     """
     Start up everything and run main loop from here.
     """
     # setup a logger
     log = iono_logger.logger("rx-")
 
-    ic = iono_config.get_config(config=config)
     s = ic.s
 
     # register signals to be caught
@@ -332,5 +331,16 @@ if __name__ == "__main__":
         default="config/default.ini",
         help='''Configuration file. (default: %(default)s)''',
     )
+    parser.add_argument(
+        '-v', '--verbose',
+        action="store_true",
+        help='''Increase output verbosity. (default: %(default)s)''',
+    )
     op = parser.parse_args()
-    main(config=op.config)
+
+    ic = iono_config.get_config(
+        config=op.config,
+        write_waveforms=True,
+        quiet=not op.verbose
+    )
+    main(ic)

@@ -16,6 +16,7 @@ import sweep
 import h5py
 import iono_config
 import scipy.constants as c
+from datetime import datetime, timedelta
 
 
 
@@ -256,4 +257,5 @@ if __name__ == "__main__":
 
     # don't create waveform files.
     ic = iono_config.get_config(config=op.config, write_waveforms=False)
+    print("Starting analysis %s" % (datetime.fromtimestamp(time.time()).strftime("%FT%T")))
     analyze_latest_sweep(ic)
