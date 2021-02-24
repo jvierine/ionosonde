@@ -155,8 +155,8 @@ class iono_config:
         return(out)
 
 
-def get_config(config="config/default.ini", write_waveforms=True):
-    c = iono_config(config, write_waveforms=write_waveforms)
+def get_config(config="config/default.ini", write_waveforms=True, quiet=True):
+    c = iono_config(config, write_waveforms=write_waveforms, quiet=quiet)
     return c
 
 

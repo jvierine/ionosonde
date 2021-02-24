@@ -198,9 +198,24 @@ if __name__ == "__main__":
         default="config/default.ini",
         help='''Configuration file. (default: %(default)s)''',
     )
+    parser.add_argument(
+        '-w', '--create_waveforms',
+        default=False,
+        action="store_true",
+        help='''Create waveform files. (default: %(default)s)''',
+    )
+    parser.add_argument(
+        '-v', '--verbose',
+        action="store_true",
+        help='''Increase output verbosity. (default: %(default)s)''',
+    )
     op = parser.parse_args()
 
-    ic = iono_config.get_config(config=op.config, write_waveforms=False)
+    ic = iono_config.get_config(
+        config=op.config,
+        write_waveforms=op.create_waveforms,
+        quiet=not op.verbose
+    )
     I,rvec,freq = analyze_ionogram(fname="results/2020-05-21T16-00-00/ionogram-1590076920.h5",
                                    avg_spec=False,
                                    plot_ionogram=False,
