@@ -24,7 +24,7 @@ class logger:
         if self.creation_time.date() != datetime.utcnow().date():
             # New day, need to reopen logfile
             self.f.close()
-            self.__init__(self, self.prefix)
+            self.__init__(self.prefix)
 
     def log(self, msg, print_msg=True):
         self.need_to_reopen()

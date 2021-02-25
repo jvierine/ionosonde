@@ -80,7 +80,9 @@ def lpf(dec=10,filter_len=4):
 def write_to_file(recv_buffer,fname,log,dec=10):
     print("writing to file %s"%(fname))
 
-    w=lpf(dec=dec)
+    #    w=lpf(dec=dec)
+    # todo: read filter length from create_waveforms, where it is determined
+    w=ss.flattop(52)
     fl=len(w)
     # filter, time shift, decimate, and cast to complex64 data type
     obuf=n.array(n.roll(n.fft.ifft(n.fft.fft(w,len(recv_buffer))*n.fft.fft(recv_buffer)),-int(fl/2))[0:len(recv_buffer):dec],dtype=n.complex64)
