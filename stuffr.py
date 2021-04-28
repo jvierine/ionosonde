@@ -151,10 +151,9 @@ def fit_velocity_and_power(z, t, var, frad=440.2e6):
 
 
 def dict2hdf5(d, fname):
-    f = h5py.File(fname, 'w')
-    for k in d.keys():
-        f[k] = d[k]
-    f.close()
+    with h5py.File(fname, 'w') as f:
+        for k in d.keys():
+            f[k] = d[k]
 
 
 def save_object(obj, filename):

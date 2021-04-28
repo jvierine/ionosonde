@@ -41,11 +41,11 @@ def acquire_spectrum(freq=12.5e6,
                     S[ti, :]+=n.abs(n.fft.fftshift(n.fft.fft(z[(ai*n_fft):(ai*n_fft + n_fft)]*w)))**2.0
 
         tvec=n.array(tvec)
-        ho=h5py.File("spec-%d.h5" % (time.time()), "w")
-        ho["S"]=S
-        ho["tvec"]=tvec
-        ho["fvec"]=freqv
-        ho.close()
+        with h5py.File("spec-%d.h5" % (time.time()), "w") as ho:
+            ho["S"]=S
+            ho["tvec"]=tvec
+            ho["fvec"]=freqv
+
         ax.clear()
         ax.pcolormesh(freqv/1e6, tvec, 10.0*n.log10(S))
         ax.set_xlabel("Frequency (MHz)")

@@ -20,14 +20,14 @@ def overview_plots(t0, t1, max_r=500, gc=20):
 
     for f in fl:
         try:
-            h=h5py.File(f, "r")
-            if "ionogram_version" in h.keys() and h["ionogram_version"].value == 1:
-                if (h["t0"].value > t0) and (h["t0"].value < t1):
-                    # print("t0 %d t1 %d t %d"%(t0,t1,h["t0"].value))
-                    # print(h["t0"].value)
-                    t.append(n.copy(h["t0"].value))
-                    v1f.append(f)
-            h.close()
+            with h5py.File(f, "r") as h:
+                if "ionogram_version" in h.keys() and h["ionogram_version"].value == 1:
+                    if (h["t0"].value > t0) and (h["t0"].value < t1):
+                        # print("t0 %d t1 %d t %d"%(t0,t1,h["t0"].value))
+                        # print(h["t0"].value)
+                        t.append(n.copy(h["t0"].value))
+                        v1f.append(f)
+
         except Exception as e:
             print("bad file %s" % (f))
     #   print(len(v1f))
@@ -35,10 +35,9 @@ def overview_plots(t0, t1, max_r=500, gc=20):
         print("no data")
         return
 
-    h=h5py.File(v1f[0], "r")
-    n_f=len(h["I_fvec"].value)
-    freq=n.copy(h["I_fvec"].value)
-    h.close()
+    with h5py.File(v1f[0], "r") as h:
+        n_f=len(h["I_fvec"].value)
+        freq=n.copy(h["I_fvec"].value)
 
     n_t=len(v1f)
     n_r=max_r
@@ -51,8 +50,9 @@ def overview_plots(t0, t1, max_r=500, gc=20):
     for fi, f in enumerate(idx):
         f=v1f[idx[fi]]
         print(f)
-        h=h5py.File(f, "r")
-        I=n.copy(h["I"].value)
+        with h5py.File(f, "r") as h:
+            I=n.copy(h["I"].value)
+
         dtt.append(stuffr.unix2date(t[idx[fi]]))
         for freq_i in range(I.shape[0]):
             I[freq_i, :]=I[freq_i, :]/n.median(n.abs(I[freq_i, :]))
@@ -64,7 +64,6 @@ def overview_plots(t0, t1, max_r=500, gc=20):
         # print(I.shape)
         OR[fi, :]=n.max(I[:, 0:max_r], axis=0)
         OF[fi, :]=n.max(I[:, gc:max_r], axis=1)
-        h.close()
 
     dBOR=10.0*n.log10(OR)
     dBOF=10.0*n.log10(OF)

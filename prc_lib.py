@@ -92,15 +92,13 @@ def analyze_prc2(z,
     cache_file="waveforms/cache-%d.h5" % (cache_idx)
 
     if os.path.exists(cache_file):
-        hb=h5py.File(cache_file, "r")
-        B=np.copy(hb["B"][()])
-        hb.close()
+        with h5py.File(cache_file, "r") as hb:
+            B=np.copy(hb["B"][()])
     else:
         r = create_estimation_matrix(code=code, rmax=n_ranges)
         B = r['B']
-        hb=h5py.File(cache_file, "w")
-        hb["B"]=B
-        hb.close()
+        with h5py.File(cache_file, "w") as hb:
+            hb["B"]=B
 
     spec = np.zeros([N, n_ranges], dtype=np.complex64)
 
