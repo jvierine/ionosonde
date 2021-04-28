@@ -38,7 +38,8 @@ def acquire_spectrum(freq=12.5e6,
                 z=samps[0]
                 z=z-n.mean(z)
                 for ai in range(n_avg):
-                    S[ti, :]+=n.abs(n.fft.fftshift(n.fft.fft(z[(ai*n_fft):(ai*n_fft + n_fft)]*w)))**2.0
+                    S[ti, :]+=n.abs(n.fft.fftshift(
+                        n.fft.fft(z[(ai*n_fft):(ai*n_fft + n_fft)]*w)))**2.0
 
         tvec=n.array(tvec)
         with h5py.File("spec-%d.h5" % (time.time()), "w") as ho:

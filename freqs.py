@@ -95,12 +95,14 @@ def code_design(sample_rate=10e6,
                 max_amp=n.sqrt(2.0),
                 min_amp=n.sqrt(0.5)):
     """
-    Design a periodic waveform that has power only on predefined bands. This is in essense a "spread spectrum" code,
-    which over the length of the code uses all of the available spectrum that it is allowed to.
+    Design a periodic waveform that has power only on predefined bands. This is in essense a
+    "spread spectrum" code, which over the length of the code uses all of the available
+    spectrum that it is allowed to.
 
     One important added constraint is that the code needs to be fairly constant in amplitude,
     so that the transmit amplifier saturation does not put high limitations on the mean
-    power that can be transmitted. max_amp and min_amp specify the minimum and maximum amplitude relative to the mean amplitude.
+    power that can be transmitted. max_amp and min_amp specify the minimum and maximum amplitude
+    relative to the mean amplitude.
     """
 
     # get the specification for the spectral mask that we are allowed to transmit in.
@@ -138,11 +140,12 @@ def code_design(sample_rate=10e6,
         in_band_pwr=n.sum(n.abs(n.fft.fft(code))[in_band_idx]**2.0)/len(in_band_idx)
         ratio_dB=10.0*n.log10(out_of_band_pwr/in_band_pwr)
 
-        print("code amplitude min %1.3g max %1.3g mean %1.3g std %1.3g\nout of band power=%1.3g"%(n.min(n.abs(code)),
-                                                                                                  n.max(n.abs(code)),
-                                                                                                  n.mean(n.abs(code)),
-                                                                                                  n.std(n.abs(code)),
-                                                                                                  ratio_dB))
+        print("code amplitude min %1.3g max %1.3g mean %1.3g std %1.3g\n"
+              "out of band power=%1.3g" % (n.min(n.abs(code)),
+                                           n.max(n.abs(code)),
+                                           n.mean(n.abs(code)),
+                                           n.std(n.abs(code)),
+                                           ratio_dB))
 
     plt.plot(code[0:1000].real, label="real")
     plt.plot(code[0:1000].imag, label="imag")

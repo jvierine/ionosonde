@@ -137,7 +137,8 @@ def analyze_ionogram(ic,
                 plt.show()
                 dBS=n.transpose(10.0*n.log10(spec))
                 nf=n.nanmedian(dBS)
-                dop=3e8*n.fft.fftshift(n.fft.fftfreq(N_codes, d=code_len/float(sample_rate)))/2.0/(freqs[i, 0]*1e6)
+                dop=3e8*n.fft.fftshift(
+                    n.fft.fftfreq(N_codes, d=code_len/float(sample_rate)))/2.0/(freqs[i, 0]*1e6)
                 plt.pcolormesh(dop, rvec, dBS, vmin=nf, vmax=nf+20)
                 plt.xlabel("Doppler shift (m/s)")
                 plt.ylabel("Range (km)")

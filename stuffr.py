@@ -193,7 +193,8 @@ def sec2dirname(t):
 
 def dirname2unix(dirn):
     r = re.search("(....)-(..)-(..)T(..)-(..)-(..)", dirn)
-    return(date2unix(int(r.group(1)), int(r.group(2)), int(r.group(3)), int(r.group(4)), int(r.group(5)), int(r.group(6))))
+    return(date2unix(int(r.group(1)), int(r.group(2)), int(r.group(3)),
+                     int(r.group(4)), int(r.group(5)), int(r.group(6))))
 
 
 def unix2datestr(x):
@@ -324,5 +325,7 @@ def spectrogram(x, window=1024, wf=hanning):
     Nwindow = int(math.floor(len(x)/window))
     res = numpy.zeros([Nwindow, window])
     for i in range(Nwindow):
-        res[i, ] = numpy.abs(numpy.fft.fftshift(numpy.fft.fft(wfv*x[i*window + numpy.arange(window)])))**2
+        res[i, ] = numpy.abs(
+            numpy.fft.fftshift(
+                numpy.fft.fft(wfv*x[i*window + numpy.arange(window)])))**2
     return(res)

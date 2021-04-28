@@ -136,7 +136,8 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
             dB_max=n.nanmax(dBr)
             plt.pcolormesh(p_tvec, p_rvec-ic.range_shift*dr, dBr, vmin=0, vmax=ic.max_plot_dB)
             plt.xlabel("Time (s)")
-            plt.title("Range-Time Power f=%d (dB)\nnoise_floor=%1.2f (dB) peak SNR=%1.2f" % (i, noise_floor, dB_max))
+            plt.title("Range-Time Power f=%d (dB)\nnoise_floor=%1.2f (dB) peak SNR=%1.2f"
+                      % (i, noise_floor, dB_max))
             plt.ylabel("Range (km)")
             plt.ylim([-10, ic.max_plot_range])
 
@@ -165,7 +166,8 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
             plt.pcolormesh(fvec, rvec-ic.range_shift*dr, dBs, vmin=0, vmax=ic.max_plot_dB)
             plt.ylim([-10, ic.max_plot_range])
 
-            plt.title("Range-Doppler Power (dB)\nnoise_floor=%1.2f (dB) peak SNR=%1.2f (dB)" % (noise_floor, max_dB))
+            plt.title("Range-Doppler Power (dB)\nnoise_floor=%1.2f (dB) peak SNR=%1.2f (dB)"
+                      % (noise_floor, max_dB))
             plt.xlabel("Frequency (Hz)")
             plt.ylabel("Virtual range (km)")
 
@@ -196,11 +198,10 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
 
     plt.figure(figsize=(1.5*8, 1.5*6))
     max_dB=n.nanmax(dB)
-    plt.pcolormesh(n.concatenate((iono_p_freq, [fmax+0.1])), rvec-ic.range_shift*1.5, dB, vmin=0, vmax=ic.max_plot_dB)
-    plt.title("%s %s\nnoise_floor=%1.2f (dB) peak SNR=%1.2f" % (ic.instrument_name,
-                                                                stuffr.unix2datestr(t0),
-                                                                noise_floor_0,
-                                                                max_dB))
+    plt.pcolormesh(n.concatenate((iono_p_freq, [fmax+0.1])),
+                   rvec-ic.range_shift*1.5, dB, vmin=0, vmax=ic.max_plot_dB)
+    plt.title("%s %s\nnoise_floor=%1.2f (dB) peak SNR=%1.2f"
+              % (ic.instrument_name, stuffr.unix2datestr(t0), noise_floor_0, max_dB))
     plt.xlabel("Frequency (MHz)")
     plt.ylabel("Virtual range (km)")
     #plt.colorbar()

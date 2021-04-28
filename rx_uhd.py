@@ -88,7 +88,14 @@ def write_to_file(recv_buffer, fname, log, dec=10):
     w=ss.flattop(52)
     fl=len(w)
     # filter, time shift, decimate, and cast to complex64 data type
-    obuf=n.array(n.roll(n.fft.ifft(n.fft.fft(w, len(recv_buffer))*n.fft.fft(recv_buffer)), -int(fl/2))[0:len(recv_buffer):dec], dtype=n.complex64)
+    obuf=n.array(
+        n.roll(
+            n.fft.ifft(
+                n.fft.fft(w, len(recv_buffer))
+                * n.fft.fft(recv_buffer)),
+            -int(fl/2)
+            )[0:len(recv_buffer):dec],
+        dtype=n.complex64)
 
     # rectangular impulse response. better for range resolution,
     # but not very good for frequency selectivity.
@@ -154,7 +161,8 @@ def receive_continuous(u, t0, t_now, ic, log, sample_rate=1000000.0):
     prev_samples = -1
 
     # samples since 1970 for the first packet.
-    samples0=int(stream_cmd.time_spec.get_full_secs())*int(sample_rate) + int(stream_cmd.time_spec.get_frac_secs()*sample_rate)
+    samples0=int(stream_cmd.time_spec.get_full_secs())*int(sample_rate) + \
+        int(stream_cmd.time_spec.get_frac_secs()*sample_rate)
 
     # number of samples per frequency in the sweep
     n_per_freq=int(s.freq_dur*sample_rate)
@@ -178,7 +186,8 @@ def receive_continuous(u, t0, t_now, ic, log, sample_rate=1000000.0):
                 continue
 
             # the start of the buffer is at this sample index
-            samples=int(md.time_spec.get_full_secs())*int(sample_rate) + int(md.time_spec.get_frac_secs()*sample_rate)
+            samples=int(md.time_spec.get_full_secs())*int(sample_rate) + \
+                int(md.time_spec.get_frac_secs()*sample_rate)
 
             # this is how many samples we have jumped forward.
             step = samples-prev_samples
@@ -204,7 +213,9 @@ def receive_continuous(u, t0, t_now, ic, log, sample_rate=1000000.0):
 
                 # spin of a thread to write all samples obtained while sounding this frequency
                 # todo: pass decimtaiton option, and pass transmit bandwidth
-                wr_thread=threading.Thread(target=write_to_file, args=(wr_buff, "%s/raw-%d-%03d.bin" % (ic.data_dir, cycle_t0, freq_num), log))
+                wr_thread=threading.Thread(target=write_to_file,
+                                           args=(wr_buff, "%s/raw-%d-%03d.bin"
+                                                          % (ic.data_dir, cycle_t0, freq_num), log))
                 wr_thread.start()
                 freq_num += 1
 
