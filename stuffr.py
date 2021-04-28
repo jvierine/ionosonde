@@ -19,8 +19,9 @@ import h5py
 # fit_velocity
 import scipy.constants
 import scipy.optimize
-
 import pytz
+
+
 # xpath-like access to nested dictionaries
 # @d ditct
 # @q query (eg., /data/stuff)
@@ -36,6 +37,7 @@ def qd(d, q):
             return None
     return nd
 
+
 # seed is a way of reproducing the random code without
 # having to store all actual codes. the seed can then
 # act as a sort of station_id.
@@ -44,6 +46,7 @@ def create_pseudo_random_code(len=10000,seed=0):
     phases = numpy.array(numpy.exp(1.0j*2.0*math.pi*numpy.random.random(len)),
                          dtype=numpy.complex64)
     return(phases)
+
 
 def periodic_convolution_matrix(envelope,rmin=0,rmax=100):
     # we imply that the number of measurements is equal to the number of elements in code
@@ -56,6 +59,7 @@ def periodic_convolution_matrix(envelope,rmin=0,rmax=100):
     result['A'] = A
     result['ridx'] = ridx
     return(result)
+
 
 def analyze_prc_file(fname="data-000001.gdf",clen=10000,station=0,Nranges=1000):
     z = numpy.fromfile(fname,dtype=numpy.complex64)
@@ -75,9 +79,12 @@ def analyze_prc_file(fname="data-000001.gdf",clen=10000,station=0,Nranges=1000):
     r['spec'] = spec
     return(r)
 
+
 B_cache = 0
 r_cache = 0
 B_cached = False
+
+
 def create_estimation_matrix(code,rmin=0,rmax=1000,cache=True):
     global B_cache
     global r_cache
@@ -94,6 +101,7 @@ def create_estimation_matrix(code,rmin=0,rmax=1000,cache=True):
     else:
         return(r_cache)
 
+
 def grid_search1d(fun,xmin,xmax,nstep=100):
     vals = numpy.linspace(xmin,xmax,num=nstep)
     min_val=fun(vals[0])
@@ -104,6 +112,7 @@ def grid_search1d(fun,xmin,xmax,nstep=100):
             min_val = try_val
             best_idx = i
     return(vals[best_idx])
+
 
 def fit_velocity(z,t,var,frad=440.2e6):
     zz = numpy.exp(1.0j*numpy.angle(z))
@@ -120,6 +129,7 @@ def fit_velocity(z,t,var,frad=440.2e6):
     #    v = scipy.optimize.fmin(ssfun,numpy.array([v0]),full_output=False,disp=False,retall=False)
     return(v0)
 
+
 def fit_velocity_and_power(z,t,var,frad=440.2e6):
     zz = numpy.exp(1.0j*numpy.angle(z))
     def ssfun(x):
@@ -135,19 +145,23 @@ def fit_velocity_and_power(z,t,var,frad=440.2e6):
 
     return([v0,p0])
 
+
 def dict2hdf5(d,fname):
     f = h5py.File(fname,'w')
     for k in d.keys():
         f[k] = d[k]
     f.close()
 
+
 def save_object(obj, filename):
     with open(filename, 'wb') as output:
         pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
+
 def load_object(filename):
     with open(filename, 'rb') as input:
         return(pickle.load(input))
+
 
 def date2unix(year,month,day,hour,minute,second):
     t0=datetime.datetime(1970,1,1)
@@ -157,12 +171,14 @@ def date2unix(year,month,day,hour,minute,second):
 #    return(t.total_seconds())#imestamp())
 #    return(time.mktime(t.timetuple()))
 
+
 def unix2date(x):
     return datetime.datetime.utcfromtimestamp(x)
 
 
 def unix2iso8601(t):
     return(unix2date(t).strftime("%Y-%m-%dT%H.%M.%SZ"))
+
 
 def unix2iso8601_dirname(t, ic):
     return(unix2date(t).strftime(ic.ionogram_dirname))
@@ -171,12 +187,15 @@ def unix2iso8601_dirname(t, ic):
 def sec2dirname(t):
     return(unix2date(t).strftime("%Y-%m-%dT%H-00-00"))
 
+
 def dirname2unix(dirn):
     r = re.search("(....)-(..)-(..)T(..)-(..)-(..)",dirn)
     return(date2unix(int(r.group(1)),int(r.group(2)),int(r.group(3)),int(r.group(4)),int(r.group(5)),int(r.group(6))))
 
+
 def unix2datestr(x):
     return(unix2date(x).strftime('%Y-%m-%d %H:%M:%S %Z'))
+
 
 def compr(x,fr=0.001):
     sh = x.shape
@@ -191,10 +210,12 @@ def compr(x,fr=0.001):
     x = x.reshape(sh)
     return(x)
 
+
 def comprz(x):
     """ Compress signal in such a way that elements less than zero are set to zero. """
     zv = x*0.0
     return(numpy.where(x>0,x,zv))
+
 
 def rep(x,n):
     """ interpolate """
@@ -203,6 +224,7 @@ def rep(x,n):
         for j in range(n):
             z[i*n+j]=x[i]
     return(z)
+
 
 def comprz_dB(xx,fr=0.05):
     """ Compress signal in such a way that is logarithmic but also avoids negative values """
@@ -218,6 +240,7 @@ def comprz_dB(xx,fr=0.05):
     xx = xx.reshape(sh)
     return(10.0*numpy.log10(xx))
 
+
 def decimate(x,dec=2):
     """
     low pass filter and decimate
@@ -229,6 +252,7 @@ def decimate(x,dec=2):
     for i in numpy.arange(dec):
         res = res + x[idx+i]
     return(res/float(dec))
+
 
 def decimate2(x,dec=2):
     Nout = int(math.floor(len(x)/dec))
@@ -256,6 +280,7 @@ def median_dec(x,dec=10):
         res[i] = numpy.median(x[i*dec + idx])
     return(res)
 
+
 def decimate_mat(M,dec0=10,dec1=10):
     shape2 = [math.floor(M.shape[0]/dec0),math.floor(M.shape[1]/dec1)]
     M2 = numpy.zeros(shape2,dtype=M.dtype)
@@ -263,6 +288,7 @@ def decimate_mat(M,dec0=10,dec1=10):
         for j in numpy.arange(dec0):
             M2[i,:] = M2[i,:] + decimate(M[i+j,:],dec=dec1)
     return(M2)
+
 
 def decimate_mat_max(M,dec0=10):
     shape2 = [int(numpy.floor(M.shape[0]/dec0)),int(M.shape[1])]
@@ -272,6 +298,7 @@ def decimate_mat_max(M,dec0=10):
         for j in range(shape2[1]):
             M2[i,j] = numpy.max(M[i*dec0 + idx,j])
     return(M2)
+
 
 def plot_cts(x,plot_abs=False,plot_show=True):
     time_vec = numpy.linspace(0,len(x)-1,num=len(x))
@@ -283,9 +310,11 @@ def plot_cts(x,plot_abs=False,plot_show=True):
     if plot_show:
         plt.show()
 
+
 def hanning(L=1000):
     n = numpy.linspace(0.0,L-1,num=L)
     return(0.5*(1.0-numpy.cos(2.0*scipy.constants.pi*n/L)))
+
 
 def spectrogram(x,window=1024,wf=hanning):
     wfv = wf(L=window)
