@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # Code adapted from digital rf.
-# 
+#
 # ----------------------------------------------------------------------------
 # Copyright (c) 2017 Massachusetts Institute of Technology (MIT)
 # All rights reserved.
@@ -37,6 +37,7 @@ import scipy.fftpack as sf
 
 import create_waveform
 
+
 def periodic_convolution_matrix(envelope, rmin=0, rmax=100):
     """
     we imply that the number of measurements is equal to the number of elements
@@ -67,6 +68,7 @@ def create_estimation_matrix(code, rmin=0, rmax=1000):
     B_cached = True
     return(r_cache)
 
+
 def analyze_prc2(z,
                  code,
                  cache_idx=0,
@@ -83,39 +85,39 @@ def analyze_prc2(z,
 
     an_len=len(z)
     clen=len(code)
-    N = int(an_len / clen )
+    N = int(an_len / clen)
     res = np.zeros([N, n_ranges], dtype=np.complex64)
 
     # use cached version of (A^HA)^{-1}A^H if it exists.
-    cache_file="waveforms/cache-%d.h5"%(cache_idx)
+    cache_file="waveforms/cache-%d.h5" % (cache_idx)
 
     if os.path.exists(cache_file):
-        hb=h5py.File(cache_file,"r")
+        hb=h5py.File(cache_file, "r")
         B=np.copy(hb["B"][()])
         hb.close()
     else:
         r = create_estimation_matrix(code=code, rmax=n_ranges)
         B = r['B']
-        hb=h5py.File(cache_file,"w")
+        hb=h5py.File(cache_file, "w")
         hb["B"]=B
         hb.close()
 
     spec = np.zeros([N, n_ranges], dtype=np.complex64)
 
-    z.shape=(N,clen)
-    
+    z.shape=(N, clen)
+
     if cw_rem:
         for ri in np.arange(clen):
-            z[:,ri]=z[:,ri]-np.mean(z[1:(N-1),ri])
+            z[:, ri]=z[:, ri]-np.mean(z[1:(N-1), ri])
 
     if rfi_rem:
-        bg=np.median(z,axis=0)
+        bg=np.median(z, axis=0)
         z=z-bg
 
     if fft_filter:
-        S=np.zeros(clen,dtype=np.float32)
+        S=np.zeros(clen, dtype=np.float32)
         for i in np.arange(N):
-            S+=np.abs(sf.fft(z[i,:]))**2.0
+            S+=np.abs(sf.fft(z[i, :]))**2.0
         S=np.sqrt(S/float(N))
     for i in np.arange(N):
         # B=(A^H A)^{-1}A^H
@@ -123,44 +125,44 @@ def analyze_prc2(z,
         # z = measurement
         # res[i,:] = backscattered echo complex amplitude
         if fft_filter:
-            zw=np.array(sf.ifft(sf.fft(z[i,:])/S),dtype=np.complex64)
+            zw=np.array(sf.ifft(sf.fft(z[i, :])/S), dtype=np.complex64)
         else:
-            zw=z[i,:]
+            zw=z[i, :]
         res[i, :] = np.dot(B, zw)
 
     if gc_rem:
-        for i in range(gc,n_ranges):
-            res[:,i]=res[:,i]-np.median(res[:,i])
+        for i in range(gc, n_ranges):
+            res[:, i]=res[:, i]-np.median(res[:, i])
 
     if time_variable_noise:
         for i in np.arange(N):
-            noise_amp=np.median(np.abs(res[i,:]))
-            res[i,:]=res[i,:]/noise_amp
+            noise_amp=np.median(np.abs(res[i, :]))
+            res[i, :]=res[i, :]/noise_amp
 
-    window=1.0#wfun(N)
+    window=1.0  # wfun(N)
     # ignore first and last, where frequency transition occurs
-    res[0,:]=0.0
-    res[N-1,:]=0.0
+    res[0, :]=0.0
+    res[N-1, :]=0.0
     for i in np.arange(n_ranges):
         spec[:, i] = np.fft.fftshift(np.fft.fft(
             window * res[:, i]
         ))
 
-    spec_snr=np.zeros(spec.shape,dtype=np.float32)
+    spec_snr=np.zeros(spec.shape, dtype=np.float32)
 
     if spec_rfi_rem:
         median_spec = np.zeros(N, dtype=np.complex64)
-        noise_floor = np.zeros(N, dtype=np.float32)        
+        noise_floor = np.zeros(N, dtype=np.float32)
         spec_std = np.zeros(N, dtype=np.float32)
-        
+
         for i in np.arange(N):
             median_spec[i] = np.median(spec[i, :])
             noise_floor[i] = np.median(np.abs(spec[i, :])**2.0)
-            spec_std[i] = np.median(np.abs(spec[i,:]-median_spec[i]))
-            
+            spec_std[i] = np.median(np.abs(spec[i, :]-median_spec[i]))
+
         for i in np.arange(n_ranges):
             # signal to noise ratio, frequency dependent
-            spec_snr[:,i]= (np.abs(spec[:,i])**2.0-noise_floor)/noise_floor
+            spec_snr[:, i]= (np.abs(spec[:, i])**2.0-noise_floor)/noise_floor
             # noise standard deviation normalized power.
             spec[:, i] = (spec[:, i]-median_spec)/spec_std
 
@@ -168,7 +170,5 @@ def analyze_prc2(z,
     ret = {}
     ret['res'] = res
     ret['spec'] = spec
-    ret['spec_snr'] = spec_snr    
+    ret['spec_snr'] = spec_snr
     return(ret)
-
-

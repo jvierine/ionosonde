@@ -4,47 +4,49 @@ import numpy as n
 import scipy.signal as ss
 
 # these are the frequency "gaps" we are allowed to transmit in
-freqs=[[2.2,2.3],
-       [2.35,2.45],
-       [2.51,2.61],
-       [2.65,2.75],
-       [3.155,3.255],
-       [3.3,3.4],
-       [3.95,4.0],
-       [4.438,4.538],
-       [4.6,4.65],
-       [4.85,4.95],
-       [5.005,5.105],
-       [5.155,5.255],
-       [5.305,5.335],
-       [5.4,5.45],
-       [5.8,5.9],
-       [5.95,6.05],
-       [6.1,6.2],
-       [6.8,6.85],
-       [6.9,7],
-       [7.2,7.3],
-       [7.35,7.45],
-       [7.5,7.6],
-       [7.65,7.75],
-       [8.095,8.195],
-       [9.4,9.5],
-       [11.6,11.7],
-       [13.57,13.67],
-       [15.1,15.2],
-       [15.7,15.8],
-       [17.48,17.58],
-       [18.9,19.0],
-       [21.45,21.55],
-       [25.01,25.11]]
+freqs=[[2.2, 2.3],
+       [2.35, 2.45],
+       [2.51, 2.61],
+       [2.65, 2.75],
+       [3.155, 3.255],
+       [3.3, 3.4],
+       [3.95, 4.0],
+       [4.438, 4.538],
+       [4.6, 4.65],
+       [4.85, 4.95],
+       [5.005, 5.105],
+       [5.155, 5.255],
+       [5.305, 5.335],
+       [5.4, 5.45],
+       [5.8, 5.9],
+       [5.95, 6.05],
+       [6.1, 6.2],
+       [6.8, 6.85],
+       [6.9, 7],
+       [7.2, 7.3],
+       [7.35, 7.45],
+       [7.5, 7.6],
+       [7.65, 7.75],
+       [8.095, 8.195],
+       [9.4, 9.5],
+       [11.6, 11.7],
+       [13.57, 13.67],
+       [15.1, 15.2],
+       [15.7, 15.8],
+       [17.48, 17.58],
+       [18.9, 19.0],
+       [21.45, 21.55],
+       [25.01, 25.11]]
+
 
 def simple_plot():
 
     for f in freqs:
-        plt.fill_between([f[0],f[0],f[1],f[1]],[0,1,1,0])
+        plt.fill_between([f[0], f[0], f[1], f[1]], [0, 1, 1, 0])
     plt.title("Licensed frequency bands")
     plt.xlabel("Frequenc (MHz)")
     plt.show()
+
 
 def get_spec(sample_rate=10e6,
              code_length_sec=0.1,
@@ -61,34 +63,32 @@ def get_spec(sample_rate=10e6,
     # how long is the code in samples
     code_len=int(sample_rate*code_length_sec)
     # initialize a vector to hold the code
-    code_spec=n.zeros(code_len,dtype=n.complex64)
+    code_spec=n.zeros(code_len, dtype=n.complex64)
     # frequencies of the spectral components
-    code_freqs=n.fft.fftshift(n.fft.fftfreq(code_len,d=1.0/sample_rate))/1e6 + sample_rate/2.0/1e6
-
-
+    code_freqs=n.fft.fftshift(n.fft.fftfreq(code_len, d=1.0/sample_rate))/1e6 + sample_rate/2.0/1e6
 
     for f in freqs:
-        code_spec[( (code_freqs > f[0]) & (code_freqs < f[1]))]=1.0
-
+        code_spec[((code_freqs > f[0]) & (code_freqs < f[1]))]=1.0
 
     wlen=int(sample_rate/roll_off)
     print(wlen)
     window=ss.hann(wlen)
     window=window/n.sqrt(n.sum(window**2.0))
     print("conv")
-    code_spec=n.fft.ifft(n.fft.fft(window,len(code_spec))*n.fft.fft(code_spec)).real
+    code_spec=n.fft.ifft(n.fft.fft(window, len(code_spec))*n.fft.fft(code_spec)).real
     # normalize to unity
     code_spec=code_spec/n.max(code_spec)
     code_spec[code_spec < 1e-5]=0.0
     print("done")
 
     if plot:
-        plt.plot(code_freqs,code_spec**2.0)
+        plt.plot(code_freqs, code_spec**2.0)
         plt.xlabel("Frequency (MHz)")
         plt.ylabel("Spectral amplitude")
         plt.title("Desired power spectrum for transmit waveform")
         plt.show()
-    return(code_freqs,code_spec)
+    return(code_freqs, code_spec)
+
 
 def code_design(sample_rate=10e6,
                 code_length_sec=0.1,
@@ -104,12 +104,12 @@ def code_design(sample_rate=10e6,
     """
 
     # get the specification for the spectral mask that we are allowed to transmit in.
-    f,s=get_spec(sample_rate=sample_rate,code_length_sec=code_length_sec,plot=True)
+    f, s=get_spec(sample_rate=sample_rate, code_length_sec=code_length_sec, plot=True)
 
     code_len=len(s)
 
     # create random initial try for code
-    code = n.zeros(code_len,dtype=n.complex64)
+    code = n.zeros(code_len, dtype=n.complex64)
 
     # initialize the code randomly
     code[:]=n.random.randn(code_len)+1j*n.random.randn(code_len)
@@ -118,7 +118,6 @@ def code_design(sample_rate=10e6,
 
     out_of_band_idx=n.where(s_shift == 0.0)[0]
     in_band_idx=n.where(s_shift > 0.0)[0]
-
 
     for i in range(200):
         # what is the periodic spectrum of the code?
@@ -145,26 +144,25 @@ def code_design(sample_rate=10e6,
                                                                                                   n.std(n.abs(code)),
                                                                                                   ratio_dB))
 
-
-
-    plt.plot(code[0:1000].real,label="real")
-    plt.plot(code[0:1000].imag,label="imag")
+    plt.plot(code[0:1000].real, label="real")
+    plt.plot(code[0:1000].imag, label="imag")
     plt.legend()
     plt.xlabel("Time (samples)")
     plt.ylabel("Complex amplitude")
     plt.title("Transmit code complex amplitude")
     plt.show()
     plt.plot(n.abs(code[0:1000]))
-    plt.ylim([0,1.2*n.max(n.abs(code[0:1000]))])
+    plt.ylim([0, 1.2*n.max(n.abs(code[0:1000]))])
     plt.xlabel("Time (samples)")
     plt.ylabel("Code magnitude")
     plt.title("Transmit code magnitude")
     plt.show()
-    plt.plot(f,10.0*n.log10(n.abs(n.fft.fftshift(n.fft.fft(code)))**2.0))
+    plt.plot(f, 10.0*n.log10(n.abs(n.fft.fftshift(n.fft.fft(code)))**2.0))
     plt.xlabel("Freuqncy (MHz)")
     plt.ylabel("Spectrum (dB)")
     plt.title("Actual power spectrum of the code")
     plt.show()
+
 
 if __name__ == "__main__":
     code_design()

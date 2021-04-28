@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 import numpy as n
 
+
 class sweep():
     def __init__(self,
                  freqs,    # list of frequencies. three values per frequency: center_freq, code idx
                  freq_dur,
-                 codes=["waveforms/code-l10000-b10-000000f_100k.bin", # code 0
-                        "waveforms/code-l10000-b10-000000f_50k.bin",  # code 1
-                        "waveforms/code-l10000-b10-000000f_30k.bin"], # code 2
-                 sample_rate=1000000, # In Hz
+                 codes=["waveforms/code-l10000-b10-000000f_100k.bin",  # code 0
+                        "waveforms/code-l10000-b10-000000f_50k.bin",   # code 1
+                        "waveforms/code-l10000-b10-000000f_30k.bin"],  # code 2
+                 sample_rate=1000000,  # In Hz
                  code_amp=0.5):
 
         self.freq_dur=freq_dur
@@ -20,7 +21,7 @@ class sweep():
         self.sample_rate=sample_rate
         # check code lengths
         for c in codes:
-            wf=n.fromfile(c,dtype=n.complex64)
+            wf=n.fromfile(c, dtype=n.complex64)
             if self.code_len == 0:
                 self.code_len=len(wf)
             else:
@@ -32,11 +33,11 @@ class sweep():
 
         # todo: use waveforms created in iono_config
         for c in codes:
-            wf=code_amp*n.fromfile(c,dtype=n.complex64)
-            self.transmit_waveforms.append(n.tile(wf,n_reps))
+            wf=code_amp*n.fromfile(c, dtype=n.complex64)
+            self.transmit_waveforms.append(n.tile(wf, n_reps))
 
         self.determine_sweep_length()
-        self.t0=n.arange(self.n_freqs,dtype=n.float)*self.freq_dur
+        self.t0=n.arange(self.n_freqs, dtype=n.float)*self.freq_dur
 
     def determine_sweep_length(self):
         """
@@ -53,27 +54,26 @@ class sweep():
         """ relative cycle start times  """
         return(self.t0)
 
-    def freq(self,i):
+    def freq(self, i):
         """ center freq for cycle i  """
-        return(self.freqs[i%self.n_freqs][0]*1e6)
+        return(self.freqs[i % self.n_freqs][0]*1e6)
 
-    def waveform(self,i):
+    def waveform(self, i):
         """ get waveform array for cycle i """
-        code_idx=self.freqs[i%self.n_freqs][1]
+        code_idx=self.freqs[i % self.n_freqs][1]
         return(self.transmit_waveforms[code_idx])
 
-    def pars(self,i):
+    def pars(self, i):
         """ freq, time for cycle i """
-        return(self.freq(i),self.t0[i%self.n_freqs])
+        return(self.freq(i), self.t0[i % self.n_freqs])
 
-    def code(self,i):
+    def code(self, i):
         """ what code is being transmitted on cycle i """
-        return(self.codes[self.freqs[i%self.n_freqs][1]])
+        return(self.codes[self.freqs[i % self.n_freqs][1]])
 
-    def code_idx(self,i):
+    def code_idx(self, i):
         """ what code is being transmitted on cycle i """
-        return(self.freqs[i%self.n_freqs][1])
+        return(self.freqs[i % self.n_freqs][1])
 
 #    def bw(self,i):
- #       return(self.freqs[i][1]-self.freqs[i][0])
-
+#        return(self.freqs[i][1]-self.freqs[i][0])

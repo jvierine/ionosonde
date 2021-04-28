@@ -24,9 +24,9 @@ r=prc_lib.create_estimation_matrix(code, rmin=0, rmax=1000)
 A=r["A"]
 
 # a posteriory covariance matrix
-S=n.linalg.inv(n.dot(n.conj(n.transpose(A)),A))
+S=n.linalg.inv(n.dot(n.conj(n.transpose(A)), A))
 
-plt.figure(figsize=(10,6))
+plt.figure(figsize=(10, 6))
 plt.subplot(121)
 plt.plot(n.diag(S)*10000.0)
 plt.title("A posteriori estimation error variance")
@@ -36,10 +36,9 @@ plt.ylabel("Normalized a posteriori error variance")
 
 plt.subplot(122)
 plt.title("Error covariance matrix row 500")
-plt.plot(S[500,:].real)
-plt.plot(S[500,:].imag)
+plt.plot(S[500, :].real)
+plt.plot(S[500, :].imag)
 plt.xlabel("Range gate")
 plt.ylabel("Error covariance")
 plt.tight_layout()
 plt.show()
-

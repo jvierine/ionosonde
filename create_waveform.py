@@ -25,14 +25,15 @@ import matplotlib.pyplot as plt
 import iono_config
 import scipy.signal as ss
 
-def lpf(dec=10,om_factor=1.0,filter_len=4):
+
+def lpf(dec=10, om_factor=1.0, filter_len=4):
     """ a better lpf """
     om0=om_factor*2.0*n.pi/dec
     dec2=filter_len*dec
-    m=n.array(n.arange(filter_len*dec),dtype=n.float32)
+    m=n.array(n.arange(filter_len*dec), dtype=n.float32)
     m=m-n.mean(m)
     # windowed low pass filter
-    wfun=n.array(ss.hann(len(m))*n.sin(om0*(m+1e-6))/(n.pi*(m+1e-6)),dtype=n.complex64)
+    wfun=n.array(ss.hann(len(m))*n.sin(om0*(m+1e-6))/(n.pi*(m+1e-6)), dtype=n.complex64)
     return(wfun)
 
 
@@ -42,13 +43,13 @@ def lpf(dec=10,om_factor=1.0,filter_len=4):
 def create_pseudo_random_code(clen=10000, seed=0, pulse_length=-1, ipp=1000):
     n.random.seed(seed)
     # Each bit has a random phase between \phi_t = U(0,2*pi). The waveform is e^(i \phi_t).
-    code = n.array(n.exp(1j*n.random.rand(clen)*2*n.pi),dtype=n.complex64)
+    code = n.array(n.exp(1j*n.random.rand(clen)*2*n.pi), dtype=n.complex64)
 
     if pulse_length > 0:
         # if a pulse length is specified, notch everything to zero after pulse
         n_pulses=int(clen/ipp)
         for i in range(n_pulses):
-            code[ (i*ipp + pulse_length): ((i+1)*ipp) ] = 0.0
+            code[(i*ipp + pulse_length): ((i+1)*ipp)] = 0.0
 
     return(code)
 
@@ -64,12 +65,13 @@ def create_prn_dft_code(clen=10000, seed=0):
     N=int(n.sqrt(clen))
     # random phases
     rp=n.exp(1j*n.random.rand(N)*2*n.pi)
-    code=n.array([],dtype=n.complex64)
-    idx=n.arange(N,dtype=n.float32)
+    code=n.array([], dtype=n.complex64)
+    idx=n.arange(N, dtype=n.float32)
     for i in range(N):
-        code=n.concatenate((code,rp*n.exp(1j*2.0*n.pi*float(i)*idx/float(N))))
-    code=n.array(code,dtype=n.complex64)
+        code=n.concatenate((code, rp*n.exp(1j*2.0*n.pi*float(i)*idx/float(N))))
+    code=n.array(code, dtype=n.complex64)
     return(code)
+
 
 # oversample a phase code by a factor of rep
 def rep_seq(x, rep=10):
@@ -79,6 +81,7 @@ def rep_seq(x, rep=10):
     for i in n.arange(rep):
         res[idx + i] = x
     return(res)
+
 
 def filter_waveform(waveform,
                     sr=1e6,
@@ -103,7 +106,7 @@ def filter_waveform(waveform,
     fl = int(sr/bandwidth/2)*2
     power_outside_band=1.0
 
-    fvec=n.fft.fftshift(n.fft.fftfreq(len(waveform),d=1.0/sr))
+    fvec=n.fft.fftshift(n.fft.fftfreq(len(waveform), d=1.0/sr))
     # which frequency bins are in the band
     fidx=n.where(n.abs(fvec) < bandwidth/2.0)[0]
 
@@ -118,7 +121,7 @@ def filter_waveform(waveform,
         a = aa / n.max(n.abs(aa))
         a = n.array(a, dtype=n.complex64)
         # remove filter time shift add a fixed shift of 20 samples
-        a=n.roll(a,-int(fl/2)+20)
+        a=n.roll(a, -int(fl/2)+20)
         # power spectrum
         S=n.fft.fftshift(n.abs(n.fft.fft(a))**2.0)
         P_tot=n.sum(S)
@@ -129,11 +132,10 @@ def filter_waveform(waveform,
 #    print("Using filter length of %d samples"%(fl-2))
 
     if plot:
-        plt.plot(a.real,a.imag,".")
+        plt.plot(a.real, a.imag, ".")
         plt.show()
 
     return(a)
-
 
 
 #
@@ -154,9 +156,8 @@ def waveform_to_file(station=0,
                      code_type="prn",
                      write_file=True):
 
-
     os.system("mkdir -p waveforms")
-    ofname='waveforms/code-l%d-b%d-%06df_%dk.bin' % (clen, oversample, station,int(bandwidth/1e3))
+    ofname='waveforms/code-l%d-b%d-%06df_%dk.bin' % (clen, oversample, station, int(bandwidth/1e3))
 
     if code_type=="prn":
         code=create_pseudo_random_code(clen=clen, seed=station, pulse_length=pulse_length, ipp=ipp)
@@ -172,17 +173,17 @@ def waveform_to_file(station=0,
                           max_power_outside_band=power_outside_band)
 
     if write_file:
-        print("Writing file %s"%(ofname))
+        print("Writing file %s" % (ofname))
         a.tofile(ofname)
-    return(ofname,code)
+    return(ofname, code)
 
 
 def barker_to_file(
     station=0, clen=10000, oversample=10, filter_output=False,
 ):
-    a=n.zeros(clen*oversample,dtype=n.complex64)
-    barker13=n.array([1,1,1,1,1,-1,-1,1,1,-1,1,-1,1],dtype=n.complex64)
-    barker130=rep_seq(barker13,rep=oversample)
+    a=n.zeros(clen*oversample, dtype=n.complex64)
+    barker13=n.array([1, 1, 1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1], dtype=n.complex64)
+    barker130=rep_seq(barker13, rep=oversample)
     a[0:130]=barker130
     print(len(a))
     w = n.zeros([oversample * clen], dtype=n.complex64)
@@ -192,7 +193,6 @@ def barker_to_file(
     a = aa / n.max(n.abs(aa))
     a = n.array(a, dtype=n.complex64)
     a.tofile('code-barkerf.bin')
-
 
 
 if __name__ == '__main__':

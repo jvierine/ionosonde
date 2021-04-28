@@ -41,7 +41,7 @@ def qd(d, q):
 # seed is a way of reproducing the random code without
 # having to store all actual codes. the seed can then
 # act as a sort of station_id.
-def create_pseudo_random_code(len=10000,seed=0):
+def create_pseudo_random_code(len=10000, seed=0):
     numpy.random.seed(seed)
     phases = numpy.array(numpy.exp(1.0j*2.0*math.pi*numpy.random.random(len)),
                          dtype=numpy.complex64)
@@ -327,5 +327,3 @@ def spectrogram(x, window=1024, wf=hanning):
     for i in range(Nwindow):
         res[i, ] = numpy.abs(numpy.fft.fftshift(numpy.fft.fft(wfv*x[i*window + numpy.arange(window)])))**2
     return(res)
-
-

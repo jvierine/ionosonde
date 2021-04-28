@@ -5,21 +5,22 @@ import uhd
 import stuffr
 
 
-def check_lock(u,log=None,exit_if_not_locked=False):
+def check_lock(u, log=None, exit_if_not_locked=False):
     locked=u.get_mboard_sensor("gps_locked").to_bool()
 
-    f=open("gps.log","a")
-    f.write("%s lock=%d\n"%(stuffr.unix2datestr(time.time()),locked))
+    f=open("gps.log", "a")
+    f.write("%s lock=%d\n" % (stuffr.unix2datestr(time.time()), locked))
     f.close()
-    if locked==False:
-        if log!=None:
+    if not locked:
+        if log is not None:
             log.log("Warning, GPS not locked")
         if exit_if_not_locked:
             print("No GPS lock. Exiting.")
             exit(0)
     return(locked)
 
-def sync_clock(u,log, min_sync_time=300.0):
+
+def sync_clock(u, log, min_sync_time=300.0):
     # Based on the specs for the gpsdo, it takes 5 minutes to warm
     # up after restart
     t0=time.time()
@@ -35,16 +36,15 @@ def sync_clock(u,log, min_sync_time=300.0):
             # we've been locked for long enough. start the receiver.
             not_locked_for_long_enough=False
 
-        print("Waiting for GPS lock.\nObtained lock for %1.0f/%1.0f seconds\nCheck GPS antenna if no lock obtained in 60 seconds."%(time_locked,min_sync_time))
+        print("Waiting for GPS lock.\nObtained lock for %1.0f/%1.0f seconds\n"
+              "Check GPS antenna if no lock obtained in 60 seconds." % (time_locked, min_sync_time))
         time.sleep(10)
         # check for lock. don't log or exit
         gps_locked=check_lock(u)
 
-        if gps_locked == False:
+        if not gps_locked:
             # reset t0 if not locked
             t0=time.time()
-
-
 
     u.set_clock_source("gpsdo")
     u.set_time_source("gpsdo")
@@ -67,11 +67,11 @@ def sync_clock(u,log, min_sync_time=300.0):
     t_usrp=(u.get_time_now().get_full_secs()+u.get_time_now().get_frac_secs())
     t_gpsdo=u.get_mboard_sensor("gps_time")
     # these should be similar
-    print("pc clock %1.2f usrp clock %1.2f gpsdo %1.2f"%(t_now,t_usrp,t_gpsdo.to_int()))
+    print("pc clock %1.2f usrp clock %1.2f gpsdo %1.2f" % (t_now, t_usrp, t_gpsdo.to_int()))
 
 
 class gpsdo_monitor:
-    def __init__(self,u,log,holdover_time=1800.0,exit_on_lost_lock=True):
+    def __init__(self, u, log, holdover_time=1800.0, exit_on_lost_lock=True):
         self.u=u
         self.t_last_locked=time.time()
         self.holdover_time=holdover_time
@@ -79,17 +79,17 @@ class gpsdo_monitor:
         self.exit_on_lost_lock=exit_on_lost_lock
 
     def check(self):
-        locked=check_lock(self.u,log=self.log, exit_if_not_locked=False)
+        locked=check_lock(self.u, log=self.log, exit_if_not_locked=False)
         locked_on_avg=True
         if not locked:
             delta_t = time.time()-self.t_last_locked
             if delta_t > self.holdover_time:
-                self.log.log("Lost GPS lock for %1.2f seconds. Exiting"%(delta_t))
+                self.log.log("Lost GPS lock for %1.2f seconds. Exiting" % (delta_t))
                 locked_on_avg=False
                 if self.exit_on_lost_lock:
                     exit(0)
             else:
-                self.log.log("Lost GPS lock for %1.2f seconds"%(delta_t))
+                self.log.log("Lost GPS lock for %1.2f seconds" % (delta_t))
         else:
             self.t_last_locked=time.time()
         return(locked_on_avg)
@@ -100,6 +100,5 @@ if __name__ == "__main__":
     print(u.get_mboard_sensor("gps_gprmc"))
     print(u.get_mboard_sensor("gps_gpgga"))
     print(u.get_mboard_sensor("gps_time"))
-    locked=check_lock(u,log=None,exit_if_not_locked=False)
-    print("GPS locked %d"%(locked))
-
+    locked=check_lock(u, log=None, exit_if_not_locked=False)
+    print("GPS locked %d" % (locked))
