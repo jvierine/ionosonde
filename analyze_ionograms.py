@@ -37,15 +37,14 @@ def save_raw_data(fname="tmp.h5",
     z_re=n.array(n.real(z_all), dtype=n.float16)
     z_im=n.array(n.imag(z_all), dtype=n.float16)
     print("saving raw complex voltage %s" % (fname))
-    ho=h5py.File(fname, "w")
-    ho["z_re"]=z_re
-    ho["t0"]=t0
-    ho["z_im"]=z_im
-    ho["freqs"]=freqs
-    ho["freq_dur"]=freq_dur
-    ho["sample_rate"]=sr
-    ho["station_id"]=station
-    ho.close()
+    with h5py.File(fname, "w") as ho:
+        ho["z_re"]=z_re
+        ho["t0"]=t0
+        ho["z_im"]=z_im
+        ho["freqs"]=freqs
+        ho["freq_dur"]=freq_dur
+        ho["sample_rate"]=sr
+        ho["station_id"]=station
 
 
 def delete_old_files(t0, data_path="/dev/shm"):
@@ -233,15 +232,14 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
 
     iono_ofname="%s/ionogram-%s.h5" % (dname, datestr)
     print("Saving ionogram %s" % (iono_ofname))
-    ho=h5py.File(iono_ofname, "w")
-    ho["I"]=IS
-    ho["I_rvec"]=rvec
-    ho["t0"]=t0
-    ho["lat"]=ic.lat
-    ho["lon"]=ic.lon
-    ho["I_fvec"]=sfreqs
-    ho["ionogram_version"]=1
-    ho.close()
+    with h5py.File(iono_ofname, "w") as ho:
+        ho["I"]=IS
+        ho["I_rvec"]=rvec
+        ho["t0"]=t0
+        ho["lat"]=ic.lat
+        ho["lon"]=ic.lon
+        ho["I_fvec"]=sfreqs
+        ho["ionogram_version"]=1
 
     delete_old_files(t0)
 
