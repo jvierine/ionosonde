@@ -46,6 +46,7 @@ def save_raw_data(fname="tmp.h5",
     ho["station_id"]=station
     ho.close()
 
+
 def delete_old_files(t0,data_path="/dev/shm"):
     """
     Deleting files that are from the currently analyzed sweep or older.
@@ -60,6 +61,7 @@ def delete_old_files(t0,data_path="/dev/shm"):
                 os.system("rm %s"%(f))
         except:
             print("error deleting file")
+
 
 def analyze_latest_sweep(ic,data_path="/dev/shm"):
     """
