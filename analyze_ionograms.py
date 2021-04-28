@@ -79,7 +79,7 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
     fmax=n.max(iono_freqs)
     #
     plot_df=0.1
-    
+
     n_plot_freqs=int((fmax+0.5)/plot_df)
     iono_p_freq=n.arange(n_plot_freqs)*plot_df#n.linspace(0,fmax+0.5,num=n_plot_freqs)
     I=n.zeros([n_plot_freqs,n_rg],dtype=n.float32)
@@ -127,7 +127,7 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
             plt.subplot(121)
 
             tvec=n.arange(int(N/ic.code_len),dtype=n.float64)*dt
-            p_tvec=n.arange(int(N/ic.code_len)+1,dtype=n.float64)*dt            
+            p_tvec=n.arange(int(N/ic.code_len)+1,dtype=n.float64)*dt
             dBr=10.0*n.log10(n.transpose(n.abs(res["res"])**2.0))
             noise_floor=n.nanmedian(dBr)
             noise_floor_0=noise_floor
@@ -139,7 +139,6 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
             plt.title("Range-Time Power f=%d (dB)\nnoise_floor=%1.2f (dB) peak SNR=%1.2f"%(i,noise_floor,dB_max))
             plt.ylabel("Range (km)")
             plt.ylim([-10,ic.max_plot_range])
-
 
             plt.colorbar()
             plt.subplot(122)
@@ -207,7 +206,7 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
     #plt.colorbar()
     cb=plt.colorbar()
     cb.set_label("SNR (dB)")
-    
+
     plt.ylim([-10,ic.max_plot_range])
     plt.xlim([n.min(iono_freqs)-0.5,n.max(iono_freqs)+0.5])
     plt.tight_layout()
@@ -221,7 +220,6 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
     # make link to latest plot
     os.system("ln -sf %s latest.png"%(ofname))
 
-
     ofname="%s/raw-%s.h5"%(dname,datestr)
     if ic.save_raw_voltage:
         save_raw_data(ofname,
@@ -231,7 +229,6 @@ def analyze_latest_sweep(ic,data_path="/dev/shm"):
                       ic.station_id,
                       sr=ic.sample_rate/ic.dec,
                       freq_dur=ic.s.freq_dur)
-
 
     iono_ofname="%s/ionogram-%s.h5"%(dname,datestr)
     print("Saving ionogram %s"%(iono_ofname))
