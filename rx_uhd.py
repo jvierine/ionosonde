@@ -45,19 +45,20 @@ def tune_at(u,t0,f0=4e6):
     """
     u.clear_command_time()
     t0_ts=uhd.libpyuhd.types.time_spec(t0)
-    print("tuning at %1.2f"%(t0_ts.get_real_secs()))
+    print("tuning at %1.2f" % (t0_ts.get_real_secs()))
     u.set_command_time(t0_ts)
     tune_req=uhd.libpyuhd.types.tune_request(f0)
     u.set_tx_freq(tune_req)
     u.set_rx_freq(tune_req)
     u.clear_command_time()
 
-def delete_old_files(t0,data_path="/dev/shm"):
+
+def delete_old_files(t0, data_path="/dev/shm"):
     """
     Deleting files older than two cycles ago
     """
     # delete older files
-    fl=glob.glob("%s/raw*.bin"%(data_path))
+    fl=glob.glob("%s/raw*.bin" % (data_path))
     fl.sort()
     for f in fl:
         try:
@@ -66,6 +67,7 @@ def delete_old_files(t0,data_path="/dev/shm"):
                 os.system("rm %s"%(f))
         except:
             print("Error deleting file %s"%(f))
+
 
 def lpf(dec=10,filter_len=4):
     """ a better lpf """
@@ -76,6 +78,7 @@ def lpf(dec=10,filter_len=4):
     # windowed low pass filter
     wfun=n.array(ss.hann(len(m))*n.sin(om0*(m+1e-6))/(n.pi*(m+1e-6)),dtype=n.complex64)
     return(wfun)
+
 
 def write_to_file(recv_buffer,fname,log,dec=10):
     print("writing to file %s"%(fname))
@@ -92,6 +95,7 @@ def write_to_file(recv_buffer,fname,log,dec=10):
 #    obuf=stuffr.decimate(recv_buffer,dec=dec)
     obuf.tofile(fname)
 
+
 def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
     """
     New receive script, which processes data incoming from the usrp
@@ -106,7 +110,7 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
         f,t=s.pars(i)
         fvec.append(f)
         t0s.append(t)
-        
+
     # it seems that waiting until a few seconds before the sweep start
     # helps to keep the ethernet link "alive" for the start of streaming
     t_now=u.get_time_now().get_real_secs()
@@ -114,8 +118,8 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
         t_now=u.get_time_now().get_real_secs()
         print("Waiting for setup %1.2f"%(t0-t_now))
         time.sleep(1)
-    t_now=u.get_time_now().get_real_secs()        
-        
+    t_now=u.get_time_now().get_real_secs()
+
     # setup usrp to stream continuously, starting at t0
     stream_args=uhd.usrp.StreamArgs("fc32","sc16")
     rx_stream=u.get_rx_stream(stream_args)
@@ -169,7 +173,7 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
         while locked and not Exit:
             num_rx_samps=rx_stream.recv(recv_buffer,md,timeout=timeout)
             if num_rx_samps == 0:
-                # shit happened. we probably lost a packet. 
+                # shit happened. we probably lost a packet.
                 log.log("dropped packet. number of received samples is 0")
                 continue
 
@@ -253,6 +257,7 @@ def receive_continuous(u,t0,t_now,ic,log,sample_rate=1000000.0):
     exit(0)
     return
 
+
 def housekeeping(usrp,log,ic):
     """
     Delete raw voltage files in ringbuffer
@@ -323,7 +328,6 @@ def main(ic):
     # start with initial frequency
     tune_req=uhd.libpyuhd.types.tune_request(s.freq(0))
     usrp.set_rx_freq(tune_req)
-
 
     # start reading data
     housekeeping_thread=threading.Thread(target=housekeeping,args=(usrp,log,ic))
