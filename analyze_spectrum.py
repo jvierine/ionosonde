@@ -21,11 +21,11 @@ def acquire_spectrum(freq=12.5e6,
     # 100 Hz frequency resolution
     N=250000
     w=ss.blackmanharris(N)
-    freqv=n.fft.fftshift(n.fft.fftfreq(N,d=1/25e6))+freq
+    freqv=n.fft.fftshift(n.fft.fftfreq(N, d=1/25e6))+freq
     S=n.zeros(N)
     Nw=N_windows
     for i in range(Nw):
-        print("%d/%d"%(i,Nw))
+        print("%d/%d" % (i, Nw))
         samps = usrp.recv_num_samps(N, freq, 25000000, [0], 0)
 
         if len(samps[0]) == N:
@@ -35,11 +35,11 @@ def acquire_spectrum(freq=12.5e6,
         else:
             print(len(samps[0]))
     #    time.sleep(1)
-    with h5py.File(ofname,"w") as h:
+    with h5py.File(ofname, "w") as h:
         h["spec"]=S
         h["freq"]=freqv
 
-    plt.plot(freqv/1e6,10.0*n.log10(S))
+    plt.plot(freqv/1e6, 10.0*n.log10(S))
     plt.show()
 
 
