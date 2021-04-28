@@ -24,15 +24,15 @@ def incoh_an(z, code, nr=500):
     return(S)
 
 
-def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00Z/raw-2020-05-22T09:30:00.h5",
+def analyze_ionogram(ic,
+                     fname,
                      avg_spec=False,
                      plot_ionogram=False,
                      plot_spectra=False,
                      use_old=False,
                      max_range=1000,
                      min_range=0,
-                     version=1,
-                     ic=iono_config.get_config()):
+                     version=1):
 
     h=h5py.File(fname, "r")
 
@@ -190,6 +190,10 @@ def analyze_ionogram(fname="/home/markus/j/ionosonde/results/2020-05-22T09:00:00
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        'filename',
+        help='''File to reanalyze.'''
+    )
+    parser.add_argument(
         '-c', '--config',
         default="config/default.ini",
         help='''Configuration file. (default: %(default)s)''',
@@ -212,9 +216,11 @@ if __name__ == "__main__":
         write_waveforms=op.create_waveforms,
         quiet=not op.verbose
     )
-    I, rvec, freq = analyze_ionogram(fname="results/2020-05-21T16-00-00/ionogram-1590076920.h5",
-                                     avg_spec=False,
-                                     plot_ionogram=False,
-                                     plot_spectra=False,
-                                     version=1,
-                                     ic=ic)
+    I, rvec, freq = analyze_ionogram(
+        ic,
+        op.filename,
+        avg_spec=False,
+        plot_ionogram=False,
+        plot_spectra=False,
+        version=1
+    )
