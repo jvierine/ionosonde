@@ -18,7 +18,7 @@ def delete_old_files(t0,data_path="/dev/shm"):
             tfile=int(re.search(".*/raw-(.*)-....bin",f).group(1))
             if tfile < t0:
                 os.system("rm %s"%(f))
-        except:
+        except Exception as e:
             print("Error deleting file %s"%(f))
 
 

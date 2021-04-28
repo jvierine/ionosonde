@@ -65,7 +65,7 @@ def delete_old_files(t0, data_path="/dev/shm"):
             tfile=int(re.search(".*/raw-(.*)-....bin", f).group(1))
             if tfile < t0:
                 os.system("rm %s" % (f))
-        except:
+        except Exception as e:
             print("Error deleting file %s" % (f))
 
 
@@ -240,7 +240,7 @@ def receive_continuous(u, t0, t_now, ic, log, sample_rate=1000000.0):
                 next_sample += n_per_freq
 
             timeout=0.1
-    except:
+    except Exception as e:
         traceback.print_exc()
         traceback.print_stack()
         print("interrupt")
@@ -272,7 +272,7 @@ def housekeeping(usrp, log, ic):
             log.log("Memory use %1.5f (MB)" % (process.memory_info().rss/1e6))
 
             time.sleep(ic.s.sweep_len_s)
-    except:
+    except Exception as e:
         print("Housekeeping thread stopped")
         pass
 

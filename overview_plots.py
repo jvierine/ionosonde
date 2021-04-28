@@ -28,7 +28,7 @@ def overview_plots(t0,t1,max_r=500,gc=20):
                     t.append(n.copy(h["t0"].value))
                     v1f.append(f)
             h.close()
-        except:
+        except Exception as e:
             print("bad file %s"%(f))
     #   print(len(v1f))
     if len(v1f)== 0:

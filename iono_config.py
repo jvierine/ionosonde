@@ -121,7 +121,7 @@ class iono_config:
 
         try:
             os.mkdir(self.ionogram_path)
-        except:
+        except Exception as e:
             pass
 
         if not os.path.exists(self.ionogram_path):
@@ -129,7 +129,7 @@ class iono_config:
             exit(0)
         try:
             os.mkdir(self.ionogram_path)
-        except:
+        except Exception as e:
             pass
 
         if not os.path.exists(self.data_dir):

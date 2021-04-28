@@ -23,7 +23,7 @@ if acquire_new_spec:
     
     try:
         input("Measuring the transmitted spectrum. Make sure that the transmitter is on.\nPress any key to continue.")
-    except:
+    except Exception as e:
         pass
 
     aspec.acquire_spectrum(ofname="meas/spec_on.h5",N_windows=10000)

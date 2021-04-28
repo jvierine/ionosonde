@@ -139,7 +139,7 @@ def transmit_waveform(u, t0_full, waveform, swr_buffer, f0, log, ic):
         tx_thread.join()
         rx_thread.join()
         tx_stream=None
-    except:
+    except Exception as e:
         exit(0)
 
 
