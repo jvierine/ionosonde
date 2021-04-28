@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import matplotlib
-matplotlib.use("Agg")
 
 import numpy as n
 import matplotlib.pyplot as plt
@@ -19,6 +18,7 @@ import scipy.constants as c
 from datetime import datetime, timedelta
 
 
+matplotlib.use("Agg")
 
 def save_raw_data(fname="tmp.h5",
                   t0=0,
