@@ -144,6 +144,8 @@ def main(config):
     """
     The main loop for the ionosonde transmitter
     """
+    global Exit
+
     # setup a logger
     log = iono_logger.logger("tx-")
 
