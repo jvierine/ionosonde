@@ -29,13 +29,13 @@ import signal
 from datetime import datetime, timedelta
 import traceback
 
-Exit = False        # Used to signal an orderly exit
+WantExit = False        # Used to signal an orderly exit
 
 
 def orderlyExit(signalNumber, frame):
-    global Exit
+    global WantExit
     # Signal that we want to exit after current sweep
-    Exit = True
+    WantExit = True
 
 
 def tune_at(u, t0, f0=4e6):
@@ -108,6 +108,8 @@ def receive_continuous(u, t0, t_now, ic, log, sample_rate=1000000.0):
     New receive script, which processes data incoming from the usrp
     one packet at a time.
     """
+    global WantExit
+
     s=ic.s
     gps_mon=gl.gpsdo_monitor(u, log, exit_on_lost_lock=False)
     # sweep timing and frequencies
@@ -177,6 +179,7 @@ def receive_continuous(u, t0, t_now, ic, log, sample_rate=1000000.0):
     tune_at(u, t0+s.freq_dur, f0=s.freq(1))
 
     locked=True
+    Exit = False
     try:
         while locked and not Exit:
             num_rx_samps=rx_stream.recv(recv_buffer, md, timeout=timeout)
@@ -246,6 +249,8 @@ def receive_continuous(u, t0, t_now, ic, log, sample_rate=1000000.0):
                             datetime.fromtimestamp(cycle_t0).strftime("%FT%T.%f")[:-3]
                         )
                     )
+                    Exit = WantExit
+
 
                 # we've got a full freq step
                 next_sample += n_per_freq
