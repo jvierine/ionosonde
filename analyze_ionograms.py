@@ -128,7 +128,8 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
 
             tvec=n.arange(int(N/ic.code_len), dtype=n.float64)*dt
             p_tvec=n.arange(int(N/ic.code_len)+1, dtype=n.float64)*dt
-            dBr=10.0*n.log10(n.transpose(n.abs(res["res"])**2.0))
+            with n.errstate(divide='ignore'):
+                dBr=10.0*n.log10(n.transpose(n.abs(res["res"])**2.0))
             noise_floor=n.nanmedian(dBr)
             noise_floor_0=noise_floor
             noise_floors.append(noise_floor_0)
@@ -160,7 +161,8 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
             IS[i, :]=n.max(S, axis=0)
 
             # SNR in dB scale
-            dBs=10.0*n.log10(n.transpose(S))
+            with n.errstate(divide='ignore'):
+                dBs=10.0*n.log10(n.transpose(S))
             noise_floor=n.nanmedian(dBs)
             max_dB=n.nanmax(dBs)
             plt.pcolormesh(fvec, rvec-ic.range_shift*dr, dBs, vmin=0, vmax=ic.max_plot_dB)
@@ -185,7 +187,8 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
     i_fvec=n.zeros(ic.s.n_freqs)
     for fi in range(ic.s.n_freqs):
         i_fvec[fi]=s.freq(fi)
-    dB=10.0*n.log10(n.transpose(I))
+    with n.errstate(divide='ignore'):
+        dB=10.0*n.log10(n.transpose(I))
     dB[n.isinf(dB)]=n.nan
     noise_floor=n.nanmedian(dB)
 
