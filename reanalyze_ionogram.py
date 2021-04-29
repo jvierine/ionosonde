@@ -51,7 +51,7 @@ def analyze_ionogram(ic,
                     f=n.copy(hi["I_fvec"].value)
                 return(I, r, f)
 
-        if not "version" in h.keys():
+        if "version" not in h.keys():
             print("Not correction file version")
             return
 
