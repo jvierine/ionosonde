@@ -97,9 +97,8 @@ def create_estimation_matrix(code, rmin=0, rmax=1000, cache=True):
         B_cache = numpy.dot(numpy.linalg.inv(numpy.dot(Ah, A)), Ah)
         r_cache['B'] = B_cache
         B_cached = True
-        return(r_cache)
-    else:
-        return(r_cache)
+
+    return(r_cache)
 
 
 def grid_search1d(fun, xmin, xmax, nstep=100):
