@@ -29,6 +29,7 @@ Exit = False        # Used to signal an orderly exit
 def orderlyExit(signalNumber, frame):
     global Exit
     # Signal that we want to exit after current sweep
+    print("Recieved SIGUSR1", flush=True)
     Exit = True
 
 
