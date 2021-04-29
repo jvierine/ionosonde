@@ -104,7 +104,7 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
     dname="%s/%s" % (ic.ionogram_path, hdname)
     os.system("mkdir -p %s" % (dname))
 
-    print(ic.s.freq_dur)
+    print("Duration of each frequency: {}".format(ic.s.freq_dur))
     z_all=n.zeros([ic.s.n_freqs, int(ic.s.freq_dur*100000)], dtype=n.complex64)
 
     noise_floors=[]
