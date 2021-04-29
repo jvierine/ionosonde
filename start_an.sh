@@ -29,10 +29,10 @@ do
 
     # current time in seconds
     S=$(date -u +%s)
+    date -d @$S +"Now: %F %T %Z"
 
     # calculate number of seconds to wait until next sweep
     WAIT=$(((SWEEP_LEN+EXTRA) - (S % SWEEP_LEN)))
-    echo "Waiting $WAIT seconds"
-    date -d @$((S+WAIT))
+    date -d @$((S+WAIT)) +"Waiting ${WAIT}s until %F %T %Z for current sweep to end"
     sleep $WAIT
 done
