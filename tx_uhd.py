@@ -49,18 +49,15 @@ def tune_at(u, t0, ic, f0=4e6, gpio_state=0):
     u.set_rx_freq(tune_req)
 
     # toggle pin 1/16 for watchdog
-    if gpio_state == 0:
-        out=0x00
-    else:
-        out=0x01
-    gpio_line=0xff
-    # toggle pin 2/16 for antenna select
-    if f0/1e6 > ic.antenna_select_freq:
-        out= out | 0x02
+    watchdog = 0x00 if gpio_state == 0 else 0x01
 
-    bits="{:02b}".format(out)
-    print("Watchdog TX A GPIO=%s" % (bits))
-    u.set_gpio_attr("TXA", "OUT", out, gpio_line, 0)
+    # toggle pin 2/16 for antenna select
+    antenna_select = 0x02 if f0/1e6 > ic.antenna_select_freq else 0x00
+
+    print("Watchdog TX A GPIO={:02b}".format(watchdog | antenna_select))
+
+    gpio_line=0xff
+    u.set_gpio_attr("TXA", "OUT", watchdog | antenna_select, gpio_line, 0)
 
     u.clear_command_time()
 
