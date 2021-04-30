@@ -5,7 +5,13 @@ source config.sh
 # remove old raw files
 # todo: read directory from config file.
 # maybe this is best done at startup of rx_uhd.py
-rm /dev/shm/raw*.bin
+unset -v latest
+for file in /dev/shm/raw*.bin; do
+  [[ $file -nt $latest ]] && latest=$file
+done
+
+# remove raw-files if config been updated
+[[ $IONO_CONFIG -nt $latest ]] && rm /dev/shm/raw*.bin
 
 # remove cache
 rm -f waveforms/cache*.h5
