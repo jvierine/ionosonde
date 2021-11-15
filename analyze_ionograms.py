@@ -124,6 +124,8 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
                                n_ranges=n_rg)
 
             plt.figure(figsize=(1.5*8, 1.5*6))
+            plt.rc('font', size=15)
+            plt.rc('axes', titlesize=20)
             plt.subplot(121)
 
             tvec=n.arange(int(N/ic.code_len), dtype=n.float64)*dt
