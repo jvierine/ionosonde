@@ -216,7 +216,7 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
     plt.tight_layout()
 
     datestr=stuffr.unix2iso8601(t0)
-    ofname="%s/%s.png" % (dname, datestr)
+    ofname="%s/%s.png" % (dname, datestr.replace(':','.'))
     print("Saving ionogram %s" % (ofname))
     plt.savefig(ofname)
     plt.clf()
@@ -224,7 +224,7 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
     # make link to latest plot
     os.system("ln -sf %s latest.png" % (ofname))
 
-    ofname="%s/raw-%s.h5" % (dname, datestr)
+    ofname="%s/raw-%s.h5" % (dname, datestr.replace(':','.'))
     if ic.save_raw_voltage:
         save_raw_data(ofname,
                       t0,
@@ -234,7 +234,7 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
                       sr=ic.sample_rate/ic.dec,
                       freq_dur=ic.s.freq_dur)
 
-    iono_ofname="%s/ionogram-%s.h5" % (dname, datestr)
+    iono_ofname="%s/ionogram-%s.h5" % (dname, datestr.replace(':','.'))
     print("Saving ionogram %s" % (iono_ofname))
     with h5py.File(iono_ofname, "w") as ho:
         ho["I"]=IS
@@ -246,6 +246,7 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
         ho["ionogram_version"]=1
 
     delete_old_files(t0)
+    os.system("ln -sf %s/%s.png %s/latest.png" % (hdname, datestr.replace(':','.'), ic.ionogram_path))
 
 
 if __name__ == "__main__":
