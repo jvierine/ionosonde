@@ -5,6 +5,7 @@ import scipy.signal as ss
 import time
 import matplotlib.pyplot as plt
 import h5py
+import sys
 
 
 def acquire_spectrum(freq=12.5e6,
@@ -14,7 +15,7 @@ def acquire_spectrum(freq=12.5e6,
                      subdev="A:A",
                      ofname="spec.h5"):
 
-    usrp = uhd.usrp.MultiUSRP("recv_buff_size=500000000")
+    usrp = uhd.usrp.MultiUSRP("addr=%s,recv_buff_size=500000000"%(sys.argv[1]))
     subdev_spec=uhd.usrp.SubdevSpec(subdev)
     usrp.set_rx_subdev_spec(subdev_spec)
 
@@ -40,6 +41,8 @@ def acquire_spectrum(freq=12.5e6,
         h["freq"]=freqv
 
     plt.plot(freqv/1e6, 10.0*n.log10(S))
+    plt.xlabel("Frequency (MHz)")
+    plt.ylabel("Power spectral density (dB)")
     plt.show()
 
 

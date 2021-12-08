@@ -96,7 +96,8 @@ class gpsdo_monitor:
 
 
 if __name__ == "__main__":
-    u = uhd.usrp.MultiUSRP()
+    import sys
+    u = uhd.usrp.MultiUSRP("addr=%s" % (sys.argv[1]))
     print(u.get_mboard_sensor("gps_gprmc"))
     print(u.get_mboard_sensor("gps_gpgga"))
     print(u.get_mboard_sensor("gps_time"))

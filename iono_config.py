@@ -116,6 +116,7 @@ class iono_config:
 
         self.tx_subdev=json.loads(c["config"]["tx_subdev"])
         self.rx_subdev=json.loads(c["config"]["rx_subdev"])
+        self.rx_subdev_refl_pwr=json.loads(c["config"]["rx_subdev_refl_pwr"])        
 
         self.ionogram_path=json.loads(c["config"]["ionogram_path"])
         self.ionogram_dirname=json.loads(c["config"]["ionogram_dirname"])
