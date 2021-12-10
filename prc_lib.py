@@ -81,7 +81,7 @@ def analyze_prc2(z,
                  gc=20,
                  fft_filter=False,
                  time_variable_noise=False,
-                 cw_rem=True):
+                 cw_rem=False):
 
     an_len=len(z)
     clen=len(code)
