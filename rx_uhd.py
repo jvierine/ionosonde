@@ -72,7 +72,7 @@ def delete_old_files(t0, data_path="/dev/shm"):
 
 def lpf(dec=10, filter_len=4):
     """ a better lpf """
-    om0=2.0*n.pi/dec
+    om0=0.8*n.pi/dec
     dec2=filter_len*dec
     m=n.array(n.arange(filter_len*dec), dtype=n.float32)
     m=m-n.mean(m)

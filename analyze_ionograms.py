@@ -110,12 +110,24 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
     noise_floors=[]
 
     for i in range(ic.s.n_freqs):
+        
         fname="%s/raw-%d-%03d.bin" % (data_path, t0, i)
         if os.path.exists(fname):
-            z=n.fromfile(fname, dtype=n.complex64)
+            z=n.fromfile(fname, dtype=n.complex64)            
+            
             z_all[i, :]=z
             N=len(z)
             code_idx=ic.s.code_idx(i)
+
+            if ic.spectral_whitening:
+                # reduce receiver noise due to narrow band
+                # broadcast signals by trying to filter them out
+                if ic.pulse_lengths[code_idx] > 0:
+                    z=p.spectral_filter_pulse(z,
+                                              ipp=ic.ipps[code_idx],
+                                              pulse_len=ic.pulse_lengths[code_idx])
+            
+            
             res=p.analyze_prc2(z,
                                code=ic.orig_codes[code_idx],
                                cache_idx=code_idx,

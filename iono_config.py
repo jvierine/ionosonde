@@ -36,6 +36,9 @@ class iono_config:
         self.lat=int(json.loads(c["config"]["lat"]))
         self.lon=int(json.loads(c["config"]["lon"]))
         self.require_gps=bool(json.loads(c["config"]["require_gps"]))
+
+        self.spectral_whitening=bool(json.loads(c["config"]["spectral_whitening"]))
+        
         self.save_raw_voltage=bool(json.loads(c["config"]["save_raw_voltage"]))
         self.min_gps_lock_time=json.loads(c["config"]["min_gps_lock_time"])
 
@@ -116,7 +119,7 @@ class iono_config:
 
         self.tx_subdev=json.loads(c["config"]["tx_subdev"])
         self.rx_subdev=json.loads(c["config"]["rx_subdev"])
-        self.rx_subdev_refl_pwr=json.loads(c["config"]["rx_subdev_refl_pwr"])        
+        self.tx_subdev_refl_pwr=json.loads(c["config"]["tx_subdev_refl_pwr"])        
 
         self.ionogram_path=json.loads(c["config"]["ionogram_path"])
         self.ionogram_dirname=json.loads(c["config"]["ionogram_dirname"])

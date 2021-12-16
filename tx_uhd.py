@@ -163,8 +163,8 @@ def main(config):
     usrp.set_tx_rate(sample_rate)
     usrp.set_rx_rate(sample_rate)
 
-    rx_subdev_spec=uhd.usrp.SubdevSpec(ic.rx_subdev)
-    tx_subdev_spec=uhd.usrp.SubdevSpec(ic.tx_subdev_refl_pwr)
+    rx_subdev_spec=uhd.usrp.SubdevSpec(ic.tx_subdev_refl_pwr)
+    tx_subdev_spec=uhd.usrp.SubdevSpec(ic.tx_subdev)
 
     usrp.set_tx_subdev_spec(tx_subdev_spec)
     usrp.set_rx_subdev_spec(rx_subdev_spec)

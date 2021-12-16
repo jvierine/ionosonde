@@ -2,6 +2,8 @@
 
 source config.sh
 
+echo "Removing cached deconvolution matrices"
+rm waveforms/cache*.h5
 WAIT=10
 while true;
 do

@@ -137,6 +137,39 @@ def filter_waveform(waveform,
 
     return(a)
 
+def barker36(clen=10000,
+             ipp=1000):
+    #Friese 1996
+    #Polyphase Barker sequences up to length 36
+    P = 180.0
+    code = n.zeros(clen,dtype=n.complex64)#)n.array(n.exp(1j*n.random.rand(clen)*2*n.pi), dtype=n.complex64)
+    phi = n.array([0,0, 41, 59,  114, 114, 29, 30, 77, 54, 10, 117, 106, 131, 118, 
+                   98, 110, 58, 6, 113, 89, 61, 63, 38, 133, 57,
+                   128, 54, 160, 50, 133, 15, 62, 123, 30, 93],dtype=n.float32)
+    barker36=n.exp(1j*2.0*n.pi*phi/P)
+    n_ipp = int(n.floor(clen/ipp))
+    print(n_ipp)
+    for i in range(n_ipp):
+        if i%2 == 0:
+            code[(i*ipp):(i*ipp+36)]=barker36
+        else:
+            code[(i*ipp):(i*ipp+36)]=barker36[::-1]
+            
+#    plt.plot(code.real)
+ #   plt.plot(code.imag)
+  #  plt.show()
+    return(code)
+    
+
+def barker13ipps(clen=10000,
+                 ipp=1000):
+    barker13=n.array([1, 1, 1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1], dtype=n.complex64)
+    code = n.zeros(clen,dtype=n.complex64)#)n.array(n.exp(1j*n.random.rand(clen)*2*n.pi), dtype=n.complex64)
+    n_ipp = int(n.floor(clen/ipp))
+    for i in range(n_ipp):
+        code[(i*ipp):(i*ipp+13)]=barker13
+    return(code)
+    
 
 #
 # lets use 0.1 s code cycle and coherence assumption
@@ -161,8 +194,14 @@ def waveform_to_file(station=0,
 
     if code_type=="prn":
         code=create_pseudo_random_code(clen=clen, seed=station, pulse_length=pulse_length, ipp=ipp)
+    elif code_type=="barker13":
+        code=barker13ipps(clen=clen,ipp=ipp)
+    elif code_type=="barker36":
+        code=barker36(clen=clen,ipp=ipp)
     else:
         code=create_prn_dft_code(clen=clen, seed=station)
+        
+    # oversample code
     a = rep_seq(code,
                 rep=oversample)
 
