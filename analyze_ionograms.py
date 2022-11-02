@@ -16,6 +16,7 @@ import h5py
 import iono_config
 import scipy.constants as c
 from datetime import datetime, timedelta
+from multiprocessing import Pool
 
 
 matplotlib.use("Agg")
@@ -210,14 +211,15 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
 
     noise_floors=n.zeros(ic.s.n_freqs)
 
-    for i in range(ic.s.n_freqs):
-        ii, z, S, noise_floor_0 = analyze_latest_sweep_nr(ic, i, t0, fvec)
-        z_all[ii, :] = n.reshape(z,(int(ic.s.freq_dur*100000),))
-        pif = n.argmin(n.abs(iono_freqs[ii]-iono_p_freq))
-        I[pif, :] = I[pif, :] + n.max(S, axis=0)
-        IS[ii, :] = n.max(S, axis=0)
-        noise_floors[ii] = noise_floor_0
-        
+    with Pool() as pool:
+        items = [(ic, i, t0, fvec) for i in range(ic.s.n_freqs)]
+        for result in pool.starmap(analyze_latest_sweep_nr, items):
+            ii, z, S, noise_floor_0 = result
+            z_all[ii, :] = n.reshape(z,(int(ic.s.freq_dur*100000),))
+            pif = n.argmin(n.abs(iono_freqs[ii]-iono_p_freq))
+            I[pif, :] += n.max(S, axis=0)
+            IS[ii, :] = n.max(S, axis=0)
+            noise_floors[ii] = noise_floor_0
 
     i_fvec=n.zeros(ic.s.n_freqs)
     for fi in range(ic.s.n_freqs):
