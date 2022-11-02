@@ -107,7 +107,7 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
     print("Duration of each frequency: {}".format(ic.s.freq_dur))
     z_all=n.zeros([ic.s.n_freqs, int(ic.s.freq_dur*100000)], dtype=n.complex64)
 
-    noise_floors=[]
+    noise_floors=n.zeros(ic.s.n_freqs)
 
     for i in range(ic.s.n_freqs):
         
@@ -146,7 +146,7 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
                 dBr=10.0*n.log10(n.transpose(n.abs(res["res"])**2.0))
             noise_floor=n.nanmedian(dBr)
             noise_floor_0=noise_floor
-            noise_floors.append(noise_floor_0)
+            noise_floors[i] = noise_floor_0
             dBr=dBr-noise_floor
             dB_max=n.nanmax(dBr)
             plt.pcolormesh(p_tvec, p_rvec-ic.range_shift*dr, dBr, vmin=0, vmax=ic.max_plot_dB)
@@ -211,7 +211,7 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
 
     dB[n.isnan(dB)]=-3
 
-    noise_floor_0=n.mean(n.array(noise_floors))
+    noise_floor_0=n.mean(noise_floors)
 
     plt.figure(figsize=(1.5*8, 1.5*6))
     max_dB=n.nanmax(dB)
