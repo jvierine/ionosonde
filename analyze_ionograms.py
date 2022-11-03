@@ -101,15 +101,16 @@ def analyze_latest_sweep_nr(ic, i, t0, fvec, data_path="/dev/shm"):
         plt.rc('axes', titlesize=20)
         plt.subplot(121)
 
-        # tvec=n.arange(int(N/ic.code_len), dtype=n.float64)*dt
         rvec = n.arange(float(n_rg))*dr
         p_rvec = n.arange(float(n_rg)+1)*dr
         p_tvec=n.arange(int(N/ic.code_len)+1, dtype=n.float64)*dt
+
         with n.errstate(divide='ignore'):
             dBr=10.0*n.log10(n.transpose(n.abs(res["res"])**2.0))
+
         noise_floor=n.nanmedian(dBr)
         noise_floor_0=noise_floor
-        # noise_floors[i] = noise_floor_0
+
         dBr=dBr-noise_floor
         dB_max=n.nanmax(dBr)
         plt.pcolormesh(p_tvec, p_rvec-ic.range_shift*dr, dBr, vmin=0, vmax=ic.max_plot_dB)
@@ -121,21 +122,8 @@ def analyze_latest_sweep_nr(ic, i, t0, fvec, data_path="/dev/shm"):
 
         plt.colorbar()
         plt.subplot(122)
-#       S=n.abs(res["spec"])**2.0
+
         S=res["spec_snr"]
-
-        #sw=n.fft.fft(n.repeat(1.0/4,4),S.shape[0])
-        #for rg_id in range(S.shape[1]):
-        #    S[:,rg_id]=n.roll(n.real(n.fft.ifft(n.fft.fft(S[:,rg_id])*sw)),-2)
-
-        # all_spec[i, :, :]=S
-            # 100 kHz steps for ionogram freqs
-        # pif=n.argmin(n.abs(iono_freqs[i]-iono_p_freq))
-#            pif=int(iono_freqs[i]/0.1)
-
-        # collect peak SNR across all doppler frequencies
-        # I[pif, :]+=n.max(S, axis=0)
-        # IS[i, :]=n.max(S, axis=0)
 
         # SNR in dB scale
         with n.errstate(divide='ignore'):
@@ -199,7 +187,6 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
     dr = ic.dec*c.c/ic.sample_rate/2.0/1e3
 
     rvec=n.arange(float(n_rg))*dr
-    # p_rvec=n.arange(float(n_rg)+1)*dr
     fvec=n.fft.fftshift(n.fft.fftfreq(n_t, d=dt))
 
     hdname=stuffr.unix2iso8601_dirname(t0, ic)
