@@ -16,7 +16,6 @@ import h5py
 import iono_config
 import scipy.constants as c
 from datetime import datetime, timedelta
-from multiprocessing import Pool
 
 
 matplotlib.use("Agg")
@@ -64,95 +63,6 @@ def delete_old_files(t0, data_path="/dev/shm"):
             print("error deleting file")
 
 
-def analyze_latest_sweep_nr(ic, i, t0, fvec, data_path="/dev/shm"):
-    fname="%s/raw-%d-%03d.bin" % (data_path, t0, i)
-    print(fname)
-    n_rg=ic.n_range_gates
-
-    # IPP length
-    dt = ic.dec*ic.code_len/1e6
-
-    # range step
-    dr = ic.dec*c.c/ic.sample_rate/2.0/1e3
-
-    if os.path.exists(fname):
-        z=n.fromfile(fname, dtype=n.complex64)
-        raw_z = z
-        N=len(z)
-        code_idx=ic.s.code_idx(i)
-
-        if ic.spectral_whitening:
-            # reduce receiver noise due to narrow band
-            # broadcast signals by trying to filter them out
-            if ic.pulse_lengths[code_idx] > 0:
-                z=p.spectral_filter_pulse(z,
-                                          ipp=ic.ipps[code_idx],
-                                          pulse_len=ic.pulse_lengths[code_idx])
-
-        res=p.analyze_prc2(z,
-                           code=ic.orig_codes[code_idx],
-                           cache_idx=code_idx,
-                           rfi_rem=False,
-                           spec_rfi_rem=True,
-                           n_ranges=n_rg)
-
-        plt.figure(figsize=(1.5*8, 1.5*6))
-        plt.rc('font', size=15)
-        plt.rc('axes', titlesize=20)
-        plt.subplot(121)
-
-        rvec = n.arange(float(n_rg))*dr
-        p_rvec = n.arange(float(n_rg)+1)*dr
-        p_tvec=n.arange(int(N/ic.code_len)+1, dtype=n.float64)*dt
-
-        with n.errstate(divide='ignore'):
-            dBr=10.0*n.log10(n.transpose(n.abs(res["res"])**2.0))
-
-        noise_floor=n.nanmedian(dBr)
-        noise_floor_0=noise_floor
-
-        dBr=dBr-noise_floor
-        dB_max=n.nanmax(dBr)
-        plt.pcolormesh(p_tvec, p_rvec-ic.range_shift*dr, dBr, vmin=0, vmax=ic.max_plot_dB)
-        plt.xlabel("Time (s)")
-        plt.title("Range-Time Power f=%d (dB)\nnoise_floor=%1.2f (dB)\n peak SNR=%1.2f"
-                  % (i, noise_floor, dB_max))
-        plt.ylabel("Range (km)")
-        plt.ylim([-10, ic.max_plot_range])
-
-        plt.colorbar()
-        plt.subplot(122)
-
-        S=res["spec_snr"]
-
-        # SNR in dB scale
-        with n.errstate(divide='ignore'):
-            dBs=10.0*n.log10(n.transpose(S))
-        noise_floor=n.nanmedian(dBs)
-        max_dB=n.nanmax(dBs)
-        plt.pcolormesh(fvec, rvec-ic.range_shift*dr, dBs, vmin=0, vmax=ic.max_plot_dB)
-        plt.ylim([-10, ic.max_plot_range])
-
-        plt.title("Range-Doppler Power (dB)\nnoise_floor=%1.2f (dB)\n peak SNR=%1.2f (dB)"
-                  % (noise_floor, max_dB))
-        plt.xlabel("Frequency (Hz)")
-        plt.ylabel("Virtual range (km)")
-
-        cb=plt.colorbar()
-        cb.set_label("SNR (dB)")
-        plt.tight_layout()
-
-        hdname=stuffr.unix2iso8601_dirname(t0, ic)
-        dname="%s/%s" % (ic.ionogram_path, hdname)
-        plt.savefig("%s/iono-%03d.png" % (dname, i))
-        plt.close()
-        plt.clf()
-    else:
-        return (i, None, None, None)
-        print("file %s not found" % (fname))
-    return (i, raw_z, S, noise_floor_0)
-
-
 def analyze_latest_sweep(ic, data_path="/dev/shm"):
     """
     Analyze an ionogram, make some plots, save some data
@@ -187,6 +97,7 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
     dr = ic.dec*c.c/ic.sample_rate/2.0/1e3
 
     rvec=n.arange(float(n_rg))*dr
+    p_rvec=n.arange(float(n_rg)+1)*dr
     fvec=n.fft.fftshift(n.fft.fftfreq(n_t, d=dt))
 
     hdname=stuffr.unix2iso8601_dirname(t0, ic)
@@ -196,17 +107,93 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
     print("Duration of each frequency: {}".format(ic.s.freq_dur))
     z_all=n.zeros([ic.s.n_freqs, int(ic.s.freq_dur*100000)], dtype=n.complex64)
 
-    noise_floors=n.zeros(ic.s.n_freqs)
+    noise_floors=[]
 
-    with Pool() as pool:
-        items = [(ic, i, t0, fvec) for i in range(ic.s.n_freqs)]
-        for result in pool.starmap(analyze_latest_sweep_nr, items):
-            ii, z, S, noise_floor_0 = result
-            z_all[ii, :] = n.reshape(z,(int(ic.s.freq_dur*100000),))
-            pif = n.argmin(n.abs(iono_freqs[ii]-iono_p_freq))
-            I[pif, :] += n.max(S, axis=0)
-            IS[ii, :] = n.max(S, axis=0)
-            noise_floors[ii] = noise_floor_0
+    for i in range(ic.s.n_freqs):
+        fname="%s/raw-%d-%03d.bin" % (data_path, t0, i)
+        if os.path.exists(fname):
+            z=n.fromfile(fname, dtype=n.complex64)
+            z_all[i, :]=z
+            N=len(z)
+            code_idx=ic.s.code_idx(i)
+
+            if ic.spectral_whitening:
+                # reduce receiver noise due to narrow band
+                # broadcast signals by trying to filter them out
+                if ic.pulse_lengths[code_idx] > 0:
+                    z = p.spectral_filter_pulse(z,
+                                                ipp=ic.ipps[code_idx],
+                                                pulse_len=ic.pulse_lengths[code_idx])
+
+            res=p.analyze_prc2(z,
+                               code=ic.orig_codes[code_idx],
+                               cache_idx=code_idx+1000000*ic.station_id,
+                               rfi_rem=False,
+                               spec_rfi_rem=True,
+                               n_ranges=n_rg)
+
+            plt.figure(figsize=(1.5*8, 1.5*6))
+            plt.rc('font', size=15)
+            plt.rc('axes', titlesize=20)
+            plt.subplot(121)
+
+            tvec=n.arange(int(N/ic.code_len), dtype=n.float64)*dt
+            p_tvec=n.arange(int(N/ic.code_len)+1, dtype=n.float64)*dt
+            with n.errstate(divide='ignore'):
+                dBr=10.0*n.log10(n.transpose(n.abs(res["res"])**2.0))
+            noise_floor=n.nanmedian(dBr)
+            noise_floor_0=noise_floor
+            noise_floors.append(noise_floor_0)
+            dBr=dBr-noise_floor
+            dB_max=n.nanmax(dBr)
+            plt.pcolormesh(p_tvec, p_rvec-ic.range_shift*dr, dBr, vmin=0, vmax=ic.max_plot_dB)
+            plt.xlabel("Time (s)")
+            plt.title("Range-Time Power f=%d (dB)\nnoise_floor=%1.2f (dB) peak SNR=%1.2f"
+                      % (i, noise_floor, dB_max))
+            plt.ylabel("Range (km)")
+            plt.ylim([-10, ic.max_plot_range])
+
+            plt.colorbar()
+            plt.subplot(122)
+#            S=n.abs(res["spec"])**2.0
+            S=res["spec_snr"]
+
+            #sw=n.fft.fft(n.repeat(1.0/4,4),S.shape[0])
+            #for rg_id in range(S.shape[1]):
+            #    S[:,rg_id]=n.roll(n.real(n.fft.ifft(n.fft.fft(S[:,rg_id])*sw)),-2)
+
+            all_spec[i, :, :]=S
+            # 100 kHz steps for ionogram freqs
+            pif=n.argmin(n.abs(iono_freqs[i]-iono_p_freq))
+#            pif=int(iono_freqs[i]/0.1)
+
+            # collect peak SNR across all doppler frequencies
+            I[pif, :]+=n.max(S, axis=0)
+            IS[i, :]=n.max(S, axis=0)
+
+            # SNR in dB scale
+            with n.errstate(divide='ignore'):
+                dBs=10.0*n.log10(n.transpose(S))
+            noise_floor=n.nanmedian(dBs)
+            max_dB=n.nanmax(dBs)
+            plt.pcolormesh(fvec, rvec-ic.range_shift*dr, dBs, vmin=0, vmax=ic.max_plot_dB)
+            plt.ylim([-10, ic.max_plot_range])
+
+            plt.title("Range-Doppler Power (dB)\nnoise_floor=%1.2f (dB) peak SNR=%1.2f (dB)"
+                      % (noise_floor, max_dB))
+            plt.xlabel("Frequency (Hz)")
+            plt.ylabel("Virtual range (km)")
+
+            cb=plt.colorbar()
+            cb.set_label("SNR (dB)")
+            plt.tight_layout()
+
+            plt.savefig("%s/iono-%03d.png" % (dname, i))
+            plt.close()
+            plt.clf()
+        else:
+            return(0)
+            print("file %s not found" % (fname))
 
     i_fvec=n.zeros(ic.s.n_freqs)
     for fi in range(ic.s.n_freqs):
@@ -221,13 +208,13 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
 
     dB[n.isnan(dB)]=-3
 
-    noise_floor_0=n.mean(noise_floors)
+    noise_floor_0=n.mean(n.array(noise_floors))
 
     plt.figure(figsize=(1.5*8, 1.5*6))
     max_dB=n.nanmax(dB)
     plt.pcolormesh(n.concatenate((iono_p_freq, [fmax+0.1])),
                    rvec-ic.range_shift*1.5, dB, vmin=0, vmax=ic.max_plot_dB)
-    plt.title("%s %s\nnoise_floor=%1.2f (dB) peak SNR=%1.2f"
+    plt.title("%s %s UT\nnoise_floor=%1.2f (dB) peak SNR=%1.2f"
               % (ic.instrument_name, stuffr.unix2datestr(t0), noise_floor_0, max_dB))
     plt.xlabel("Frequency (MHz)")
     plt.ylabel("Virtual range (km)")
@@ -269,7 +256,8 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
         ho["I_fvec"]=sfreqs
         ho["ionogram_version"]=1
 
-    delete_old_files(t0)
+    # keep two sweeps in ringbuffer to allow oblique analysis to also finish
+    delete_old_files(t0-ic.s.sweep_len_s*2)
     os.system("ln -sf %s/%s.png %s/latest.png" % (hdname, datestr.replace(':','.'), ic.ionogram_path))
 
 
@@ -283,6 +271,6 @@ if __name__ == "__main__":
     op = parser.parse_args()
 
     # don't create waveform files.
-    ic = iono_config.get_config(config=op.config, write_waveforms=False)
+    ic = iono_config.get_config(config=op.config, write_waveforms=True)
     print("Starting analysis %s" % (datetime.fromtimestamp(time.time()).strftime("%FT%T")))
     analyze_latest_sweep(ic)

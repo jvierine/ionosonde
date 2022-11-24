@@ -212,8 +212,12 @@ def waveform_to_file(station=0,
                           max_power_outside_band=power_outside_band)
 
     if write_file:
-        print("Writing file %s" % (ofname))
-        a.tofile(ofname)
+         if os.path.exists(ofname):
+             print("file %s already exists. not writing to file"%(ofname))            
+         else:
+             a.tofile(ofname)
+
+        
     return(ofname, code)
 
 

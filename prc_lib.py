@@ -29,7 +29,6 @@ import time
 import h5py
 from argparse import ArgumentParser
 import stuffr
-import scipy.signal as ss
 
 import numpy as np  # this is for those who can't cope with numpy as n
 import numpy as n   # this saves one character of code each time
@@ -37,43 +36,6 @@ import scipy.signal
 import scipy.fftpack as sf
 
 import create_waveform
-
-
-def spectral_filter_pulse(zin,
-                          ipp=500,
-                          threshold_std=20.0,
-                          pulse_len=40):
-    """
-    Filter away frequency domain outliers in receive signal
-    """
-    pl=pulse_len
-    n_samples = len(zin)
-    rx_mask = n.zeros(n_samples,dtype=n.complex64)
-    rx_mask[:]=1.0
-    tx_mask = n.zeros(n_samples,dtype=n.complex64)
-    tx_mask[:]=1.0
-    n_ipps=int(n_samples/ipp)
-    for i in range(n_ipps):
-        rx_mask[(i*ipp):(i*ipp+pl+10)]=0.0
-        tx_mask[(i*ipp+pl+10):(i*ipp+ipp)]=0.0
-
-    echoes=n.copy(zin)
-    echoes=echoes-n.mean(echoes)
-    
-    tx = echoes*tx_mask
-    echoes=echoes*rx_mask
-    
-    wf=ss.tukey(n_samples)
-    E=n.fft.fft(wf*echoes)
-    EP=n.abs(E)**2.0
-
-    mean_est=n.median(EP)
-    std_est=n.median(n.abs(EP-mean_est))
-    shit_idx=n.where(EP > (threshold_std*std_est+mean_est))[0]
-    E[shit_idx]=0.0
-    # should be "clean" now
-    echoes2=n.fft.ifft(E)*rx_mask + tx*tx_mask
-    return(echoes2)
 
 
 def periodic_convolution_matrix(envelope, rmin=0, rmax=100):
