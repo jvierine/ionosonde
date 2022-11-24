@@ -31,7 +31,7 @@ class iono_config:
         self.fname=fname
         self.instrument_name=json.loads(c["config"]["instrument_name"])
         self.n_range_gates=int(json.loads(c["config"]["n_range_gates"]))
-        self.station_id=json.loads(c["config"]["station_id"])
+        self.station_id=int(json.loads(c["config"]["station_id"]))
 
         self.lat=int(json.loads(c["config"]["lat"]))
         self.lon=int(json.loads(c["config"]["lon"]))
