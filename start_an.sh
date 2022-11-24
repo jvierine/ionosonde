@@ -28,7 +28,7 @@ EXTRA=5
 # remove cache
 rm -f waveforms/cache*.h5
 
-PROGRESS_BAR_WIDTH=50  # progress bar length in characters
+PROGRESS_BAR_WIDTH=33  # progress bar length in characters
 
 draw_progress_bar() {
   # Arguments: current value, max value, unit of measurement (optional)
@@ -47,7 +47,7 @@ draw_progress_bar() {
   printf "["
   for b in $(seq 1 $__num_bar); do printf "#"; done
   for s in $(seq 1 $(( $PROGRESS_BAR_WIDTH - $__num_bar ))); do printf " "; done
-  printf "] $__percentage%% ($__value / $__max $__unit)\r"
+  printf "] $__percentage%% ($__value/$__max $__unit)\r"
 }
 
 wait_until() {
@@ -60,7 +60,7 @@ wait_until() {
         remain_wait=$((target - now))
 
         # Draw a progress bar
-        draw_progress_bar $remain_wait $total_wait "seconds"
+        draw_progress_bar $remain_wait $total_wait "s"
 
         # Check if we reached 100%
         if [ $remain_wait -le 0 ]; then break; fi
@@ -73,6 +73,7 @@ wait_until() {
 while true;
 do
     python3 analyze_ionograms.py --config=$IONO_CONFIG
+    python3 analyze_ionograms.py --config=$IONO_CONFIG_OBLIQUE
 #     python3 overview_plots.py $IONO_CONFIG
 
     # current time in seconds
