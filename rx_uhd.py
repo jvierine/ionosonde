@@ -29,6 +29,8 @@ import signal
 from datetime import datetime, timedelta
 import traceback
 
+import create_waveform as cf
+
 WantExit = False        # Used to signal an orderly exit
 
 
@@ -72,7 +74,7 @@ def delete_old_files(t0, data_path="/dev/shm"):
 
 def lpf(dec=10, filter_len=4):
     """ a better lpf """
-    om0=0.8*n.pi/dec
+    om0=2.0*n.pi/dec
     dec2=filter_len*dec
     m=n.array(n.arange(filter_len*dec), dtype=n.float32)
     m=m-n.mean(m)
@@ -84,9 +86,14 @@ def lpf(dec=10, filter_len=4):
 def write_to_file(recv_buffer, fname, log, dec=10):
     print("writing to file %s" % (fname))
 
+    # this is a better low pass filter.
+    w=cf.lpf(dec=dec,om_factor=0.5,filter_len=8)
     #    w=lpf(dec=dec)
     # todo: read filter length from create_waveforms, where it is determined
-    w=ss.flattop(52)
+    #
+    # 
+    #w=ss.flattop(52)
+    # fix this!
     fl=len(w)
     # filter, time shift, decimate, and cast to complex64 data type
     obuf=n.array(
