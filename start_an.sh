@@ -72,10 +72,11 @@ wait_until() {
 
 while true;
 do
-    python3 analyze_ionograms.py --config=$IONO_CONFIG
-    python3 analyze_ionograms.py --config=$IONO_CONFIG_OBLIQUE
+    python3 analyze_ionograms.py --config=$IONO_CONFIG &
+    python3 analyze_ionograms.py --config=$IONO_CONFIG_OBLIQUE &
 #     python3 overview_plots.py $IONO_CONFIG
 
+    wait
     # current time in seconds
     S=$(date -u +%s)
     date -d @$S +"Now: %F %T %Z"
