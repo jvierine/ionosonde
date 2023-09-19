@@ -175,7 +175,10 @@ def main(config):
     if ic.require_gps == False:
         usrp.set_clock_source("external");
         usrp.set_time_source("external");
-        usrp.set_time_next_pps(n.ceil(time.time()));
+        time_at_last_pps = usrp.get_time_last_pps().get_real_secs()
+        while time_at_last_pps == usrp.get_time_last_pps().get_real_secs():
+            time.sleep(0.1)
+        usrp.set_time_next_pps(uhd.libpyuhd.types.time_spec(int(n.ceil(time.time()))));
     else:
         gl.sync_clock(usrp, log, min_sync_time=ic.min_gps_lock_time)
         gps_mon=gl.gpsdo_monitor(usrp, log, ic.gps_holdover_time)

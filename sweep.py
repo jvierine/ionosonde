@@ -41,7 +41,7 @@ class sweep():
 
     def determine_sweep_length(self):
         """
-        how long is a sweep
+        how long is a sweep. make it a multiple of a minute
         """
         self.n_minutes=n.ceil((self.n_freqs*self.freq_dur)/60.0)
         # how many sweeps per day
