@@ -37,7 +37,7 @@ class sweep():
             self.transmit_waveforms.append(n.tile(wf, n_reps))
 
         self.determine_sweep_length()
-        self.t0=n.arange(self.n_freqs, dtype=n.float)*self.freq_dur
+        self.t0=n.arange(self.n_freqs, dtype=n.float64)*self.freq_dur
 
     def determine_sweep_length(self):
         """

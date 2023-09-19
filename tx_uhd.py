@@ -169,9 +169,16 @@ def main(config):
     usrp.set_tx_subdev_spec(tx_subdev_spec)
     usrp.set_rx_subdev_spec(rx_subdev_spec)
 
+    
     # wait until GPS is locked, then align USRP time with global ref
-    gl.sync_clock(usrp, log, min_sync_time=ic.min_gps_lock_time)
-    gps_mon=gl.gpsdo_monitor(usrp, log, ic.gps_holdover_time)
+    gps_mon=None
+    if ic.require_gps == False:
+        usrp.set_clock_source("external");
+        usrp.set_time_source("external");
+        usrp.set_time_next_pps(n.ceil(time.time()));
+    else:
+        gl.sync_clock(usrp, log, min_sync_time=ic.min_gps_lock_time)
+        gps_mon=gl.gpsdo_monitor(usrp, log, ic.gps_holdover_time)
 
     # start with first frequency on tx and rx
     tune_req=uhd.libpyuhd.types.tune_request(s.freq(0))
@@ -203,7 +210,8 @@ def main(config):
             gpio_state=(gpio_state+1) % 2
 
             # check that GPS is still locked.
-            gps_mon.check()
+            if ic.require_gps:
+                gps_mon.check()
 
         t0+=n.uint64(s.sweep_len_s)
 
