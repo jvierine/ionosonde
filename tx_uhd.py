@@ -10,7 +10,7 @@ import argparse
 import uhd
 import time
 import threading
-import numpy as n
+import numpy as np
 import matplotlib.pyplot as plt
 import os
 import signal
@@ -85,11 +85,11 @@ def rx_swr(u, t0, recv_buffer, f0, log, ic):
     rx_stream.issue_stream_cmd(stream_cmd)
     md=uhd.types.RXMetadata()
     num_rx_samps=rx_stream.recv(recv_buffer, md, timeout=float(N/ic.sample_rate)+1.0)
-    pwr=n.mean(n.abs(recv_buffer)**2.0)
+    pwr=np.mean(np.abs(recv_buffer)**2.0)
     rx_stream=None
     if pwr <= 0.0:
         pwr=1e-99
-    refl_pwr_dBm=10.0*n.log10(pwr)+ic.reflected_power_cal_dB
+    refl_pwr_dBm=10.0*np.log10(pwr)+ic.reflected_power_cal_dB
     log.log("reflected pwr %1.4f (MHz) %1.4f (dBm)" % (f0/1e6, refl_pwr_dBm))
 
 
@@ -97,7 +97,7 @@ def transmit_waveform(u, t0_full, waveform, swr_buffer, f0, log, ic):
     """
     Transmit a timed burst
     """
-    t0_ts=uhd.libpyuhd.types.time_spec(n.uint64(t0_full), 0.0)
+    t0_ts=uhd.libpyuhd.types.time_spec(np.uint64(t0_full), 0.0)
     stream_args=uhd.usrp.StreamArgs("fc32", "sc16")
     md=uhd.types.TXMetadata()
     md.has_time_spec=True
@@ -178,7 +178,7 @@ def main(config):
         time_at_last_pps = usrp.get_time_last_pps().get_real_secs()
         while time_at_last_pps == usrp.get_time_last_pps().get_real_secs():
             time.sleep(0.1)
-        usrp.set_time_next_pps(uhd.libpyuhd.types.time_spec(int(n.ceil(time.time()))));
+        usrp.set_time_next_pps(uhd.libpyuhd.types.time_spec(int(np.ceil(time.time()))));
     else:
         gl.sync_clock(usrp, log, min_sync_time=ic.min_gps_lock_time)
         gps_mon=gl.gpsdo_monitor(usrp, log, ic.gps_holdover_time)
@@ -190,11 +190,11 @@ def main(config):
 
     # hold SWR measurement about half of the transmit waveform length, so
     # we have no timing issues
-    swr_buffer=n.empty(int(0.5*sample_rate*s.freq_dur), dtype=n.complex64)
+    swr_buffer=np.empty(int(0.5*sample_rate*s.freq_dur), dtype=np.complex64)
 
     # figure out when to start the cycle
     t_now=usrp.get_time_now().get_real_secs()
-    t0=n.uint64(n.floor(t_now/(s.sweep_len_s))*s.sweep_len_s+s.sweep_len_s)
+    t0=np.uint64(np.floor(t_now/(s.sweep_len_s))*s.sweep_len_s+s.sweep_len_s)
     print("starting next sweep at %1.2f" % (s.sweep_len_s))
 
     gpio_state=0
@@ -205,7 +205,7 @@ def main(config):
             f0, dt=s.pars(i)
 
             print("f=%f code %s" % (f0/1e6, s.code(i)))
-            transmit_waveform(usrp, n.uint64(t0+dt), s.waveform(i), swr_buffer, f0, log, ic)
+            transmit_waveform(usrp, np.uint64(t0+dt), s.waveform(i), swr_buffer, f0, log, ic)
 
             # tune to next frequency 0.0 s before end
             next_freq_idx=(i+1) % s.n_freqs
@@ -216,7 +216,7 @@ def main(config):
             if ic.require_gps:
                 gps_mon.check()
 
-        t0+=n.uint64(s.sweep_len_s)
+        t0+=np.uint64(s.sweep_len_s)
 
 
 if __name__ == "__main__":

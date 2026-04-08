@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import numpy as n
+import numpy as np
 import uhd
 import scipy.signal as ss
 import time
@@ -25,8 +25,8 @@ def acquire_spectrum(freq=12.5e6,
 
     while True:
         w=ss.blackmanharris(n_fft)
-        freqv=n.fft.fftshift(n.fft.fftfreq(n_fft, d=1.0/25e6))+freq
-        S=n.zeros([n_t, n_fft])
+        freqv=np.fft.fftshift(np.fft.fftfreq(n_fft, d=1.0/25e6))+freq
+        S=np.zeros([n_t, n_fft])
         tvec=[]
         for ti in range(n_t):
             print("%d/%d" % (ti, n_t))
@@ -36,19 +36,19 @@ def acquire_spectrum(freq=12.5e6,
                 print("shit happened")
             else:
                 z=samps[0]
-                z=z-n.mean(z)
+                z=z-np.mean(z)
                 for ai in range(n_avg):
-                    S[ti, :]+=n.abs(n.fft.fftshift(
-                        n.fft.fft(z[(ai*n_fft):(ai*n_fft + n_fft)]*w)))**2.0
+                    S[ti, :]+=np.abs(np.fft.fftshift(
+                        np.fft.fft(z[(ai*n_fft):(ai*n_fft + n_fft)]*w)))**2.0
 
-        tvec=n.array(tvec)
+        tvec=np.array(tvec)
         with h5py.File("spec-%d.h5" % (time.time()), "w") as ho:
             ho["S"]=S
             ho["tvec"]=tvec
             ho["fvec"]=freqv
 
         ax.clear()
-        ax.pcolormesh(freqv/1e6, tvec, 10.0*n.log10(S))
+        ax.pcolormesh(freqv/1e6, tvec, 10.0*np.log10(S))
         ax.set_xlabel("Frequency (MHz)")
         ax.set_ylabel("Time (unix)")
         fig.canvas.draw()

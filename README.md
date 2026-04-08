@@ -8,7 +8,8 @@ The software is written purely in Python and it relies on the Ettus Research USR
 
 On receive, a range-Doppler spectrum of the received echoes is estimated and an ionogram is produced using the configured frequency sweep. 
 
-The software is released under the GPL 3.0 license. 
+The software is released under the GPL 3.0 license. Note that there are also source files licensed under BSD 3-Clause, which
+is more permissive than GPL 3.0.
 
 Markus Floer's thesis includes a description of building a software defined ionosonde:
 

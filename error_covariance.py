@@ -4,7 +4,7 @@
 # error covariance matrix of the estimated complex
 # radar scatter voltage
 #
-import numpy as n
+import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 import create_waveform
@@ -24,11 +24,11 @@ r=prc_lib.create_estimation_matrix(code, rmin=0, rmax=1000)
 A=r["A"]
 
 # a posteriory covariance matrix
-S=n.linalg.inv(n.dot(n.conj(n.transpose(A)), A))
+S=np.linalg.inv(np.dot(np.conj(np.transpose(A)), A))
 
 plt.figure(figsize=(10, 6))
 plt.subplot(121)
-plt.plot(n.diag(S)*10000.0)
+plt.plot(np.diag(S)*10000.0)
 plt.title("A posteriori estimation error variance")
 plt.xlabel("Range gate")
 plt.ylabel("Normalized a posteriori error variance")

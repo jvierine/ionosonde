@@ -11,7 +11,6 @@ import numpy as np
 import uhd
 import time
 import threading
-import numpy as n
 import matplotlib.pyplot as plt
 import sweep
 import iono_logger
@@ -21,7 +20,6 @@ import glob
 import re
 import os
 import iono_config
-import scipy.signal
 import scipy.signal as ss
 import os
 import psutil
@@ -74,12 +72,12 @@ def delete_old_files(t0, data_path="/dev/shm"):
 
 def lpf(dec=10, filter_len=4):
     """ a better lpf """
-    om0=2.0*n.pi/dec
+    om0=2.0*np.pi/dec
     dec2=filter_len*dec
-    m=n.array(n.arange(filter_len*dec), dtype=n.float32)
-    m=m-n.mean(m)
+    m=np.array(np.arange(filter_len*dec), dtype=np.float32)
+    m=m-np.mean(m)
     # windowed low pass filter
-    wfun=n.array(ss.hann(len(m))*n.sin(om0*(m+1e-6))/(n.pi*(m+1e-6)), dtype=n.complex64)
+    wfun=np.array(ss.hann(len(m))*np.sin(om0*(m+1e-6))/(np.pi*(m+1e-6)), dtype=np.complex64)
     return(wfun)
 
 
@@ -96,14 +94,14 @@ def write_to_file(recv_buffer, fname, log, dec=10):
     # fix this!
     fl=len(w)
     # filter, time shift, decimate, and cast to complex64 data type
-    obuf=n.array(
-        n.roll(
-            n.fft.ifft(
-                n.fft.fft(w, len(recv_buffer))
-                * n.fft.fft(recv_buffer)),
+    obuf=np.array(
+        np.roll(
+            np.fft.ifft(
+                np.fft.fft(w, len(recv_buffer))
+                * np.fft.fft(recv_buffer)),
             -int(fl/2)
             )[0:len(recv_buffer):dec],
-        dtype=n.complex64)
+        dtype=np.complex64)
 
     # rectangular impulse response. better for range resolution,
     # but not very good for frequency selectivity.
@@ -150,7 +148,7 @@ def receive_continuous(u, t0, t_now, ic, log, sample_rate=1000000.0):
     max_samps_per_packet = rx_stream.get_max_num_samps()
 
     # receive buffer size large enough to fit one packet
-    recv_buffer=n.zeros(max_samps_per_packet, dtype=n.complex64)
+    recv_buffer=np.zeros(max_samps_per_packet, dtype=np.complex64)
 
     # initial timeout is long enough for us to receive the first packet, which
     # happens at t0
@@ -158,10 +156,10 @@ def receive_continuous(u, t0, t_now, ic, log, sample_rate=1000000.0):
 
     # store data in this ringbuffer, and offload it to ram disk once
     # one full cycle is finished
-    output_buffer = n.zeros(2*int(s.freq_dur*sample_rate), dtype=n.complex64)
+    output_buffer = np.zeros(2*int(s.freq_dur*sample_rate), dtype=np.complex64)
 
     # use this buffer to write to a file
-    wr_buff = n.zeros(int(s.freq_dur*sample_rate), dtype=n.complex64)
+    wr_buff = np.zeros(int(s.freq_dur*sample_rate), dtype=np.complex64)
     bl=len(output_buffer)
     bi=0
 
@@ -212,7 +210,7 @@ def receive_continuous(u, t0, t_now, ic, log, sample_rate=1000000.0):
             prev_samples=samples
 
             # write the result into the output buffer
-            output_buffer[n.mod(bi+n.arange(num_rx_samps, dtype=n.uint64), bl)]=recv_buffer
+            output_buffer[np.mod(bi+np.arange(num_rx_samps, dtype=np.uint64), bl)]=recv_buffer
 
             bi=bi+step
 
@@ -220,10 +218,10 @@ def receive_continuous(u, t0, t_now, ic, log, sample_rate=1000000.0):
                 # this should be correct now.
                 idx0=sweep_num*n_per_sweep+freq_num*n_per_freq
 
-                wr_buff[:]=output_buffer[n.mod(idx0+n.arange(n_per_freq, dtype=n.uint64), bl)]
+                wr_buff[:]=output_buffer[np.mod(idx0+np.arange(n_per_freq, dtype=np.uint64), bl)]
 
                 # spin of a thread to write all samples obtained while sounding this frequency
-                # todo: pass decimtaiton option, and pass transmit bandwidth
+                # todo: pass decimation option, and pass transmit bandwidth
                 wr_thread=threading.Thread(target=write_to_file,
                                            args=(wr_buff, "%s/raw-%d-%03d.bin"
                                                           % (ic.data_dir, cycle_t0, freq_num), log))

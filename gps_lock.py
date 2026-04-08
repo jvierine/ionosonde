@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import numpy as n
+import numpy as np
 import time
 import uhd
 import stuffr

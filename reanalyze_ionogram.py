@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import argparse
-import numpy as n
+import numpy as np
 import h5py
 import matplotlib.pyplot as plt
-import scipy.constants as c
+import scipy.constants as const
 import os
 
 import create_waveform
@@ -13,14 +13,14 @@ import iono_config
 
 def incoh_an(z, code, nr=500):
     code_len=len(code)
-    S=n.zeros([nr, code_len])
-#    C=n.conj(n.fft.fft(code))
+    S=np.zeros([nr, code_len])
+#    C=np.conj(np.fft.fft(code))
     for ci in range(z.shape[0]):
         for ri in range(nr):
-            tidx=n.array(n.mod(n.arange(code_len)+ri, code_len), dtype=n.int)
-            S[ri, :]+=n.fft.fftshift(n.abs(n.fft.fft(z[ci, tidx]*n.conj(code)))**2.0)
+            tidx=np.array(np.mod(np.arange(code_len)+ri, code_len), dtype=np.int)
+            S[ri, :]+=np.fft.fftshift(np.abs(np.fft.fft(z[ci, tidx]*np.conj(code)))**2.0)
 #    for fi in range(code_len):
-#        S[:,fi]=S[:,fi]-n.median(S[:,fi])
+#        S[:,fi]=S[:,fi]-np.median(S[:,fi])
     return(S)
 
 
@@ -46,9 +46,9 @@ def analyze_ionogram(ic,
         if use_old:
             if os.path.exists(iono_ofname):
                 with h5py.File(iono_ofname, "r") as hi:
-                    I=n.copy(hi["I"].value)
-                    r=n.copy(hi["I_rvec"].value)
-                    f=n.copy(hi["I_fvec"].value)
+                    I=np.copy(hi["I"].value)
+                    r=np.copy(hi["I_rvec"].value)
+                    f=np.copy(hi["I_fvec"].value)
                 return(I, r, f)
 
         if "version" not in h.keys():
@@ -61,14 +61,14 @@ def analyze_ionogram(ic,
 
 #        if use_old:
 #            if "I" in h.keys():
-#                I=n.copy(h["I"].value)
-#                I_fvec=n.copy(h["I_fvec"].value)
-#                I_rvec=n.copy(h["I_rvec"].value)
+#                I=np.copy(h["I"].value)
+#                I_fvec=np.copy(h["I_fvec"].value)
+#                I_rvec=np.copy(h["I_rvec"].value)
 #                h.close()
 #                return(I,I_rvec,I_fvec)
 
         # float16 re and im to complex64
-        z_all=n.array(h["z_re"].value+h["z_im"].value*1j, dtype=n.complex64)
+        z_all=np.array(h["z_re"].value+h["z_im"].value*1j, dtype=np.complex64)
         freqs=h["freqs"].value
         codes=h["codes"].value
         code_type=h["code_type"].value
@@ -78,7 +78,7 @@ def analyze_ionogram(ic,
             code_len=10000
     #    print(codes)
         sample_rate=h["sample_rate"].value
-        dr=c.c/h["sample_rate"].value/2.0/1e3
+        dr=const.c/h["sample_rate"].value/2.0/1e3
         t0=h["t0"].value
         n_freqs=freqs.shape[0]
         if "station_id" in h.keys():
@@ -87,58 +87,58 @@ def analyze_ionogram(ic,
             station_id=0
 
         iono_freqs=0.5*(freqs[:, 0]+freqs[:, 1])
-        fmax=n.max(iono_freqs)
+        fmax=np.max(iono_freqs)
         n_plot_freqs=int((fmax+0.5)/0.1)+1
-        iono_p_freq=n.linspace(0, fmax+0.5, num=n_plot_freqs)
-        I=n.zeros([n_plot_freqs, code_len], dtype=n.float32)
+        iono_p_freq=np.linspace(0, fmax+0.5, num=n_plot_freqs)
+        I=np.zeros([n_plot_freqs, code_len], dtype=np.float32)
 
         wf=create_waveform.create_prn_dft_code(clen=code_len, seed=station_id)
-        WF=n.fft.fft(wf)
-        rvec=n.arange(code_len)*dr
+        WF=np.fft.fft(wf)
+        rvec=np.arange(code_len)*dr
 
-        IS=n.zeros([n_freqs, code_len])
+        IS=np.zeros([n_freqs, code_len])
 
         for i in range(n_freqs):
-            z=n.copy(z_all[i, :])
-            z=z-n.mean(z)
+            z=np.copy(z_all[i, :])
+            z=z-np.mean(z)
 
             N_codes=len(z)/code_len
             z.shape=(N_codes, code_len)
 
-            echoes=n.zeros([N_codes, code_len], dtype=n.complex64)
-            spec=n.zeros([N_codes, code_len], dtype=n.float)
+            echoes=np.zeros([N_codes, code_len], dtype=np.complex64)
+            spec=np.zeros([N_codes, code_len], dtype=np.float)
 
             for ci in range(N_codes):
-                echoes[ci, :]=n.fft.ifft(n.fft.fft(z[ci, :])/WF)
+                echoes[ci, :]=np.fft.ifft(np.fft.fft(z[ci, :])/WF)
 
             # remove edge effect when hopping in frequency
             echoes[N_codes-1, :]=echoes[N_codes-2, :]
 
             for ri in range(code_len):
-                spec[:, ri]=n.fft.fftshift(n.abs(n.fft.fft(echoes[:, ri]))**2.0)
+                spec[:, ri]=np.fft.fftshift(np.abs(np.fft.fft(echoes[:, ri]))**2.0)
             for fi in range(N_codes):
-                spec[fi, :]=spec[fi, :]/n.median(n.abs(spec[fi, :]))
+                spec[fi, :]=spec[fi, :]/np.median(np.abs(spec[fi, :]))
 
             if avg_spec:
-                sw=n.fft.fft(n.repeat(1.0/4, 4), N_codes)
+                sw=np.fft.fft(np.repeat(1.0/4, 4), N_codes)
                 for ri in range(code_len):
-                    spec[:, ri]=n.roll(n.real(n.fft.ifft(n.fft.fft(spec[:, ri])*sw)), -2)
+                    spec[:, ri]=np.roll(np.real(np.fft.ifft(np.fft.fft(spec[:, ri])*sw)), -2)
             pif=int(iono_freqs[i]/0.1)
-            I[pif, :]+=n.max(spec, axis=0)
-            IS[i, :]=n.max(spec, axis=0)
+            I[pif, :]+=np.max(spec, axis=0)
+            IS[i, :]=np.max(spec, axis=0)
 
             if plot_spectra:
-                tv=n.arange(N_codes)
-                dBP=n.transpose(10.0*n.log10(n.abs(echoes)**2.0))
-                nf=n.nanmedian(dBP)
+                tv=np.arange(N_codes)
+                dBP=np.transpose(10.0*np.log10(np.abs(echoes)**2.0))
+                nf=np.nanmedian(dBP)
                 plt.pcolormesh(tv, rvec, dBP, vmin=nf, vmax=nf+20)
                 plt.ylim([0, 800])
                 plt.colorbar()
                 plt.show()
-                dBS=n.transpose(10.0*n.log10(spec))
-                nf=n.nanmedian(dBS)
-                dop=3e8*n.fft.fftshift(
-                    n.fft.fftfreq(N_codes, d=code_len/float(sample_rate)))/2.0/(freqs[i, 0]*1e6)
+                dBS=np.transpose(10.0*np.log10(spec))
+                nf=np.nanmedian(dBS)
+                dop=3e8*np.fft.fftshift(
+                    np.fft.fftfreq(N_codes, d=code_len/float(sample_rate)))/2.0/(freqs[i, 0]*1e6)
                 plt.pcolormesh(dop, rvec, dBS, vmin=nf, vmax=nf+20)
                 plt.xlabel("Doppler shift (m/s)")
                 plt.ylabel("Range (km)")
@@ -147,17 +147,17 @@ def analyze_ionogram(ic,
                 plt.show()
 
         if plot_ionogram:
-            dBI=n.transpose(10.0*n.log10(I))
-            dBI[n.isinf(dBI)]=n.nan
-            noise_floor=n.nanmedian(dBI)
+            dBI=np.transpose(10.0*np.log10(I))
+            dBI[np.isinf(dBI)]=np.nan
+            noise_floor=np.nanmedian(dBI)
             dBI=dBI-noise_floor
-            dBI[n.isnan(dBI)]=-3
-            plt.pcolormesh(n.concatenate((iono_p_freq, [fmax+0.1])), rvec, dBI, vmin=-3, vmax=20.0)
+            dBI[np.isnan(dBI)]=-3
+            plt.pcolormesh(np.concatenate((iono_p_freq, [fmax+0.1])), rvec, dBI, vmin=-3, vmax=20.0)
             plt.title("%s %s\nNoise floor=%1.2f (dB)" % (ic.instrument_name,
                                                          stuffr.unix2datestr(h["t0"].value),
                                                          noise_floor))
 
-            plt.xlim([n.min(iono_freqs)-0.5, n.max(iono_freqs)+0.5])
+            plt.xlim([np.min(iono_freqs)-0.5, np.max(iono_freqs)+0.5])
             #    plt.pcolormesh(freqs[:,0],rvec,dBI,vmin=0,vmax=20)
             plt.ylim([0, 800])
             plt.colorbar()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import numpy as n
+import numpy as np
 
 
 class sweep():
@@ -21,7 +21,7 @@ class sweep():
         self.sample_rate=sample_rate
         # check code lengths
         for c in codes:
-            wf=n.fromfile(c, dtype=n.complex64)
+            wf=np.fromfile(c, dtype=np.complex64)
             if self.code_len == 0:
                 self.code_len=len(wf)
             else:
@@ -33,19 +33,19 @@ class sweep():
 
         # todo: use waveforms created in iono_config
         for c in codes:
-            wf=code_amp*n.fromfile(c, dtype=n.complex64)
-            self.transmit_waveforms.append(n.tile(wf, n_reps))
+            wf=code_amp*np.fromfile(c, dtype=np.complex64)
+            self.transmit_waveforms.append(np.tile(wf, n_reps))
 
         self.determine_sweep_length()
-        self.t0=n.arange(self.n_freqs, dtype=n.float64)*self.freq_dur
+        self.t0=np.arange(self.n_freqs, dtype=np.float64)*self.freq_dur
 
     def determine_sweep_length(self):
         """
         how long is a sweep. make it a multiple of a minute
         """
-        self.n_minutes=n.ceil((self.n_freqs*self.freq_dur)/60.0)
+        self.n_minutes=np.ceil((self.n_freqs*self.freq_dur)/60.0)
         # how many sweeps per day
-        self.n_sweeps=n.floor(24*60/self.n_minutes)
+        self.n_sweeps=np.floor(24*60/self.n_minutes)
         # how long is one ionosonde sweep
         self.sweep_len=24*60/self.n_sweeps
         self.sweep_len_s=self.sweep_len*60

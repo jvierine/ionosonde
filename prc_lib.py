@@ -30,10 +30,9 @@ import h5py
 from argparse import ArgumentParser
 import stuffr
 
-import numpy as np  # this is for those who can't cope with numpy as n
-import numpy as n   # this saves one character of code each time
-import scipy.signal
-import scipy.fftpack as sf
+import numpy as np
+import scipy.signal as ss
+import scipy.fft as fft
 
 import create_waveform
 
@@ -77,7 +76,7 @@ def analyze_prc2(z,
                  spec_rfi_rem=False,
                  cache=True,
                  gc_rem=False,
-                 wfun=scipy.signal.tukey,
+                 wfun=ss.windows.tukey,
                  gc=20,
                  fft_filter=False,
                  time_variable_noise=False,
@@ -115,7 +114,7 @@ def analyze_prc2(z,
     if fft_filter:
         S=np.zeros(clen, dtype=np.float32)
         for i in np.arange(N):
-            S+=np.abs(sf.fft(z[i, :]))**2.0
+            S+=np.abs(fft.fft(z[i, :]))**2.0
         S=np.sqrt(S/float(N))
     for i in np.arange(N):
         # B=(A^H A)^{-1}A^H
@@ -123,7 +122,7 @@ def analyze_prc2(z,
         # z = measurement
         # res[i,:] = backscattered echo complex amplitude
         if fft_filter:
-            zw=np.array(sf.ifft(sf.fft(z[i, :])/S), dtype=np.complex64)
+            zw=np.array(fft.ifft(fft.fft(z[i, :])/S), dtype=np.complex64)
         else:
             zw=z[i, :]
         res[i, :] = np.dot(B, zw)

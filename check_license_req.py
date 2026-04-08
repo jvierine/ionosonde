@@ -5,7 +5,7 @@
 #
 import sweep
 import h5py
-import numpy as n
+import numpy as np
 import matplotlib.pyplot as plt
 
 acquire_new_spec=False
@@ -45,15 +45,15 @@ freq=h["freq"].value
 # substract noise floor
 spec=spec-noise_floor
 p_in=0.0
-spec[n.where(freq < 2e6)[0]]=0
-spec[n.where(freq > 19e6)[0]]=0
-p_tot=n.sum(spec)
+spec[np.where(freq < 2e6)[0]]=0
+spec[np.where(freq > 19e6)[0]]=0
+p_tot=np.sum(spec)
 
-plt.plot(freq/1e6, 10.0*n.log10(spec), color="black")
+plt.plot(freq/1e6, 10.0*np.log10(spec), color="black")
 for fi in range(n_f):
-    fidx=n.where((freq > 1e6*s.freqs[fi][0]) & (freq < 1e6*s.freqs[fi][1]))[0]
-    p_in+=n.sum(spec[fidx])
-    plt.plot(freq[fidx]/1e6, 10.0*n.log10(spec[fidx]), color="green")
+    fidx=np.where((freq > 1e6*s.freqs[fi][0]) & (freq < 1e6*s.freqs[fi][1]))[0]
+    p_in+=np.sum(spec[fidx])
+    plt.plot(freq[fidx]/1e6, 10.0*np.log10(spec[fidx]), color="green")
 plt.title("Power outside licensed band %1.4f %%" % (100.0*(1-p_in/p_tot)))
 plt.xlabel("Frequency (MHz)")
 plt.ylabel("Power (dB)")

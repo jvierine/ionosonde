@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
-import numpy as n
+import numpy as np
 import sweep
 import sys
-
-import numpy as n
 import os
 try:
     import configparser
@@ -67,7 +65,7 @@ class iono_config:
         self.orig_codes=[]
         for i in range(self.n_codes):
             if self.pulse_lengths[i] > 0:
-                if n.mod(int(self.code_len), int(self.ipps[i])) != 0:
+                if np.mod(int(self.code_len), int(self.ipps[i])) != 0:
                     print("Code length %d must be a multiple of IPP %d."
                           " This is not the case. Exiting." % (self.code_len, self.ipps[i]))
                     exit(0)
@@ -101,7 +99,7 @@ class iono_config:
 
         self.frequency_duration=float(json.loads(c["config"]["frequency_duration"]))
 
-        if n.mod(int(self.frequency_duration*self.sample_rate), int(self.code_len*self.dec)) != 0:
+        if np.mod(int(self.frequency_duration*self.sample_rate), int(self.code_len*self.dec)) != 0:
             print("frequency_duration (%1.2f s) needs to be a multiple of code_length (%1.2f s)"
                   % (self.frequency_duration, self.code_len*self.dec/self.sample_rate))
             exit(0)

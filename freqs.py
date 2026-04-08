@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import matplotlib.pyplot as plt
-import numpy as n
+import numpy as np
 import scipy.signal as ss
 
 # these are the frequency "gaps" we are allowed to transmit in
@@ -63,9 +63,9 @@ def get_spec(sample_rate=10e6,
     # how long is the code in samples
     code_len=int(sample_rate*code_length_sec)
     # initialize a vector to hold the code
-    code_spec=n.zeros(code_len, dtype=n.complex64)
+    code_spec=np.zeros(code_len, dtype=np.complex64)
     # frequencies of the spectral components
-    code_freqs=n.fft.fftshift(n.fft.fftfreq(code_len, d=1.0/sample_rate))/1e6 + sample_rate/2.0/1e6
+    code_freqs=np.fft.fftshift(np.fft.fftfreq(code_len, d=1.0/sample_rate))/1e6 + sample_rate/2.0/1e6
 
     for f in freqs:
         code_spec[((code_freqs > f[0]) & (code_freqs < f[1]))]=1.0
@@ -73,11 +73,11 @@ def get_spec(sample_rate=10e6,
     wlen=int(sample_rate/roll_off)
     print(wlen)
     window=ss.hann(wlen)
-    window=window/n.sqrt(n.sum(window**2.0))
+    window=window/np.sqrt(np.sum(window**2.0))
     print("conv")
-    code_spec=n.fft.ifft(n.fft.fft(window, len(code_spec))*n.fft.fft(code_spec)).real
+    code_spec=np.fft.ifft(np.fft.fft(window, len(code_spec))*np.fft.fft(code_spec)).real
     # normalize to unity
-    code_spec=code_spec/n.max(code_spec)
+    code_spec=code_spec/np.max(code_spec)
     code_spec[code_spec < 1e-5]=0.0
     print("done")
 
@@ -92,8 +92,8 @@ def get_spec(sample_rate=10e6,
 
 def code_design(sample_rate=10e6,
                 code_length_sec=0.1,
-                max_amp=n.sqrt(2.0),
-                min_amp=n.sqrt(0.5)):
+                max_amp=np.sqrt(2.0),
+                min_amp=np.sqrt(0.5)):
     """
     Design a periodic waveform that has power only on predefined bands. This is in essense a
     "spread spectrum" code, which over the length of the code uses all of the available
@@ -111,40 +111,40 @@ def code_design(sample_rate=10e6,
     code_len=len(s)
 
     # create random initial try for code
-    code = n.zeros(code_len, dtype=n.complex64)
+    code = np.zeros(code_len, dtype=np.complex64)
 
     # initialize the code randomly
-    code[:]=n.random.randn(code_len)+1j*n.random.randn(code_len)
+    code[:]=np.random.randn(code_len)+1j*np.random.randn(code_len)
 
-    s_shift=n.fft.fftshift(s)
+    s_shift=np.fft.fftshift(s)
 
-    out_of_band_idx=n.where(s_shift == 0.0)[0]
-    in_band_idx=n.where(s_shift > 0.0)[0]
+    out_of_band_idx=np.where(s_shift == 0.0)[0]
+    in_band_idx=np.where(s_shift > 0.0)[0]
 
     for i in range(200):
         # what is the periodic spectrum of the code?
-        C=n.fft.fft(code)
+        C=np.fft.fft(code)
         # project code to a code that matches the spectral shape
-        C_p=C*s_shift/n.abs(C)
-        code=n.fft.ifft(C_p)
-        mean_amp=n.mean(n.abs(code))
+        C_p=C*s_shift/np.abs(C)
+        code=np.fft.ifft(C_p)
+        mean_amp=np.mean(np.abs(code))
 
         # project code to a unit amplitude code
-        idx=n.where(n.abs(code)>max_amp*mean_amp)[0]
-        code[idx] = max_amp*mean_amp*code[idx]/n.abs(code[idx])
+        idx=np.where(np.abs(code)>max_amp*mean_amp)[0]
+        code[idx] = max_amp*mean_amp*code[idx]/np.abs(code[idx])
 
-        idx=n.where(n.abs(code)<min_amp*mean_amp)[0]
-        code[idx] = min_amp*mean_amp*code[idx]/n.abs(code[idx])
+        idx=np.where(np.abs(code)<min_amp*mean_amp)[0]
+        code[idx] = min_amp*mean_amp*code[idx]/np.abs(code[idx])
 
-        out_of_band_pwr=n.sum(n.abs(n.fft.fft(code))[out_of_band_idx]**2.0)/len(out_of_band_idx)
-        in_band_pwr=n.sum(n.abs(n.fft.fft(code))[in_band_idx]**2.0)/len(in_band_idx)
-        ratio_dB=10.0*n.log10(out_of_band_pwr/in_band_pwr)
+        out_of_band_pwr=np.sum(np.abs(np.fft.fft(code))[out_of_band_idx]**2.0)/len(out_of_band_idx)
+        in_band_pwr=np.sum(np.abs(np.fft.fft(code))[in_band_idx]**2.0)/len(in_band_idx)
+        ratio_dB=10.0*np.log10(out_of_band_pwr/in_band_pwr)
 
         print("code amplitude min %1.3g max %1.3g mean %1.3g std %1.3g\n"
-              "out of band power=%1.3g" % (n.min(n.abs(code)),
-                                           n.max(n.abs(code)),
-                                           n.mean(n.abs(code)),
-                                           n.std(n.abs(code)),
+              "out of band power=%1.3g" % (np.min(np.abs(code)),
+                                           np.max(np.abs(code)),
+                                           np.mean(np.abs(code)),
+                                           np.std(np.abs(code)),
                                            ratio_dB))
 
     plt.plot(code[0:1000].real, label="real")
@@ -154,13 +154,13 @@ def code_design(sample_rate=10e6,
     plt.ylabel("Complex amplitude")
     plt.title("Transmit code complex amplitude")
     plt.show()
-    plt.plot(n.abs(code[0:1000]))
-    plt.ylim([0, 1.2*n.max(n.abs(code[0:1000]))])
+    plt.plot(np.abs(code[0:1000]))
+    plt.ylim([0, 1.2*np.max(np.abs(code[0:1000]))])
     plt.xlabel("Time (samples)")
     plt.ylabel("Code magnitude")
     plt.title("Transmit code magnitude")
     plt.show()
-    plt.plot(f, 10.0*n.log10(n.abs(n.fft.fftshift(n.fft.fft(code)))**2.0))
+    plt.plot(f, 10.0*np.log10(np.abs(np.fft.fftshift(np.fft.fft(code)))**2.0))
     plt.xlabel("Freuqncy (MHz)")
     plt.ylabel("Spectrum (dB)")
     plt.title("Actual power spectrum of the code")
