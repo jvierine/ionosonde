@@ -131,11 +131,11 @@ def transmit_waveform(u, t0_full, waveform, swr_buffer, f0, log, ic):
         tx_thread.start()
 
         # do an swr measurement
-        rx_thread = threading.Thread(target=rx_swr, args=(u, t0_full, swr_buffer, f0, log, ic))
-        rx_thread.daemon=True  # exit if parent thread exits
-        rx_thread.start()
+        # rx_thread = threading.Thread(target=rx_swr, args=(u, t0_full, swr_buffer, f0, log, ic))
+        # rx_thread.daemon=True  # exit if parent thread exits
+        # rx_thread.start()
         tx_thread.join()
-        rx_thread.join()
+        # rx_thread.join()
         tx_stream=None
     except Exception as e:
         exit(0)
