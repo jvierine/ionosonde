@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source .venv/bin/activate
 source config.sh
 
 echo "Removing cached deconvolution matrices"

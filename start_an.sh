@@ -1,5 +1,6 @@
 #!/bin/bash
 
+source .venv/bin/activate
 source config.sh
 
 # remove old raw files
