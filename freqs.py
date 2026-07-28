@@ -72,7 +72,7 @@ def get_spec(sample_rate=10e6,
 
     wlen=int(sample_rate/roll_off)
     print(wlen)
-    window=ss.hann(wlen)
+    window=ss.windows.hann(wlen)
     window=window/np.sqrt(np.sum(window**2.0))
     print("conv")
     code_spec=np.fft.ifft(np.fft.fft(window, len(code_spec))*np.fft.fft(code_spec)).real
