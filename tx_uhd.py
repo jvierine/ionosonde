@@ -125,11 +125,18 @@ def transmit_waveform(u, t0_full, waveform, swr_buffer, f0, log, ic, gpio_state)
         time.sleep(t0_full-t_now-0.1)
 
     # if tuned to correct frequency, toggle pin 1/16 for watchdog
-    print(f'f0={f0}, f_usrp={u.get_rx_freq(0)}')
-    if f0 == u.get_rx_freq(0):
+    print(f'f0={f0}, f_usrp={u.get_tx_freq(0)}')
+    if abs(f0 - u.get_tx_freq(0)) < 10:
+        # toggle pin 1/16 for watchdog
         print('Petting the watchdog')
         watchdog = 0x00 if gpio_state == 0 else 0x01
-        u.set_gpio_attr("TXA", "OUT", watchdog)
+
+        # toggle pin 2/16 for antenna select
+        antenna_select = 0x02 if f0/1e6 > ic.antenna_select_freq else 0x00
+        print("Watchdog TX A GPIO={:02b}".format(watchdog | antenna_select))
+
+        gpio_line=0xff
+        u.set_gpio_attr("TXA", "OUT", watchdog | antenna_select, gpio_line, 0)
 
     try:
         # transmit the code
