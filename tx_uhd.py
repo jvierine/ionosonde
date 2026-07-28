@@ -49,7 +49,7 @@ def tune_at(u, t0, ic, f0=4e6, gpio_state=0):
     u.set_tx_freq(tune_req)
     u.set_rx_freq(tune_req)
 
-    # # toggle pin 1/16 for watchdog
+    # # toggle pin 1/16 for watchdog -- moved to transmit_waveform
     # print('Petting the watchdog')
     # watchdog = 0x00 if gpio_state == 0 else 0x01
 
@@ -125,10 +125,8 @@ def transmit_waveform(u, t0_full, waveform, swr_buffer, f0, log, ic, gpio_state)
         time.sleep(t0_full-t_now-0.1)
 
     # if tuned to correct frequency, toggle pin 1/16 for watchdog
-    print(f'f0={f0}, f_usrp={u.get_tx_freq(0)}')
     if abs(f0 - u.get_tx_freq(0)) < 10:
         # toggle pin 1/16 for watchdog
-        print('Petting the watchdog')
         watchdog = 0x00 if gpio_state == 0 else 0x01
 
         # toggle pin 2/16 for antenna select
