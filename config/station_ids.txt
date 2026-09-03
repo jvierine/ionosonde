@@ -1,2 +1,3 @@
 Lycksele 1
 Rovaniemi 2
+Longyearbyen 4

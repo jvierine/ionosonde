@@ -49,16 +49,17 @@ def tune_at(u, t0, ic, f0=4e6, gpio_state=0):
     u.set_tx_freq(tune_req)
     u.set_rx_freq(tune_req)
 
-    # toggle pin 1/16 for watchdog
-    watchdog = 0x00 if gpio_state == 0 else 0x01
+    # # toggle pin 1/16 for watchdog -- moved to transmit_waveform
+    # print('Petting the watchdog')
+    # watchdog = 0x00 if gpio_state == 0 else 0x01
 
-    # toggle pin 2/16 for antenna select
-    antenna_select = 0x02 if f0/1e6 > ic.antenna_select_freq else 0x00
+    # # toggle pin 2/16 for antenna select
+    # antenna_select = 0x02 if f0/1e6 > ic.antenna_select_freq else 0x00
 
-    print("Watchdog TX A GPIO={:02b}".format(watchdog | antenna_select))
+    # print("Watchdog TX A GPIO={:02b}".format(watchdog | antenna_select))
 
-    gpio_line=0xff
-    u.set_gpio_attr("TXA", "OUT", watchdog | antenna_select, gpio_line, 0)
+    # gpio_line=0xff
+    # u.set_gpio_attr("TXA", "OUT", watchdog | antenna_select, gpio_line, 0)
 
     u.clear_command_time()
 
@@ -93,7 +94,7 @@ def rx_swr(u, t0, recv_buffer, f0, log, ic):
     log.log("reflected pwr %1.4f (MHz) %1.4f (dBm)" % (f0/1e6, refl_pwr_dBm))
 
 
-def transmit_waveform(u, t0_full, waveform, swr_buffer, f0, log, ic):
+def transmit_waveform(u, t0_full, waveform, swr_buffer, f0, log, ic, gpio_state):
     """
     Transmit a timed burst
     """
@@ -123,6 +124,18 @@ def transmit_waveform(u, t0_full, waveform, swr_buffer, f0, log, ic):
     if t0_full-t_now > 0.1:
         time.sleep(t0_full-t_now-0.1)
 
+    # if tuned to correct frequency, toggle pin 1/16 for watchdog
+    if abs(f0 - u.get_tx_freq(0)) < 10:
+        # toggle pin 1/16 for watchdog
+        watchdog = 0x00 if gpio_state == 0 else 0x01
+
+        # toggle pin 2/16 for antenna select
+        antenna_select = 0x02 if f0/1e6 > ic.antenna_select_freq else 0x00
+        print("Watchdog TX A GPIO={:02b}".format(watchdog | antenna_select))
+
+        gpio_line=0xff
+        u.set_gpio_attr("TXA", "OUT", watchdog | antenna_select, gpio_line, 0)
+
     try:
         # transmit the code
         tx_stream=u.get_tx_stream(stream_args)
@@ -131,11 +144,11 @@ def transmit_waveform(u, t0_full, waveform, swr_buffer, f0, log, ic):
         tx_thread.start()
 
         # do an swr measurement
-        rx_thread = threading.Thread(target=rx_swr, args=(u, t0_full, swr_buffer, f0, log, ic))
-        rx_thread.daemon=True  # exit if parent thread exits
-        rx_thread.start()
+        # rx_thread = threading.Thread(target=rx_swr, args=(u, t0_full, swr_buffer, f0, log, ic))
+        # rx_thread.daemon=True  # exit if parent thread exits
+        # rx_thread.start()
         tx_thread.join()
-        rx_thread.join()
+        # rx_thread.join()
         tx_stream=None
     except Exception as e:
         exit(0)
@@ -205,7 +218,7 @@ def main(config):
             f0, dt=s.pars(i)
 
             print("f=%f code %s" % (f0/1e6, s.code(i)))
-            transmit_waveform(usrp, np.uint64(t0+dt), s.waveform(i), swr_buffer, f0, log, ic)
+            transmit_waveform(usrp, np.uint64(t0+dt), s.waveform(i), swr_buffer, f0, log, ic, gpio_state=gpio_state)
 
             # tune to next frequency 0.0 s before end
             next_freq_idx=(i+1) % s.n_freqs

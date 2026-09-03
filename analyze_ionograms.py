@@ -117,13 +117,13 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
             N=len(z)
             code_idx=ic.s.code_idx(i)
 
-            if ic.spectral_whitening:
-                # reduce receiver noise due to narrow band
-                # broadcast signals by trying to filter them out
-                if ic.pulse_lengths[code_idx] > 0:
-                    z = p.spectral_filter_pulse(z,
-                                                ipp=ic.ipps[code_idx],
-                                                pulse_len=ic.pulse_lengths[code_idx])
+            # if ic.spectral_whitening:
+            #     # reduce receiver noise due to narrow band
+            #     # broadcast signals by trying to filter them out
+            #     if ic.pulse_lengths[code_idx] > 0:
+            #         z = p.spectral_filter_pulse(z,
+            #                                     ipp=ic.ipps[code_idx],
+            #                                     pulse_len=ic.pulse_lengths[code_idx])
 
             res=p.analyze_prc2(z,
                                code=ic.orig_codes[code_idx],
@@ -192,8 +192,8 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
             plt.close()
             plt.clf()
         else:
-            return(0)
             print("file %s not found" % (fname))
+            return(0)
 
     i_fvec=np.zeros(ic.s.n_freqs)
     for fi in range(ic.s.n_freqs):
@@ -203,8 +203,9 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
     dB[np.isinf(dB)]=np.nan
     noise_floor=np.nanmedian(dB)
 
-    for i in range(dB.shape[1]):
-        dB[:, i]=dB[:, i]-np.nanmedian(dB[:, i])
+    med = np.nanmedian(dB, axis=0)
+    med = np.nan_to_num(med, nan=0.0)
+    dB -= med
 
     dB[np.isnan(dB)]=-3
 
@@ -212,8 +213,7 @@ def analyze_latest_sweep(ic, data_path="/dev/shm"):
 
     plt.figure(figsize=(1.5*8, 1.5*6))
     max_dB=np.nanmax(dB)
-    plt.pcolormesh(np.concatenate((iono_p_freq, [fmax+0.1])),
-                   rvec-ic.range_shift*1.5, dB, vmin=0, vmax=ic.max_plot_dB)
+    plt.pcolormesh(iono_p_freq, rvec-ic.range_shift*1.5, dB, vmin=0, vmax=ic.max_plot_dB, shading='auto')
     plt.title("%s %s UT\nnoise_floor=%1.2f (dB) peak SNR=%1.2f"
               % (ic.instrument_name, stuffr.unix2datestr(t0), noise_floor_0, max_dB))
     plt.xlabel("Frequency (MHz)")

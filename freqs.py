@@ -3,48 +3,58 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy_signal_compat import hann
 
-# these are the frequency "gaps" we are allowed to transmit in
-freqs=[[2.2, 2.3],
-       [2.35, 2.45],
-       [2.51, 2.61],
-       [2.65, 2.75],
-       [3.155, 3.255],
-       [3.3, 3.4],
-       [3.95, 4.0],
-       [4.438, 4.538],
-       [4.6, 4.65],
-       [4.85, 4.95],
-       [5.005, 5.105],
-       [5.155, 5.255],
-       [5.305, 5.335],
-       [5.4, 5.45],
-       [5.8, 5.9],
-       [5.95, 6.05],
-       [6.1, 6.2],
-       [6.8, 6.85],
-       [6.9, 7],
-       [7.2, 7.3],
-       [7.35, 7.45],
-       [7.5, 7.6],
-       [7.65, 7.75],
-       [8.095, 8.195],
-       [9.4, 9.5],
-       [11.6, 11.7],
-       [13.57, 13.67],
-       [15.1, 15.2],
-       [15.7, 15.8],
-       [17.48, 17.58],
-       [18.9, 19.0],
-       [21.45, 21.55],
-       [25.01, 25.11]]
+# these are the frequencies are allowed to transmit in, amd their respective bandwidth
+freqs=[[2.25,0],
+       [2.4,0],
+       [2.56,0],
+       [2.7,0],
+       [3.205,0],
+       [3.35,0],
+       [3.975,1],
+       [4.488,0],
+       [4.625,1],
+       [4.9,0],
+       [5.055,0],
+       [5.32,2],
+       [5.425,1],
+       [5.85,0],
+       [6.0,0],
+       [6.15,0],
+       [6.825,1],
+       [6.95,0],
+       [7.25,0],
+       [7.4,0],
+       [7.55,0],
+       [7.7,0],
+       [8.145,0],
+       [9.45,0],
+       [11.650,0],
+       [13.620,0],
+       [15.15,0],
+       [15.75,0],
+       [17.53,0],
+       [18.95,0],
+       [21.5,0],
+       [25.06,0]]
+
+bandwidths = [0.1, 0.05, 0.03] # MHz
+
+f_color = ['grey', 'green', 'red']
 
 
 def simple_plot():
+    plt.figure(figsize=(15, 2.5))
 
     for f in freqs:
-        plt.fill_between([f[0], f[0], f[1], f[1]], [0, 1, 1, 0])
+        f_min = f[0] - bandwidths[f[1]]/2
+        f_max = f[0] + bandwidths[f[1]]/2
+        plt.fill([f_min, f_min, f_max, f_max], [0, 1, 1, 0], color=f_color[f[1]], alpha=0.8)
+    plt.ylim((0, 1))
+    plt.yticks([])
+    plt.xticks(np.arange(0, 28, 1))
     plt.title("Licensed frequency bands")
-    plt.xlabel("Frequenc (MHz)")
+    plt.xlabel("Frequency (MHz)")
+    plt.tight_layout()
     plt.show()
 
 
@@ -168,4 +178,4 @@ def code_design(sample_rate=10e6,
 
 
 if __name__ == "__main__":
-    code_design()
+    simple_plot()
