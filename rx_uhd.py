@@ -20,7 +20,7 @@ import glob
 import re
 import os
 import iono_config
-import scipy.signal as ss
+from scipy_signal_compat import hann
 import os
 import psutil
 import signal
@@ -77,7 +77,7 @@ def lpf(dec=10, filter_len=4):
     m=np.array(np.arange(filter_len*dec), dtype=np.float32)
     m=m-np.mean(m)
     # windowed low pass filter
-    wfun=np.array(ss.hann(len(m))*np.sin(om0*(m+1e-6))/(np.pi*(m+1e-6)), dtype=np.complex64)
+    wfun=np.array(hann(len(m))*np.sin(om0*(m+1e-6))/(np.pi*(m+1e-6)), dtype=np.complex64)
     return(wfun)
 
 

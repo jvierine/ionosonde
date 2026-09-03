@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import uhd
-import scipy.signal as ss
+from scipy_signal_compat import blackmanharris
 import time
 import matplotlib.pyplot as plt
 import h5py
@@ -24,7 +24,7 @@ def acquire_spectrum(freq=12.5e6,
     ax=fig.add_subplot(111)
 
     while True:
-        w=ss.blackmanharris(n_fft)
+        w=blackmanharris(n_fft)
         freqv=np.fft.fftshift(np.fft.fftfreq(n_fft, d=1.0/25e6))+freq
         S=np.zeros([n_t, n_fft])
         tvec=[]

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.signal as ss
+from scipy_signal_compat import hann
 
 # these are the frequency "gaps" we are allowed to transmit in
 freqs=[[2.2, 2.3],
@@ -72,7 +72,7 @@ def get_spec(sample_rate=10e6,
 
     wlen=int(sample_rate/roll_off)
     print(wlen)
-    window=ss.hann(wlen)
+    window=hann(wlen)
     window=window/np.sqrt(np.sum(window**2.0))
     print("conv")
     code_spec=np.fft.ifft(np.fft.fft(window, len(code_spec))*np.fft.fft(code_spec)).real

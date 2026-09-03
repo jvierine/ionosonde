@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import uhd
-import scipy.signal as ss
+from scipy_signal_compat import blackmanharris
 import time
 import matplotlib.pyplot as plt
 import h5py
@@ -21,7 +21,7 @@ def acquire_spectrum(freq=12.5e6,
 
     # 100 Hz frequency resolution
     N=250000
-    w=ss.blackmanharris(N)
+    w=blackmanharris(N)
     freqv=np.fft.fftshift(np.fft.fftfreq(N, d=1/25e6))+freq
     S=np.zeros(N)
     Nw=N_windows

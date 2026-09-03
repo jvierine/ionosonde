@@ -31,8 +31,8 @@ from argparse import ArgumentParser
 import stuffr
 
 import numpy as np
-import scipy.signal as ss
 import scipy.fft as fft
+from scipy_signal_compat import tukey
 
 import create_waveform
 
@@ -76,7 +76,7 @@ def analyze_prc2(z,
                  spec_rfi_rem=False,
                  cache=True,
                  gc_rem=False,
-                 wfun=ss.windows.tukey,
+                 wfun=tukey,
                  gc=20,
                  fft_filter=False,
                  time_variable_noise=False,
