@@ -141,19 +141,25 @@ def downconvert_block(
     if source.size != read_count:
         raise RuntimeError(f"short DigitalRF read: expected {read_count}, got {source.size}")
 
-    # Reference phase to the dwell start.  This avoids loss of precision from
-    # multiplying RF offsets by a Unix timestamp while preserving phase across
-    # independently processed chunks.
-    relative_indices = np.arange(read_start - dwell_start_sample,
-                                 read_start - dwell_start_sample + read_count,
-                                 dtype=np.float64)
+    # Translate the low-pass prototype into a complex band-pass filter.  This
+    # performs the expensive input-rate frequency selection inside upfirdn's
+    # polyphase implementation; only the small decimated output needs mixing.
     offset_hz = target_frequency_hz - input_center_hz
-    source *= np.exp(-2j * np.pi * offset_hz * relative_indices / input_rate_hz).astype(
+    half = (len(taps) - 1) // 2
+    tap_indices = np.arange(len(taps), dtype=np.float64) - half
+    translated_taps = taps * np.exp(
+        2j * np.pi * offset_hz * tap_indices / input_rate_hz
+    ).astype(np.complex64)
+    filtered = upfirdn(translated_taps, source, down=decimation)
+    delay_outputs = (len(taps) - 1) // decimation
+    output = np.asarray(
+        filtered[delay_outputs : delay_outputs + output_count], dtype=np.complex64
+    )
+    output_indices = (first_output_sample + np.arange(output_count, dtype=np.float64)) * decimation
+    output *= np.exp(-2j * np.pi * offset_hz * output_indices / input_rate_hz).astype(
         np.complex64
     )
-    filtered = upfirdn(taps, source, down=decimation)
-    delay_outputs = (len(taps) - 1) // decimation
-    return np.asarray(filtered[delay_outputs : delay_outputs + output_count], dtype=np.complex64)
+    return output
 
 
 def wait_for_source(reader, channel: str, first_sample: int, last_sample: int,
