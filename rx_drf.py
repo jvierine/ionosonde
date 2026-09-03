@@ -16,6 +16,8 @@ The output files contain complex64 samples at config sample_rate / config dec.
 
 import argparse
 import configparser
+import ctypes
+from numpy import ctypeslib
 from dataclasses import dataclass
 import json
 import math
@@ -26,7 +28,6 @@ import tempfile
 import time
 
 import numpy as np
-from scipy.signal import firwin, upfirdn
 
 try:
     import digital_rf as drf
@@ -35,6 +36,74 @@ except ImportError:  # Allow DSP unit tests on machines without DigitalRF.
 
 
 STOP_AFTER_SWEEP = False
+
+
+class CDownconverter:
+    """Binding to chirpsounder2's optimized digisonde channelizer."""
+
+    def __init__(self, library_path: Path):
+        self.library_path = library_path
+        self.library = ctypes.cdll.LoadLibrary(str(library_path))
+        self.function = self.library.digisonde_downconvert_decimate
+        self.function.argtypes = [
+            ctypeslib.ndpointer(np.complex64, ndim=1, flags="C"),
+            ctypeslib.ndpointer(np.complex64, ndim=1, flags="C"),
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_float,
+            ctypes.c_float,
+            ctypes.c_int,
+            ctypeslib.ndpointer(np.float32, ndim=1, flags="C"),
+            ctypes.c_int,
+            ctypes.c_int,
+        ]
+        self.function.restype = None
+
+    def process(self, source, decimation, frequency_offset_hz, sample_rate_hz,
+                initial_phase, taps):
+        source = np.ascontiguousarray(source, dtype=np.complex64)
+        output = np.empty(source.size // decimation, dtype=np.complex64)
+        self.function(
+            source,
+            output,
+            source.size,
+            decimation,
+            frequency_offset_hz,
+            sample_rate_hz,
+            np.float32(initial_phase.real),
+            np.float32(initial_phase.imag),
+            2,  # FIR: 10x mix/average followed by the short FIR and 25x decimation.
+            taps,
+            taps.size,
+            2,
+        )
+        return output
+
+
+def find_downconverter_library(configured_path: str | None) -> Path:
+    candidates = []
+    if configured_path:
+        candidates.append(Path(configured_path).expanduser())
+    environment_path = os.environ.get("CHIRPSOUNDER_DOWNCONVERT_LIBRARY")
+    if environment_path:
+        candidates.append(Path(environment_path).expanduser())
+    source_dir = Path(__file__).resolve().parent
+    candidates.extend(
+        [
+            source_dir / "libdownconvert.so",
+            source_dir.parent / "chirpsounder2" / "libdownconvert.so",
+            Path.cwd() / "libdownconvert.so",
+        ]
+    )
+    for path in candidates:
+        if path.is_file():
+            return path.resolve()
+    raise FileNotFoundError(
+        "libdownconvert.so not found; use --downconverter-library or "
+        "CHIRPSOUNDER_DOWNCONVERT_LIBRARY"
+    )
 
 
 def request_stop(_signal_number, _frame):
@@ -100,19 +169,22 @@ def load_program(path: str, output_dir: str | None = None) -> ReceiverProgram:
 
 
 def make_filter(input_rate_hz: int, output_rate_hz: int, bandwidth_hz: float) -> np.ndarray:
-    """Return a symmetric FIR whose length supports exact chunk stitching."""
+    """Make the short second-stage FIR used by receive_digisonde.py."""
     if input_rate_hz % output_rate_hz:
         raise ValueError("input rate must be an integer multiple of output rate")
     decimation = input_rate_hz // output_rate_hz
-    # Preserve as much of the configured full bandwidth as possible while
-    # leaving an anti-alias transition before the output Nyquist frequency.
+    if decimation != 250:
+        raise ValueError("the compiled FIR channelizer currently requires decimation 250")
     cutoff_hz = min(0.5 * bandwidth_hz, 0.45 * output_rate_hz)
     if cutoff_hz <= 0:
         raise ValueError("passband must be positive")
-    # L-1 is an integer multiple of D.  This makes the group-delay-compensated
-    # sample position identical for every independently processed chunk.
-    taps = firwin(8 * decimation + 1, cutoff_hz, fs=input_rate_hz, window=("kaiser", 8.0))
-    return np.asarray(taps, dtype=np.float32)
+    stage1_rate_hz = input_rate_hz / 10.0
+    tap_indices = np.arange(191) - 95
+    normalized_cutoff = cutoff_hz / stage1_rate_hz
+    taps = 2.0 * normalized_cutoff * np.sinc(2.0 * normalized_cutoff * tap_indices)
+    taps *= np.kaiser(taps.size, 8.6)
+    taps /= taps.sum()
+    return np.ascontiguousarray(taps, dtype=np.float32)
 
 
 def downconvert_block(
@@ -126,40 +198,32 @@ def downconvert_block(
     output_count: int,
     decimation: int,
     taps: np.ndarray,
+    downconverter: CDownconverter,
 ) -> np.ndarray:
-    """Produce one group-delay-compensated output block from DigitalRF."""
-    if (len(taps) - 1) % decimation:
-        raise ValueError("filter length minus one must be divisible by decimation")
-    half = (len(taps) - 1) // 2
+    """Produce one overlap-padded output block with the compiled channelizer."""
+    # The C FIR operates after its first 10x stage.  Four final-rate samples of
+    # padding cover the 95-stage1-sample half-window and align to decimation.
+    padding_source_samples = math.ceil(95 * 10 / decimation) * decimation
     target_source_sample = dwell_start_sample + first_output_sample * decimation
-    read_start = target_source_sample - half
-    read_count = (output_count - 1) * decimation + len(taps)
+    read_start = target_source_sample - padding_source_samples
+    read_count = output_count * decimation + 2 * padding_source_samples
     source = reader.read_vector_1d(read_start, read_count, channel)
-    # Own the buffer because mixing is in-place; some reader/test backends may
-    # return a view into reusable storage.
-    source = np.array(source, dtype=np.complex64, copy=True)
+    source = np.ascontiguousarray(source, dtype=np.complex64)
     if source.size != read_count:
         raise RuntimeError(f"short DigitalRF read: expected {read_count}, got {source.size}")
 
-    # Translate the low-pass prototype into a complex band-pass filter.  This
-    # performs the expensive input-rate frequency selection inside upfirdn's
-    # polyphase implementation; only the small decimated output needs mixing.
     offset_hz = target_frequency_hz - input_center_hz
-    half = (len(taps) - 1) // 2
-    tap_indices = np.arange(len(taps), dtype=np.float64) - half
-    translated_taps = taps * np.exp(
-        2j * np.pi * offset_hz * tap_indices / input_rate_hz
-    ).astype(np.complex64)
-    filtered = upfirdn(translated_taps, source, down=decimation)
-    delay_outputs = (len(taps) - 1) // decimation
-    output = np.asarray(
-        filtered[delay_outputs : delay_outputs + output_count], dtype=np.complex64
+    relative_start = read_start - dwell_start_sample
+    initial_phase = np.exp(-2j * np.pi * offset_hz * relative_start / input_rate_hz)
+    padded_output = downconverter.process(
+        source, decimation, offset_hz, input_rate_hz, initial_phase, taps
     )
-    output_indices = (first_output_sample + np.arange(output_count, dtype=np.float64)) * decimation
-    output *= np.exp(-2j * np.pi * offset_hz * output_indices / input_rate_hz).astype(
-        np.complex64
+    padding_output_samples = padding_source_samples // decimation
+    return np.array(
+        padded_output[padding_output_samples : padding_output_samples + output_count],
+        dtype=np.complex64,
+        copy=True,
     )
-    return output
 
 
 def wait_for_source(reader, channel: str, first_sample: int, last_sample: int,
@@ -184,13 +248,14 @@ def write_dwell(
     frequency_index: int,
     chunk_output_samples: int,
     poll_s: float,
+    downconverter: CDownconverter,
 ) -> Path | None:
     output_rate = program.output_sample_rate_hz
     decimation = input_rate_hz // output_rate
     target_frequency = program.frequencies_hz[frequency_index]
     bandwidth = program.bandwidths_hz[program.code_indices[frequency_index]]
     taps = make_filter(input_rate_hz, output_rate, bandwidth)
-    half = (len(taps) - 1) // 2
+    padding_source_samples = math.ceil(95 * 10 / decimation) * decimation
 
     source_low = input_center_hz - input_rate_hz / 2.0
     source_high = input_center_hz + input_rate_hz / 2.0
@@ -211,8 +276,8 @@ def write_dwell(
     dwell_start_s = cycle_start_s + frequency_index * program.frequency_duration_s
     dwell_start_sample = int(round(dwell_start_s * input_rate_hz))
     output_count = int(round(program.frequency_duration_s * output_rate))
-    required_first = dwell_start_sample - half
-    required_last = dwell_start_sample + (output_count - 1) * decimation + half + 1
+    required_first = dwell_start_sample - padding_source_samples
+    required_last = dwell_start_sample + output_count * decimation + padding_source_samples
     if not wait_for_source(reader, channel, required_first, required_last, poll_s):
         print(f"source data aged out for sweep {int(cycle_start_s)}; skipping sweep", flush=True)
         return None
@@ -228,7 +293,7 @@ def write_dwell(
                 count = min(chunk_output_samples, output_count - first)
                 block = downconvert_block(
                     reader, channel, input_rate_hz, input_center_hz, target_frequency,
-                    dwell_start_sample, first, count, decimation, taps,
+                    dwell_start_sample, first, count, decimation, taps, downconverter,
                 )
                 block.tofile(temporary)
             temporary.flush()
@@ -276,7 +341,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input-sample-rate", type=int, default=25_000_000)
     parser.add_argument("--input-center-frequency", type=float, default=12.5e6)
     parser.add_argument("--output-dir", default=None)
-    parser.add_argument("--chunk-output-samples", type=int, default=20_000)
+    parser.add_argument(
+        "--chunk-output-samples",
+        type=int,
+        default=1_000,
+        help="Output samples per C channelizer call. Default is a short 10 ms window at 100 ksps.",
+    )
+    parser.add_argument("--downconverter-library", default=None)
     parser.add_argument("--poll-seconds", type=float, default=0.1)
     parser.add_argument("--retention-sweeps", type=int, default=3)
     parser.add_argument("--once", action="store_true", help="Process the newest complete sweep and exit.")
@@ -298,6 +369,8 @@ def main() -> None:
             f"input rate {args.input_sample_rate} is not divisible by output rate {output_rate}"
         )
     reader = drf.DigitalRFReader(args.input_dir)
+    library_path = find_downconverter_library(args.downconverter_library)
+    downconverter = CDownconverter(library_path)
     properties = reader.get_properties(args.input_channel)
     recorded_rate = int(round(float(properties["samples_per_second"])))
     if recorded_rate != args.input_sample_rate:
@@ -309,7 +382,8 @@ def main() -> None:
         print(
             f"DigitalRF {args.input_dir}/{args.input_channel}: {recorded_rate} samples/s; "
             f"output: {output_rate} samples/s in {program.output_dir}; "
-            f"{len(program.frequencies_hz)} frequencies every {program.sweep_period_s:g} s",
+            f"{len(program.frequencies_hz)} frequencies every {program.sweep_period_s:g} s; "
+            f"channelizer: {library_path}",
             flush=True,
         )
     signal.signal(signal.SIGUSR1, request_stop)
@@ -324,7 +398,7 @@ def main() -> None:
             result = write_dwell(
                 reader, args.input_channel, program, args.input_sample_rate,
                 args.input_center_frequency, cycle_start, frequency_index,
-                args.chunk_output_samples, args.poll_seconds,
+                args.chunk_output_samples, args.poll_seconds, downconverter,
             )
             if result is None:
                 complete = False
